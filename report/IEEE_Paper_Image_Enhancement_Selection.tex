@@ -266,17 +266,17 @@ Table~\ref{tab:primary_results} reports the primary selection accuracy and regre
 \label{tab:primary_results}
 \begin{tabular}{lccccc}
 \toprule
-\textbf{Model / Selection Strategy} & \textbf{Accuracy Mean (\%)} & \textbf{Accuracy Std (\%)} & \textbf{Mean Regret (dB)} & \textbf{Regret Std (dB)} & \textbf{Max Regret (dB)} \\
+\textbf{Model / Selection Strategy} & \textbf{Accuracy (\%)} & \textbf{Mean Regret (dB)} & \textbf{Max Regret (dB)} & \textbf{Mean SSIM} & \textbf{SSIM Regret} \\
 \midrule
-Random Choice (Chance) & 17.66 & $\pm 4.77$ & 6.916 & $\pm 0.511$ & 18.085 \\
-Best Fixed Method (Retinex) & 45.57 & $\pm 3.41$ & 2.734 & $\pm 0.118$ & 17.815 \\
-Hand-Written Heuristic Rule & 12.16 & $\pm 3.29$ & 6.926 & $\pm 0.360$ & 17.064 \\
+Random Choice (Chance) & 17.66 $\pm 4.77$ & 6.916 $\pm 0.511$ & 18.085 & 0.4392 & 0.2859 \\
+Best Fixed Method (Retinex) & 45.57 $\pm 3.41$ & 2.734 $\pm 0.118$ & 17.815 & 0.7287 & 0.0313 \\
+Hand-Written Heuristic Rule & 12.16 $\pm 3.29$ & 6.926 $\pm 0.360$ & 17.064 & 0.5751 & 0.1603 \\
 \midrule
-Multinomial Logistic Regression & 61.86 & $\pm 2.53$ & 1.421 & $\pm 0.213$ & 15.032 \\
-\textbf{Random Forest (Proposed)} & \textbf{68.18} & $\mathbf{\pm 3.49}$ & \textbf{1.160} & $\mathbf{\pm 0.236}$ & \textbf{15.181} \\
-XGBoost Classifier & 67.70 & $\pm 4.90$ & 1.249 & $\pm 0.322$ & 14.673 \\
+Multinomial Logistic Regression & 61.86 $\pm 2.53$ & 1.421 $\pm 0.213$ & 15.032 & 0.6877 & 0.0486 \\
+\textbf{Random Forest (Proposed)} & \textbf{68.18} $\mathbf{\pm 3.49}$ & \textbf{1.160} $\mathbf{\pm 0.236}$ & \textbf{15.181} & \textbf{0.6949} & \textbf{0.0408} \\
+XGBoost Classifier & 67.70 $\pm 4.90$ & 1.249 $\pm 0.322$ & 14.673 & 0.6926 & 0.0428 \\
 \midrule
-Theoretical Oracle Upper Bound & 100.00 & $\pm 0.00$ & 0.000 & $\pm 0.000$ & 0.000 \\
+Theoretical Oracle Upper Bound & 100.00 $\pm 0.00$ & 0.000 $\pm 0.000$ & 0.000 & 0.7129 & 0.0000 \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -350,13 +350,13 @@ To verify that our model generalizes beyond the training folds, we evaluate the 
 \centering
 \caption{Performance on the Official Held-Out Test Split (\texttt{eval15})}
 \label{tab:test_split}
-\begin{tabular}{lccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Model} & \textbf{Accuracy (\%)} & \textbf{Mean Regret (dB)} & \textbf{Max Regret (dB)} \\
+\textbf{Model} & \textbf{Accuracy (\%)} & \textbf{Mean Regret (dB)} & \textbf{Max Regret (dB)} & \textbf{Mean SSIM} & \textbf{SSIM Regret} \\
 \midrule
-Best Fixed Method & 46.67 & 2.777 & 11.448 \\
-Hand-Written Rule & 26.67 & 5.798 & 14.432 \\
-\textbf{Random Forest Selector} & \textbf{66.67} & \textbf{1.283} & \textbf{5.328} \\
+Best Fixed Method & 46.67 & 2.777 & 11.448 & 0.7534 & 0.0480 \\
+Hand-Written Rule & 26.67 & 5.798 & 14.432 & 0.6712 & 0.1001 \\
+\textbf{Random Forest Selector} & \textbf{66.67} & \textbf{1.283} & \textbf{5.328} & \textbf{0.6965} & \textbf{0.0623} \\
 \bottomrule
 \end{tabular}
 \end{table}

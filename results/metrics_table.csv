@@ -1,7 +1,7 @@
-Model,Accuracy_Mean (%),Accuracy_Std (%),Mean_Regret_dB,Mean_Regret_Std_dB,Max_Regret_dB
-Random Choice,17.66,4.77,6.916,0.511,18.085
-Best Fixed Method,45.57,3.41,2.734,0.118,17.815
-Hand-Written Rule,12.16,3.29,6.926,0.36,17.064
-Logistic Regression,61.86,2.53,1.421,0.213,15.032
-Random Forest,68.18,3.49,1.16,0.236,15.181
-XGBoost,67.7,4.9,1.249,0.322,14.673
+Model,Accuracy_Mean (%),Accuracy_Std (%),Mean_Regret_dB,Mean_Regret_Std_dB,Max_Regret_dB,Mean_SSIM,SSIM_Regret
+Random Choice,17.66,4.77,6.916,0.511,18.085,0.4392,0.2859
+Best Fixed Method,45.57,3.41,2.734,0.118,17.815,0.7287,0.0313
+Hand-Written Rule,12.16,3.29,6.926,0.36,17.064,0.5751,0.1603
+Logistic Regression,61.86,2.53,1.421,0.213,15.032,0.6877,0.0486
+Random Forest,68.18,3.49,1.16,0.236,15.181,0.6949,0.0408
+XGBoost,67.7,4.9,1.249,0.322,14.673,0.6926,0.0428

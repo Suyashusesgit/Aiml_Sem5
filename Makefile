@@ -1,4 +1,4 @@
-.PHONY: help install benchmark demo app downstream docx test package clean
+.PHONY: help install benchmark demo app downstream downstream_semantic robustness presentation docx test package clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
@@ -7,7 +7,10 @@ help:
 	@echo "  make benchmark  - Run end-to-end GroupKFold benchmark pipeline (main.py)"
 	@echo "  make demo       - Run inference demo on a sample image (src/demo.py)"
 	@echo "  make app        - Launch interactive web application dashboard (app.py)"
-	@echo "  make downstream - Run Phase 1 downstream computer vision benchmark"
+	@echo "  make downstream - Run Phase 1 downstream ORB keypoint benchmark"
+	@echo "  make downstream_semantic - Run SIFT RANSAC & Canny boundary benchmark"
+	@echo "  make robustness - Run sensor noise sensitivity sweep (src/robustness_sweep.py)"
+	@echo "  make presentation - Generate 12-slide PowerPoint deck and 1-page handout"
 	@echo "  make docx       - Generate comprehensive step-by-step Word (.docx) walkthrough"
 	@echo "  make package    - Build Overleaf camera-ready LaTeX zip archive"
 	@echo "  make test       - Run unit tests (tests/test_pipeline.py)"
@@ -27,6 +30,16 @@ app:
 
 downstream:
 	python3 src/downstream_detection.py
+
+downstream_semantic:
+	python3 src/downstream_semantic_eval.py
+
+robustness:
+	python3 src/robustness_sweep.py
+
+presentation:
+	python3 scripts/generate_presentation.py
+	python3 scripts/generate_handout_docx.py
 
 docx:
 	python3 scripts/generate_walkthrough_docx.py

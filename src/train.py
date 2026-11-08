@@ -139,6 +139,21 @@ def compute_regrets(
     return np.array(regrets)
 
 
+def compute_ssim_metrics(
+    predictions: np.ndarray,
+    df_scores_sub: pd.DataFrame
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Computes achieved SSIM and SSIM regret: r_ssim(x) = ssim_{a*}(x) - ssim_{a_pred}(x)."""
+    ssims = []
+    regrets = []
+    for pred, (_, row) in zip(predictions, df_scores_sub.iterrows()):
+        s_val = float(row[f"ssim_{pred}"])
+        ssims.append(s_val)
+        loss = float(row["oracle_ssim"]) - s_val
+        regrets.append(max(0.0, loss))
+    return np.array(ssims), np.array(regrets)
+
+
 def run_cross_validation(
     df_scores: pd.DataFrame,
     df_features: pd.DataFrame,
@@ -170,7 +185,7 @@ def run_cross_validation(
     }
 
     results: Dict[str, Dict[str, List[float]]] = {
-        m: {"accuracy": [], "mean_regret": [], "max_regret": []}
+        m: {"accuracy": [], "mean_regret": [], "max_regret": [], "mean_ssim": [], "ssim_regret": []}
         for m in models_to_test
     }
 
@@ -197,9 +212,12 @@ def run_cross_validation(
             rand_preds = np.random.choice(method_names, size=len(y_va))
             rand_acc = float(np.mean(rand_preds == y_va))
             rand_reg = compute_regrets(rand_preds, scores_va)
+            rand_ssim, rand_sreg = compute_ssim_metrics(rand_preds, scores_va)
             results["Random Choice"]["accuracy"].append(rand_acc)
             results["Random Choice"]["mean_regret"].append(float(np.mean(rand_reg)))
             results["Random Choice"]["max_regret"].append(float(np.max(rand_reg)))
+            results["Random Choice"]["mean_ssim"].append(float(np.mean(rand_ssim)))
+            results["Random Choice"]["ssim_regret"].append(float(np.mean(rand_sreg)))
             if seed == seeds[0]:
                 oof_predictions["Random Choice"][va_idx] = rand_preds
 
@@ -208,9 +226,12 @@ def run_cross_validation(
             fixed_preds = np.array([fold_best_fixed] * len(y_va))
             fixed_acc = float(np.mean(fixed_preds == y_va))
             fixed_reg = compute_regrets(fixed_preds, scores_va)
+            fixed_ssim, fixed_sreg = compute_ssim_metrics(fixed_preds, scores_va)
             results["Best Fixed Method"]["accuracy"].append(fixed_acc)
             results["Best Fixed Method"]["mean_regret"].append(float(np.mean(fixed_reg)))
             results["Best Fixed Method"]["max_regret"].append(float(np.max(fixed_reg)))
+            results["Best Fixed Method"]["mean_ssim"].append(float(np.mean(fixed_ssim)))
+            results["Best Fixed Method"]["ssim_regret"].append(float(np.mean(fixed_sreg)))
             if seed == seeds[0]:
                 oof_predictions["Best Fixed Method"][va_idx] = fixed_preds
 
@@ -221,9 +242,12 @@ def run_cross_validation(
             ])
             rule_acc = float(np.mean(rule_preds == y_va))
             rule_reg = compute_regrets(rule_preds, scores_va)
+            rule_ssim, rule_sreg = compute_ssim_metrics(rule_preds, scores_va)
             results["Hand-Written Rule"]["accuracy"].append(rule_acc)
             results["Hand-Written Rule"]["mean_regret"].append(float(np.mean(rule_reg)))
             results["Hand-Written Rule"]["max_regret"].append(float(np.max(rule_reg)))
+            results["Hand-Written Rule"]["mean_ssim"].append(float(np.mean(rule_ssim)))
+            results["Hand-Written Rule"]["ssim_regret"].append(float(np.mean(rule_sreg)))
             if seed == seeds[0]:
                 oof_predictions["Hand-Written Rule"][va_idx] = rule_preds
 
@@ -277,10 +301,13 @@ def run_cross_validation(
 
                 acc = float(np.mean(preds == y_va))
                 reg = compute_regrets(preds, scores_va)
+                m_ssim, m_sreg = compute_ssim_metrics(preds, scores_va)
 
                 results[model_name]["accuracy"].append(acc)
                 results[model_name]["mean_regret"].append(float(np.mean(reg)))
                 results[model_name]["max_regret"].append(float(np.max(reg)))
+                results[model_name]["mean_ssim"].append(float(np.mean(m_ssim)))
+                results[model_name]["ssim_regret"].append(float(np.mean(m_sreg)))
                 if seed == seeds[0]:
                     oof_predictions[model_name][va_idx] = preds
 
@@ -289,6 +316,8 @@ def run_cross_validation(
         acc_arr = np.array(metrics["accuracy"]) * 100.0
         mreg_arr = np.array(metrics["mean_regret"])
         xreg_arr = np.array(metrics["max_regret"])
+        ssim_arr = np.array(metrics["mean_ssim"])
+        sreg_arr = np.array(metrics["ssim_regret"])
 
         summary.append({
             "Model": model_name,
@@ -297,6 +326,8 @@ def run_cross_validation(
             "Mean_Regret_dB": round(float(mreg_arr.mean()), 3),
             "Mean_Regret_Std_dB": round(float(mreg_arr.std()), 3),
             "Max_Regret_dB": round(float(xreg_arr.mean()), 3),
+            "Mean_SSIM": round(float(ssim_arr.mean()), 4),
+            "SSIM_Regret": round(float(sreg_arr.mean()), 4),
         })
 
     df_summary = pd.DataFrame(summary)

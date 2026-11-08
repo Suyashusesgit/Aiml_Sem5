@@ -30,6 +30,7 @@ from src.dataset import get_dataset_manifest, load_and_preprocess_pair
 from src.train import (
     run_cross_validation,
     compute_regrets,
+    compute_ssim_metrics,
     evaluate_hand_written_rule,
     seed_everything,
 )
@@ -298,24 +299,34 @@ def evaluate_official_test_split(
         for k in range(len(df_test_feats))
     ])
 
+    fixed_ssims, fixed_sregs = compute_ssim_metrics(fixed_preds, df_test_scores)
+    rule_ssims, rule_sregs = compute_ssim_metrics(rule_preds, df_test_scores)
+    rf_ssims, rf_sregs = compute_ssim_metrics(rf_preds, df_test_scores)
+
     test_results = [
         {
             "Model": "Best Fixed Method",
             "Accuracy (%)": round(float(np.mean(fixed_preds == y_test)) * 100.0, 2),
             "Mean_Regret_dB": round(float(np.mean(compute_regrets(fixed_preds, df_test_scores))), 3),
             "Max_Regret_dB": round(float(np.max(compute_regrets(fixed_preds, df_test_scores))), 3),
+            "Mean_SSIM": round(float(np.mean(fixed_ssims)), 4),
+            "SSIM_Regret": round(float(np.mean(fixed_sregs)), 4),
         },
         {
             "Model": "Hand-Written Rule",
             "Accuracy (%)": round(float(np.mean(rule_preds == y_test)) * 100.0, 2),
             "Mean_Regret_dB": round(float(np.mean(compute_regrets(rule_preds, df_test_scores))), 3),
             "Max_Regret_dB": round(float(np.max(compute_regrets(rule_preds, df_test_scores))), 3),
+            "Mean_SSIM": round(float(np.mean(rule_ssims)), 4),
+            "SSIM_Regret": round(float(np.mean(rule_sregs)), 4),
         },
         {
             "Model": "Random Forest Selector",
             "Accuracy (%)": round(float(np.mean(rf_preds == y_test)) * 100.0, 2),
             "Mean_Regret_dB": round(float(np.mean(compute_regrets(rf_preds, df_test_scores))), 3),
             "Max_Regret_dB": round(float(np.max(compute_regrets(rf_preds, df_test_scores))), 3),
+            "Mean_SSIM": round(float(np.mean(rf_ssims)), 4),
+            "SSIM_Regret": round(float(np.mean(rf_sregs)), 4),
         },
     ]
 

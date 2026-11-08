@@ -87,6 +87,12 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
     enhanced_bgr = METHODS[pred_method](deg)
     t_enh_ms = (time.perf_counter() - t2) * 1000.0
 
+    # 3b. Downstream ORB Keypoints overlay
+    orb = cv2.ORB_create(nfeatures=400)
+    kp = orb.detect(enhanced_bgr, None)
+    kp_img = cv2.drawKeypoints(enhanced_bgr, kp, None, color=(0, 255, 0), flags=0)
+    kp_b64 = img_to_base64(kp_img)
+
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
     # 4. Optional candidate scoring if reference image provided
@@ -130,6 +136,8 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
         },
         "enhanced_image": f"data:image/png;base64,{img_to_base64(enhanced_bgr)}",
         "degraded_image": f"data:image/png;base64,{img_to_base64(deg)}",
+        "keypoints_image": f"data:image/png;base64,{kp_b64}",
+        "keypoint_count": len(kp),
         "reference_eval": ref_eval,
         "all_methods": all_methods_out,
     }
@@ -186,6 +194,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .img-box { background: #000; border-radius: 8px; overflow: hidden; text-align: center; }
     .img-box img { width: 100%; height: auto; display: block; object-fit: contain; max-height: 420px; }
     .img-label { background: #1e293b; color: white; padding: 8px; font-size: 13px; font-weight: 600; }
+
+    .badge-btn {
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: white;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .badge-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .badge-btn.active { background: #2563eb; color: white; border-color: #1d4ed8; }
     
     .winner-banner { background: #dcfce7; border: 1px solid #86efac; color: #15803d; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
     .winner-banner strong { font-size: 16px; }
@@ -252,8 +274,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
 
         <div class="card">
-          <h2>Restoration Result (Interactive View)</h2>
-          <div class="viewer">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+            <h2>Restoration Result</h2>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button id="btnSide" class="badge-btn active" onclick="setViewMode('side')">Side-by-Side</button>
+              <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
+              <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
+            </div>
+          </div>
+
+          <!-- Mode 1: Side by Side -->
+          <div id="sideViewer" class="viewer">
             <div class="img-box">
               <div class="img-label">Degraded Input (Low-Light)</div>
               <img id="imgDegraded" src="" alt="Degraded">
@@ -262,6 +293,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <div class="img-label" id="enhancedLabel">★ Selected Output ★</div>
               <img id="imgEnhanced" src="" alt="Enhanced">
             </div>
+          </div>
+
+          <!-- Mode 2: Interactive Swipe Comparison Slider -->
+          <div id="swipeViewer" style="display:none; position:relative; width:100%; height:420px; overflow:hidden; border-radius:8px; background:#000; user-select:none;">
+            <img id="swipeDegraded" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;">
+            <div style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.75); color:white; padding:4px 10px; border-radius:4px; font-size:12px; font-weight:700; z-index:5;">Degraded Input</div>
+
+            <div id="swipeClip" style="position:absolute; top:0; left:0; width:50%; height:100%; overflow:hidden; border-right:3px solid #2563eb; z-index:10; background:transparent;">
+              <img id="swipeEnhanced" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;">
+              <div style="position:absolute; bottom:12px; right:12px; background:rgba(37,99,235,0.9); color:white; padding:4px 10px; border-radius:4px; font-size:12px; font-weight:700;">★ Selected Output ★</div>
+            </div>
+
+            <input type="range" min="0" max="100" value="50" id="swipeRange" oninput="onSwipeMove(this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:ew-resize; z-index:20;">
           </div>
         </div>
 
@@ -276,6 +320,46 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 
   <script>
+    let currentData = null;
+    let showingKeypoints = false;
+    let currentViewMode = 'side';
+
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      document.getElementById('btnSide').classList.toggle('active', mode === 'side');
+      document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
+      document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
+      document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
+      if (mode === 'swipe') {
+        syncSwipeWidth();
+      }
+    }
+
+    function onSwipeMove(val) {
+      const clip = document.getElementById('swipeClip');
+      clip.style.width = val + '%';
+      syncSwipeWidth();
+    }
+
+    function syncSwipeWidth() {
+      const container = document.getElementById('swipeViewer');
+      const innerImg = document.getElementById('swipeEnhanced');
+      if (container && innerImg) {
+        innerImg.style.width = container.offsetWidth + 'px';
+      }
+    }
+    window.addEventListener('resize', syncSwipeWidth);
+
+    function toggleKeypoints() {
+      if (!currentData) return;
+      showingKeypoints = !showingKeypoints;
+      document.getElementById('btnKp').classList.toggle('active', showingKeypoints);
+      const targetSrc = showingKeypoints ? currentData.keypoints_image : currentData.enhanced_image;
+      document.getElementById('imgEnhanced').src = targetSrc;
+      document.getElementById('swipeEnhanced').src = targetSrc;
+      document.getElementById('enhancedLabel').innerText = showingKeypoints ? `★ Selected Output (ORB Keypoints: ${currentData.keypoint_count}) ★` : `★ Selected: ${currentData.predicted_method.toUpperCase()} ★`;
+    }
+
     async function loadSample(name) {
       const res = await fetch(`/api/sample?name=${name}`);
       const data = await res.json();
@@ -301,11 +385,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     function renderResults(data) {
       if (data.status !== 'success') return;
+      currentData = data;
+      showingKeypoints = false;
+      document.getElementById('btnKp').classList.remove('active');
+      document.getElementById('kpCount').innerText = data.keypoint_count || '0';
 
       // Images
       document.getElementById('imgDegraded').src = data.degraded_image;
+      document.getElementById('swipeDegraded').src = data.degraded_image;
       document.getElementById('imgEnhanced').src = data.enhanced_image;
+      document.getElementById('swipeEnhanced').src = data.enhanced_image;
       document.getElementById('enhancedLabel').innerText = `★ Selected: ${data.predicted_method.toUpperCase()} ★`;
+      syncSwipeWidth();
 
       // Banner
       document.getElementById('resultBanner').style.display = 'flex';
@@ -360,6 +451,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           </div>
         `;
       }
+      document.getElementById('methodsGrid').innerHTML = mHtml;
+    }
       document.getElementById('methodsGrid').innerHTML = mHtml;
     }
 
