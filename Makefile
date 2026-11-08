@@ -1,4 +1,4 @@
-.PHONY: help install benchmark demo app downstream test package clean
+.PHONY: help install benchmark demo app downstream docx test package clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
@@ -8,6 +8,7 @@ help:
 	@echo "  make demo       - Run inference demo on a sample image (src/demo.py)"
 	@echo "  make app        - Launch interactive web application dashboard (app.py)"
 	@echo "  make downstream - Run Phase 1 downstream computer vision benchmark"
+	@echo "  make docx       - Generate comprehensive step-by-step Word (.docx) walkthrough"
 	@echo "  make package    - Build Overleaf camera-ready LaTeX zip archive"
 	@echo "  make test       - Run unit tests (tests/test_pipeline.py)"
 	@echo "  make clean      - Remove bytecode, cache, and temporary demo outputs"
@@ -26,6 +27,9 @@ app:
 
 downstream:
 	python3 src/downstream_detection.py
+
+docx:
+	python3 scripts/generate_walkthrough_docx.py
 
 package:
 	python3 -c "import os, zipfile; z = zipfile.ZipFile('report/IEEE_Paper_Overleaf_Package.zip', 'w', zipfile.ZIP_DEFLATED); z.write('report/IEEE_Paper_Image_Enhancement_Selection.tex', 'main.tex'); z.write('report/IEEEtran.cls', 'IEEEtran.cls'); [z.write(os.path.join('results/figures', f), f) for f in os.listdir('results/figures') if f.endswith('.png')]; [z.write(os.path.join('results/figures', f), os.path.join('figures', f)) for f in os.listdir('results/figures') if f.endswith('.png')]; z.close(); print('Overleaf Camera-Ready Package ready at report/IEEE_Paper_Overleaf_Package.zip')"
