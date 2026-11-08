@@ -1,7 +1,7 @@
 """
 Project Triathlon: Fidelity-Driven Per-Image Enhancement Selection Package
-Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan
-Supervisor: Prof. Kishor P. Upla, SVNIT Surat
+Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan (Gati Shakti Vishwavidyalaya, Vadodara)
+Supervisor: Prof. Kishor P. Upla (SVNIT Surat)
 """
 
 from src.methods import METHODS

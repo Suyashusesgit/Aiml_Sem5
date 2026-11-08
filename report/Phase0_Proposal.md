@@ -2,10 +2,9 @@
 
 **Project Title**: Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement via Handcrafted Physical Statistics  
 **Project Identifier**: Project Triathlon — AIML Capstone Phase 0  
-**Authors**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan  
-**Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE*  
-**Department**: Department of Electronics Engineering, SVNIT Surat  
-**Academic Year**: 2026–2027 (5th Semester B.Tech)  
+**Authors**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (Gati Shakti Vishwavidyalaya, Vadodara)  
+**Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE* (SVNIT Surat)  
+**Academic Year**: 2026–2027 (5th Semester B.Tech Capstone)  
 **Date**: November 2026  
 
 ---

@@ -1,7 +1,7 @@
 """
 Downstream Computer Vision Utility Evaluation (Phase 1 Early Preview)
-Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan
-Supervisor: Prof. Kishor P. Upla, SVNIT Surat
+Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan (Gati Shakti Vishwavidyalaya, Vadodara)
+Supervisor: Prof. Kishor P. Upla (SVNIT Surat)
 
 Evaluates whether fidelity-driven algorithm selection translates directly into
 superior downstream computer vision performance (keypoint recovery and descriptor

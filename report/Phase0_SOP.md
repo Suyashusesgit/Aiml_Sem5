@@ -1,8 +1,8 @@
 # Project Triathlon: Standard Operating Procedure (SOP)
 ## Phase 0 Experimental Protocol & Data Integrity Rules
 
-**Team Triathlon**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan  
-**Supervisor**: Prof. Kishor P. Upla, SVNIT Surat  
+**Team Triathlon**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (Gati Shakti Vishwavidyalaya, Vadodara)  
+**Supervisor**: Prof. Kishor P. Upla (SVNIT Surat)  
 **Milestone**: Phase 0 Benchmark Execution Protocol  
 **Version**: 1.0 (November 2026)  
 

@@ -1,9 +1,8 @@
 # Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement
 ## Handcrafted Physical Statistics for Per-Image Enhancer Optimization
 
-**Team Triathlon**: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan  
-**Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE*  
-**Department**: Department of Electronics Engineering, SVNIT Surat  
+**Team Triathlon**: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan (Gati Shakti Vishwavidyalaya, Vadodara)  
+**Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE* (SVNIT Surat)  
 **Milestone**: 5th Semester B.Tech Capstone Project (Phase 0 Defense)  
 **Date**: November 2026  
 
@@ -164,6 +163,6 @@ Performance on the official unseen 15 test pairs:
 
 ### Questions & Discussion
 **Thank you!**  
-*Team Triathlon — Ananya Kasaudhan, Suyash Srivastav, Logi Vasan*  
-*Supervisor: Prof. Kishor P. Upla, SVNIT Surat*
+*Team Triathlon — Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (Gati Shakti Vishwavidyalaya, Vadodara)*  
+*Supervisor: Prof. Kishor P. Upla (SVNIT Surat)*
 

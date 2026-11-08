@@ -6,10 +6,8 @@
 [![Evaluation: IEEE](https://img.shields.io/badge/Paper-IEEE%20Format-red.svg)](report/IEEE_Paper_Image_Enhancement_Selection.pdf)
 
 > **5th Semester Capstone Project in Artificial Intelligence and Machine Learning (AIML)**  
-> **Institution**: Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat  
-> **Department**: Department of Electronics Engineering  
-> **Team Triathlon**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan  
-> **Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE*  
+> **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (**Gati Shakti Vishwavidyalaya, Vadodara**)  
+> **Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE* (**SVNIT Surat**)  
 > **Date**: November 2026
 
 ---
@@ -211,6 +209,6 @@ jupyter notebook notebooks/exploration_and_benchmarks.ipynb
 
 ## 👥 Team & Acknowledgments
 
-- **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (5th Semester B.Tech, AIML / ECE, SVNIT Surat).
-- **Supervisor**: Prof. Kishor P. Upla, Department of Electronics Engineering, SVNIT Surat.
+- **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (5th Semester B.Tech, Artificial Intelligence and Machine Learning, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat).
+- **Supervisor**: Prof. Kishor P. Upla (*Senior Member, IEEE*), Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat 395007, Gujarat.
 - **Reference**: Prepared according to the handbook *"Image Enhancement and Per-Image Selection: from pixels and histograms to classical learning, regret, and the research frontier"* (SVNIT, Nov 2026).

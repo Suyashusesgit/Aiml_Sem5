@@ -1,7 +1,7 @@
 """
 Interactive Web Application for Image Enhancement and Per-Image Selection
-Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan
-Supervisor: Prof. Kishor P. Upla, SVNIT Surat
+Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan (Gati Shakti Vishwavidyalaya, Vadodara)
+Supervisor: Prof. Kishor P. Upla (SVNIT Surat)
 
 Self-contained lightweight web server (zero extra dependencies required).
 Runs on standard Python library (http.server) + modern responsive UI.
@@ -199,7 +199,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="container">
     <header>
       <h1>Project Triathlon · Low-Light Image Enhancement Selector</h1>
-      <p>5th Semester Capstone Project · SVNIT Surat · Prof. Kishor P. Upla (Supervisor)</p>
+      <p>5th Semester Capstone Project · Gati Shakti Vishwavidyalaya, Vadodara · Supervised by Prof. Kishor P. Upla (SVNIT Surat)</p>
       <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest</div>
     </header>
 

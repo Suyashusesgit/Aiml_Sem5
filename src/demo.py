@@ -1,7 +1,7 @@
 """
 Standalone Demo Script for Image Enhancement and Per-Image Selection
-Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan
-Supervisor: Prof. Kishor P. Upla, SVNIT Surat
+Team Triathlon: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan (Gati Shakti Vishwavidyalaya, Vadodara)
+Supervisor: Prof. Kishor P. Upla (SVNIT Surat)
 
 Demonstrates end-to-end inference on a single test image:
 1. Loads and preprocesses degraded image (and optional clean reference)
