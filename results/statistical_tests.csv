@@ -1,0 +1,6 @@
+Baseline_Model,Regret_Reduction_Mean_dB,Regret_CI_95_Low,Regret_CI_95_High,Regret_t_stat,Regret_p_value,Regret_Wilcoxon_p_value,Accuracy_Gain_Mean_pct,Accuracy_CI_95_Low,Accuracy_CI_95_High,Accuracy_t_stat,Accuracy_p_value,Accuracy_Wilcoxon_p_value
+Best Fixed Method,1.574,1.398,1.75,19.179,1.9e-11,6.1e-05,22.61,21.38,23.84,39.444,9.44e-16,0.000645
+Logistic Regression,0.262,0.188,0.335,7.662,2.26e-06,6.1e-05,6.32,4.57,8.07,7.744,2e-06,0.000642
+XGBoost,0.089,0.01,0.169,2.411,0.0302,0.0413,0.48,-0.7,1.66,0.875,0.396,0.528
+Hand-Written Rule,5.767,5.534,6.0,53.062,1.52e-17,6.1e-05,56.01,53.54,58.49,48.52,5.3e-17,0.000642
+Random Choice,5.756,5.493,6.02,46.83,8.68e-17,6.1e-05,50.52,47.18,53.85,32.478,1.39e-14,0.000648

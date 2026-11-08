@@ -1,0 +1,54 @@
+experiment:
+  name: "phase0_selector_benchmark"
+  random_seed: 42
+  seeds: [42, 123, 999]
+  n_splits: 5
+  tie_threshold_db: 0.05
+  target_long_side: 512
+
+data:
+  data_dir: "data"
+  train_split: "our485"
+  test_split: "eval15"
+
+methods:
+  identity: {}
+  gamma:
+    g: 0.5
+  clahe:
+    clip_limit: 2.0
+    tile_grid_size: [8, 8]
+  hist_eq: {}
+  retinex:
+    sigma: 80.0
+  bilat_unsharp:
+    d: 9
+    sigma_color: 75.0
+    sigma_space: 75.0
+    unsharp_sigma: 1.5
+    unsharp_amount: 0.8
+
+models:
+  logreg:
+    C: 1.0
+    max_iter: 2000
+    random_state: 42
+  rf:
+    n_estimators: 300
+    random_state: 42
+    n_jobs: -1
+  xgb:
+    n_estimators: 400
+    learning_rate: 0.05
+    max_depth: 4
+    subsample: 0.9
+    eval_metric: "mlogloss"
+    random_state: 42
+    n_jobs: -1
+
+paths:
+  scores_cache: "results/scores.csv"
+  features_cache: "results/features.csv"
+  metrics_output: "results/metrics_table.csv"
+  figures_dir: "results/figures"
+  reports_dir: "report"

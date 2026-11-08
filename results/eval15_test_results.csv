@@ -1,0 +1,4 @@
+Model,Accuracy (%),Mean_Regret_dB,Max_Regret_dB
+Best Fixed Method,46.67,2.777,11.448
+Hand-Written Rule,26.67,5.798,14.432
+Random Forest Selector,66.67,1.283,5.328
