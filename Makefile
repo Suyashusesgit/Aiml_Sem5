@@ -1,4 +1,4 @@
-.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness presentation docx test package clean
+.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness presentation docx package pdf watch_paper test clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
@@ -16,6 +16,8 @@ help:
 	@echo "  make presentation       - Generate 12-slide PowerPoint deck and 1-page handout"
 	@echo "  make docx               - Generate comprehensive step-by-step Word (.docx) walkthrough"
 	@echo "  make package            - Build Overleaf camera-ready LaTeX zip archive"
+	@echo "  make pdf                - Compile LaTeX directly to camera-ready PDF (report/*.pdf)"
+	@echo "  make watch_paper        - Live auto-compile PDF on every LaTeX file edit"
 	@echo "  make test               - Run unit tests (tests/test_pipeline.py)"
 	@echo "  make clean              - Remove bytecode, cache, and temporary demo outputs"
 
@@ -58,6 +60,13 @@ docx:
 
 package:
 	python3 -c "import os, zipfile; z = zipfile.ZipFile('report/IEEE_Paper_Overleaf_Package.zip', 'w', zipfile.ZIP_DEFLATED); z.write('report/IEEE_Paper_Image_Enhancement_Selection.tex', 'main.tex'); z.write('report/IEEEtran.cls', 'IEEEtran.cls'); [z.write(os.path.join('results/figures', f), f) for f in os.listdir('results/figures') if f.endswith('.png')]; [z.write(os.path.join('results/figures', f), os.path.join('figures', f)) for f in os.listdir('results/figures') if f.endswith('.png')]; z.close(); print('Overleaf Camera-Ready Package ready at report/IEEE_Paper_Overleaf_Package.zip')"
+
+pdf:
+	cd report && tectonic IEEE_Paper_Image_Enhancement_Selection.tex
+	@echo "SUCCESS: Camera-ready PDF compiled at report/IEEE_Paper_Image_Enhancement_Selection.pdf"
+
+watch_paper:
+	python3 scripts/watch_paper.py
 
 test:
 	python3 -m unittest discover tests
