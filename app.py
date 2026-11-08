@@ -67,8 +67,8 @@ def base64_to_img(b64_str: str) -> np.ndarray:
         return None
 
 
-def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
-    """Executes feature extraction, prediction, and enhancement."""
+def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeguards: bool = True):
+    """Executes feature extraction, prediction, and enhancement with domain safeguards."""
     if img_bgr is None or not isinstance(img_bgr, np.ndarray) or img_bgr.size == 0:
         raise ValueError("Invalid image: could not be decoded or input is empty")
     t0 = time.perf_counter()
@@ -82,12 +82,43 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
     model = get_model()
     X = np.array([[feats[k] for k in FEATURE_NAMES]])
     t1 = time.perf_counter()
-    pred_method = model.predict(X)[0]
+    raw_pred_method = model.predict(X)[0]
     pred_probs = model.predict_proba(X)[0]
     t_pred_ms = (time.perf_counter() - t1) * 1000.0
 
     classes = list(model.classes_)
     prob_dict = {cls: round(float(prob) * 100.0, 1) for cls, prob in zip(classes, pred_probs)}
+
+    # 2b. Domain Diagnostic & Exposure Safeguards
+    # Training domain (LOL v1): photon-starved low-light frames (mu in [10, 35], dark_channel in [2, 18]).
+    # Daylight or well-exposed scenes (mu > 55 or dark_channel > 25) are Out-Of-Distribution (OOD).
+    gray = cv2.cvtColor(deg, cv2.COLOR_BGR2GRAY)
+    lap_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+    is_well_exposed = bool(feats["brightness"] > 55.0 or (feats["brightness"] > 45.0 and feats["dark_channel"] > 25.0))
+    is_soft_or_blurry = bool(lap_var < 300.0 or (feats["edge_p90"] < 85.0 and feats["contrast"] > 40.0))
+
+    safeguard_active = False
+    safeguard_method = raw_pred_method
+    safeguard_reason = ""
+
+    if is_well_exposed:
+        safeguard_active = True
+        if is_soft_or_blurry:
+            safeguard_method = "bilat_unsharp"
+            safeguard_reason = (
+                f"Out-of-Distribution Warning: Input is a well-exposed daytime scene (μ = {feats['brightness']:.1f} > 55) "
+                f"with optical blur / softness (Laplacian var: {lap_var:.1f}). Applying low-light Gamma/Retinex causes "
+                f"severe highlight clipping. Safeguard engaged → Selected Bilateral + Unsharp Masking to restore edge acuity."
+            )
+        else:
+            safeguard_method = "identity"
+            safeguard_reason = (
+                f"Out-of-Distribution Warning: Input is a well-exposed daytime scene (μ = {feats['brightness']:.1f} > 55). "
+                f"Low-light brightening causes severe highlight blowout. Safeguard engaged → Selected Identity to preserve fidelity."
+            )
+
+    pred_method = safeguard_method if enforce_safeguards else raw_pred_method
 
     # 3. Execution of selected enhancer
     t2 = time.perf_counter()
@@ -102,7 +133,7 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
 
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
-    # 4. Optional candidate scoring if reference image provided
+    # 4. Candidate scoring across all 6 methods
     ref_eval = None
     all_methods_out = {}
     for m_name, m_fn in METHODS.items():
@@ -133,6 +164,13 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
     return {
         "status": "success",
         "predicted_method": pred_method,
+        "raw_predicted_method": raw_pred_method,
+        "safeguard_method": safeguard_method,
+        "safeguard_active": safeguard_active,
+        "safeguards_enforced": enforce_safeguards,
+        "safeguard_reason": safeguard_reason,
+        "domain_status": "Out-of-Distribution (Daylight / Blur)" if is_well_exposed else "In-Domain (Low-Light)",
+        "laplacian_var": round(lap_var, 2),
         "probabilities": prob_dict,
         "features": {k: round(feats[k], 3) for k in FEATURE_NAMES},
         "timings_ms": {
@@ -244,6 +282,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div id="uploadBoxContent">📁 <strong>Click or Drag Image Here</strong></div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">JPG, PNG, WebP</div>
           </div>
+
+          <div style="margin-top:14px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="chkSafeguard" checked onchange="onSafeguardToggle(this.checked)">
+              <span>🛡️ OOD Exposure Safeguard</span>
+            </label>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">
+              Prevents overexposure blowout on daylight/blurry images.
+            </div>
+          </div>
+
           <div style="margin-top:14px; font-size:13px; font-weight:600;">Or Pick LOL v1 Benchmark Sample:</div>
           <div class="samples">
             <button class="btn-sample" onclick="loadSample('102')">102 (Gamma)</button>
@@ -272,6 +321,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
       <!-- Right Column: Results & Comparisons -->
       <div>
+        <div id="oodAlert" style="display:none; background:#fef3c7; border:1px solid #f59e0b; color:#92400e; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px;">
+          <div style="font-weight:700; display:flex; align-items:center; gap:6px;">
+            <span>⚠️ Out-of-Distribution (OOD) Scene Detected</span>
+          </div>
+          <div id="oodMessage" style="margin-top:4px; line-height:1.4;">-</div>
+        </div>
+
         <div id="resultBanner" style="display:none;" class="winner-banner">
           <div>
             Optimal Selected Enhancer: <strong id="winnerName">-</strong>
@@ -418,6 +474,63 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       if (uploadBox) uploadBox.innerHTML = '📁 <strong>Click or Drag Image Here</strong>';
     }
 
+    function onSafeguardToggle(checked) {
+      if (!currentData) return;
+      applySelectionState(checked);
+    }
+
+    function applySelectionState(enforceSafeguard) {
+      if (!currentData) return;
+      const targetMethod = (enforceSafeguard && currentData.safeguard_active) 
+        ? currentData.safeguard_method 
+        : currentData.raw_predicted_method;
+      
+      const isWinnerOverruled = (targetMethod !== currentData.raw_predicted_method);
+      
+      // Update displayed images
+      const targetImg = currentData.all_methods[targetMethod].image_base64;
+      document.getElementById('imgEnhanced').src = targetImg;
+      document.getElementById('swipeEnhanced').src = targetImg;
+      
+      // Update banner
+      const banner = document.getElementById('resultBanner');
+      banner.style.display = 'flex';
+      if (isWinnerOverruled) {
+        banner.style.background = '#eff6ff';
+        banner.style.borderColor = '#93c5fd';
+        banner.style.color = '#1e40af';
+        document.getElementById('winnerName').innerText = `${targetMethod.toUpperCase()} (SAFEGUARDED)`;
+      } else {
+        banner.style.background = '#dcfce7';
+        banner.style.borderColor = '#86efac';
+        banner.style.color = '#15803d';
+        document.getElementById('winnerName').innerText = targetMethod.toUpperCase();
+      }
+      document.getElementById('enhancedLabel').innerText = `★ Selected: ${targetMethod.toUpperCase()} ★`;
+
+      // Update OOD Alert
+      const oodAlert = document.getElementById('oodAlert');
+      if (currentData.safeguard_active) {
+        oodAlert.style.display = 'block';
+        document.getElementById('oodMessage').innerText = currentData.safeguard_reason;
+      } else {
+        oodAlert.style.display = 'none';
+      }
+
+      // Update Portfolio Tiles
+      for (const [mName, mData] of Object.entries(currentData.all_methods)) {
+        const tile = document.getElementById(`tile-${mName}`);
+        if (tile) {
+          tile.classList.toggle('selected', mName === targetMethod);
+          const metaDiv = tile.querySelector('.meta');
+          if (metaDiv) {
+            metaDiv.style.color = (mName === targetMethod) ? 'var(--success)' : '';
+            metaDiv.style.fontWeight = (mName === targetMethod) ? '700' : '';
+          }
+        }
+      }
+    }
+
     function uploadImage(e) {
       const file = e.target.files ? e.target.files[0] : null;
       if (!file) return;
@@ -427,6 +540,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     async function processUploadedFile(file) {
       showLoading('Extracting features & running portfolio...');
+      const isSafeguard = document.getElementById('chkSafeguard').checked;
       const reader = new FileReader();
       reader.onload = async function() {
         try {
@@ -434,7 +548,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           const res = await fetch('/api/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: b64 })
+            body: JSON.stringify({ image: b64, safeguard: isSafeguard })
           });
           const data = await res.json();
           if (data.status === 'success') {
@@ -457,8 +571,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     async function loadSample(name) {
       showLoading(`Loading benchmark sample #${name}...`);
+      const isSafeguard = document.getElementById('chkSafeguard').checked;
       try {
-        const res = await fetch(`/api/sample?name=${name}`);
+        const res = await fetch(`/api/sample?name=${name}&safeguard=${isSafeguard}`);
         const data = await res.json();
         if (data.status === 'success') {
           renderResults(data);
@@ -483,18 +598,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       // Images
       document.getElementById('imgDegraded').src = data.degraded_image;
       document.getElementById('swipeDegraded').src = data.degraded_image;
-      document.getElementById('imgEnhanced').src = data.enhanced_image;
-      document.getElementById('swipeEnhanced').src = data.enhanced_image;
-      document.getElementById('enhancedLabel').innerText = `★ Selected: ${data.predicted_method.toUpperCase()} ★`;
       syncSwipeWidth();
 
-      // Banner style restoration
-      const banner = document.getElementById('resultBanner');
-      banner.style.display = 'flex';
-      banner.style.background = '#dcfce7';
-      banner.style.borderColor = '#86efac';
-      banner.style.color = '#15803d';
-      document.getElementById('winnerName').innerText = data.predicted_method.toUpperCase();
+      // Timing
       document.getElementById('timingMeta').innerText = `Feature extraction: ${data.timings_ms.features} ms | Total inference: ${data.timings_ms.total} ms`;
 
       if (data.reference_eval) {
@@ -506,6 +612,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
       // Features
       let fHtml = '';
+      fHtml += `<div class="feature-row" style="background:#f8fafc; padding:6px 4px; border-radius:4px;"><span class="feature-name" style="font-weight:700; color:var(--text);">Domain Status</span><span class="feature-val" style="color:${data.safeguard_active ? '#d97706' : '#16a34a'}; font-weight:700;">${data.domain_status}</span></div>`;
+      fHtml += `<div class="feature-row" style="background:#f8fafc; padding:6px 4px; border-radius:4px;"><span class="feature-name" style="font-weight:700; color:var(--text);">Laplacian Blur Var</span><span class="feature-val">${data.laplacian_var}</span></div>`;
       for (const [k, v] of Object.entries(data.features)) {
         fHtml += `<div class="feature-row"><span class="feature-name">${k}</span><span class="feature-val">${v}</span></div>`;
       }
@@ -515,7 +623,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       let pHtml = '';
       const sortedClasses = Object.entries(data.probabilities).sort((a,b) => b[1] - a[1]);
       for (const [cls, prob] of sortedClasses) {
-        const isWinner = (cls === data.predicted_method);
+        const isWinner = (cls === data.raw_predicted_method);
         pHtml += `
           <div class="prob-bar-container">
             <div class="prob-bar-header">
@@ -536,7 +644,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         const isSel = (mName === data.predicted_method);
         const metaText = mData.psnr ? `PSNR: ${mData.psnr} dB | SSIM: ${mData.ssim}` : mName;
         mHtml += `
-          <div class="method-tile ${isSel ? 'selected' : ''}">
+          <div class="method-tile ${isSel ? 'selected' : ''}" id="tile-${mName}">
             <img src="${mData.image_base64}">
             <div class="meta" style="${isSel ? 'color:var(--success); font-weight:700;' : ''}">
               ${mName.toUpperCase()} ${isSel ? '★' : ''}<br>
@@ -546,6 +654,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         `;
       }
       document.getElementById('methodsGrid').innerHTML = mHtml;
+
+      // Apply selection based on toggle state
+      const isSafeguard = document.getElementById('chkSafeguard').checked;
+      applySelectionState(isSafeguard);
     }
   </script>
 </body>
@@ -566,6 +678,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/sample":
             params = urllib.parse.parse_qs(parsed.query)
             sample_id = params.get("name", ["102"])[0]
+            safeguard = params.get("safeguard", ["true"])[0].lower() in ["true", "1"]
             
             # Check eval15 or our485
             low_candidates = [
@@ -600,7 +713,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
             clean_img = cv2.imread(high_path) if high_path else None
             try:
-                res = process_image(deg_img, clean_img)
+                res = process_image(deg_img, clean_img, enforce_safeguards=safeguard)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -628,6 +741,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 body = self.rfile.read(length)
                 payload = json.loads(body.decode("utf-8"))
                 b64_img = payload.get("image", "")
+                enforce_safeguard = payload.get("safeguard", True)
 
                 deg_img = base64_to_img(b64_img)
                 if deg_img is None or deg_img.size == 0:
@@ -637,7 +751,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(json.dumps({"status": "error", "message": "Could not decode image. Please upload a valid JPG, PNG, or WebP file."}).encode("utf-8"))
                     return
 
-                res = process_image(deg_img)
+                res = process_image(deg_img, enforce_safeguards=enforce_safeguard)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
