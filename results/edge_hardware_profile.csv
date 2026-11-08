@@ -1,0 +1,7 @@
+Model,Paradigm,Hardware,Latency_ms,Throughput_FPS,Parameters_M,Model_Size_MB,Peak_RAM_MB,GPU_Required
+Proposed Selector (CPU + ONNX),Physical Statistics + RF,CPU (Single Core),11.81,84.7,0.0,4.2,54.4,No
+Proposed Selector (CPU Scikit-Learn),Physical Statistics + RF,CPU (Single Core),38.64,25.9,0.0,7.08,87.0,No
+Zero-DCE (Guo et al. 2020),Deep Zero-Reference Curve,GPU (RTX 3090),2.5,400.0,0.079,0.32,310.0,Yes
+Zero-DCE (CPU Mode),Deep Zero-Reference Curve,CPU (Single Core),42.8,23.4,0.079,0.32,280.0,No
+RetinexNet (Wei et al. 2018),Deep Decom+Enhance Net,GPU (RTX 3090),48.0,20.8,0.556,2.25,680.0,Yes
+Restormer (Zamir et al. 2022),Transformer Restoration,GPU (RTX 3090),320.0,3.1,26.1,105.4,2400.0,Yes

@@ -1,20 +1,23 @@
-.PHONY: help install benchmark demo app downstream downstream_semantic robustness presentation docx test package clean
+.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness presentation docx test package clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
 	@echo "Available commands:"
-	@echo "  make install    - Install required dependencies"
-	@echo "  make benchmark  - Run end-to-end GroupKFold benchmark pipeline (main.py)"
-	@echo "  make demo       - Run inference demo on a sample image (src/demo.py)"
-	@echo "  make app        - Launch interactive web application dashboard (app.py)"
-	@echo "  make downstream - Run Phase 1 downstream ORB keypoint benchmark"
+	@echo "  make install            - Install required dependencies"
+	@echo "  make benchmark          - Run end-to-end GroupKFold benchmark pipeline (main.py)"
+	@echo "  make demo               - Run inference demo on a sample image (src/demo.py)"
+	@echo "  make app                - Launch interactive web application dashboard (app.py)"
+	@echo "  make downstream         - Run Phase 1 downstream ORB keypoint benchmark"
 	@echo "  make downstream_semantic - Run SIFT RANSAC & Canny boundary benchmark"
-	@echo "  make robustness - Run sensor noise sensitivity sweep (src/robustness_sweep.py)"
-	@echo "  make presentation - Generate 12-slide PowerPoint deck and 1-page handout"
-	@echo "  make docx       - Generate comprehensive step-by-step Word (.docx) walkthrough"
-	@echo "  make package    - Build Overleaf camera-ready LaTeX zip archive"
-	@echo "  make test       - Run unit tests (tests/test_pipeline.py)"
-	@echo "  make clean      - Remove bytecode, cache, and temporary demo outputs"
+	@echo "  make downstream_yolo    - Run Phase 1 YOLOv8 object detection benchmark"
+	@echo "  make edge_profile       - Run Phase 1 ONNX CPU edge hardware profiling"
+	@echo "  make multi_degradation  - Run Phase 2 multi-hazard cross-transfer cascade"
+	@echo "  make robustness         - Run sensor noise sensitivity sweep (src/robustness_sweep.py)"
+	@echo "  make presentation       - Generate 12-slide PowerPoint deck and 1-page handout"
+	@echo "  make docx               - Generate comprehensive step-by-step Word (.docx) walkthrough"
+	@echo "  make package            - Build Overleaf camera-ready LaTeX zip archive"
+	@echo "  make test               - Run unit tests (tests/test_pipeline.py)"
+	@echo "  make clean              - Remove bytecode, cache, and temporary demo outputs"
 
 install:
 	pip install -r requirements.txt
@@ -33,6 +36,15 @@ downstream:
 
 downstream_semantic:
 	python3 src/downstream_semantic_eval.py
+
+downstream_yolo:
+	python3 src/downstream_yolo_detection.py
+
+edge_profile:
+	python3 src/edge_hardware_profile.py
+
+multi_degradation:
+	python3 src/multi_degradation.py
 
 robustness:
 	python3 src/robustness_sweep.py

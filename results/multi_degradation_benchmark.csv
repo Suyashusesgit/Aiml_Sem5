@@ -1,0 +1,61 @@
+scene,true_regime,diagnosed_regime,selected_method,oracle_method,oracle_psnr,fixed_retinex_psnr,fixed_retinex_regret,cascade_psnr,cascade_regret,is_correct_selection
+1.png,low_light,Low-Light,retinex,hist_eq,19.18,13.4,5.783,13.4,5.783,False
+1.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,24.01,7.93,16.076,13.64,10.364,False
+1.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,hist_eq,17.61,12.85,4.756,16.71,0.9,False
+1.png,composite,Low-Light,gamma,hist_eq,17.02,12.01,5.012,12.25,4.773,False
+111.png,low_light,Low-Light,hist_eq,retinex,17.25,17.25,0.0,15.53,1.717,False
+111.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,27.13,18.44,8.691,7.57,19.566,False
+111.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,retinex,20.95,20.95,0.0,11.01,9.937,False
+111.png,composite,Low-Light,gamma,retinex,15.33,15.33,0.0,11.75,3.579,False
+146.png,low_light,Low-Light,hist_eq,retinex,17.72,17.72,0.0,15.37,2.352,False
+146.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,24.41,9.91,14.498,11.44,12.97,False
+146.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,17.8,15.42,2.376,17.8,0.0,True
+146.png,composite,Low-Light,gamma,retinex,15.84,15.84,0.0,12.18,3.662,False
+179.png,low_light,Low-Light,hist_eq,gamma,16.6,14.39,2.211,9.13,7.467,False
+179.png,defocus_blur,Defocus Blur,high_boost_sharpen,high_boost_sharpen,25.11,5.67,19.444,25.11,0.0,True
+179.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,15.22,12.21,3.008,15.22,0.0,True
+179.png,composite,Low-Light,gamma,gamma,14.89,10.81,4.073,14.89,0.0,True
+22.png,low_light,Low-Light,retinex,hist_eq,19.06,15.15,3.906,15.15,3.906,False
+22.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,26.46,9.37,17.086,8.75,17.711,False
+22.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,hist_eq,18.79,13.35,5.436,13.12,5.67,False
+22.png,composite,Low-Light,gamma,hist_eq,17.57,13.04,4.533,12.08,5.49,False
+23.png,low_light,Low-Light,retinex,hist_eq,17.19,15.39,1.791,15.39,1.791,False
+23.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,25.95,9.99,15.958,8.4,17.551,False
+23.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,hist_eq,17.53,13.11,4.425,12.91,4.622,False
+23.png,composite,Low-Light,gamma,hist_eq,16.33,13.56,2.776,11.62,4.715,False
+493.png,low_light,Low-Light,hist_eq,gamma,16.99,14.19,2.808,13.19,3.803,False
+493.png,defocus_blur,Defocus Blur,high_boost_sharpen,high_boost_sharpen,23.01,6.83,16.175,23.01,0.0,True
+493.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,18.61,11.82,6.786,18.61,0.0,True
+493.png,composite,Low-Light,gamma,gamma,15.16,10.41,4.75,15.16,0.0,True
+547.png,low_light,Low-Light,hist_eq,hist_eq,15.43,12.7,2.732,15.43,0.0,True
+547.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,26.57,7.33,19.243,11.96,14.608,False
+547.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,20.28,11.49,8.79,20.28,0.0,True
+547.png,composite,Low-Light,gamma,hist_eq,13.97,11.94,2.032,13.6,0.371,False
+55.png,low_light,Low-Light,retinex,retinex,17.51,17.51,0.0,17.51,0.0,True
+55.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,24.88,11.9,12.977,8.99,15.893,False
+55.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,hist_eq,17.06,15.61,1.446,11.81,5.25,False
+55.png,composite,Low-Light,gamma,hist_eq,15.93,15.91,0.02,11.55,4.386,False
+665.png,low_light,Low-Light,hist_eq,retinex,16.69,16.69,0.0,15.58,1.118,False
+665.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,27.25,11.21,16.043,12.15,15.103,False
+665.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,18.84,16.53,2.314,18.84,0.0,True
+665.png,composite,Low-Light,gamma,hist_eq,14.36,13.2,1.161,12.96,1.405,False
+669.png,low_light,Low-Light,hist_eq,hist_eq,15.41,14.08,1.332,15.41,0.0,True
+669.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,26.14,10.3,15.833,11.36,14.775,False
+669.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,retinex,18.12,18.12,0.0,16.8,1.319,False
+669.png,composite,Low-Light,gamma,hist_eq,14.51,13.09,1.422,12.46,2.045,False
+748.png,low_light,Low-Light,hist_eq,retinex,16.19,16.19,0.0,12.22,3.966,False
+748.png,defocus_blur,Defocus Blur,high_boost_sharpen,high_boost_sharpen,25.25,10.53,14.718,25.25,0.0,True
+748.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,21.75,18.5,3.249,21.75,0.0,True
+748.png,composite,Low-Light,gamma,gamma,14.0,13.61,0.392,14.0,0.0,True
+778.png,low_light,Low-Light,hist_eq,retinex,15.84,15.84,0.0,14.95,0.882,False
+778.png,defocus_blur,Defocus Blur,bilat_unsharp,high_boost_sharpen,22.04,7.49,14.554,21.73,0.308,False
+778.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,19.12,11.06,8.059,19.12,0.0,True
+778.png,composite,Low-Light,gamma,gamma,13.97,12.04,1.928,13.97,0.0,True
+780.png,low_light,Low-Light,hist_eq,gamma,17.22,14.28,2.937,9.2,8.015,False
+780.png,defocus_blur,Defocus Blur,high_boost_sharpen,high_boost_sharpen,24.76,8.09,16.671,24.76,0.0,True
+780.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,dcp_dehaze,21.99,19.15,2.846,21.99,0.0,True
+780.png,composite,Low-Light,gamma,gamma,15.09,11.45,3.634,15.09,0.0,True
+79.png,low_light,Well-Exposed Clean,identity,retinex,17.87,17.87,0.0,6.36,11.508,False
+79.png,defocus_blur,Atmospheric Haze,dcp_dehaze,high_boost_sharpen,26.27,17.66,8.605,9.0,17.263,False
+79.png,atmospheric_haze,Atmospheric Haze,dcp_dehaze,retinex,21.95,21.95,0.0,13.69,8.265,False
+79.png,composite,Low-Light,gamma,retinex,16.94,16.94,0.0,11.34,5.601,False

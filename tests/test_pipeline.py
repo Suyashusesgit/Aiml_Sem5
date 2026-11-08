@@ -80,6 +80,53 @@ class TestModelInference(unittest.TestCase):
         pred = model.predict(X)[0]
         self.assertIn(pred, METHODS.keys())
 
+    def test_onnx_model_inference(self):
+        onnx_path = "models/rf_selector.onnx"
+        if not os.path.exists(onnx_path):
+            self.skipTest(f"ONNX model file {onnx_path} does not exist.")
+
+        try:
+            import onnxruntime as ort
+        except ImportError:
+            self.skipTest("onnxruntime not installed.")
+
+        session = ort.InferenceSession(onnx_path, providers=["CPUExecutionProvider"])
+        sample_img = np.random.randint(15, 70, (100, 100, 3), dtype=np.uint8)
+        feats = extract_features(sample_img)
+        X = np.array([[feats[k] for k in FEATURE_NAMES]], dtype=np.float32)
+
+        input_name = session.get_inputs()[0].name
+        outputs = session.run(None, {input_name: X})
+        pred_label = outputs[0][0]
+        self.assertIn(pred_label, METHODS.keys())
+
+
+class TestMultiDegradationPipeline(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(42)
+        self.sample_img = np.random.randint(30, 150, (100, 100, 3), dtype=np.uint8)
+
+    def test_extended_features(self):
+        from src.multi_degradation import extract_extended_features, EXTENDED_FEATURE_NAMES
+        feats = extract_extended_features(self.sample_img)
+        for name in EXTENDED_FEATURE_NAMES:
+            self.assertIn(name, feats)
+            val = feats[name]
+            self.assertFalse(np.isnan(val), f"NaN in extended feature: {name}")
+            self.assertFalse(np.isinf(val), f"Inf in extended feature: {name}")
+
+    def test_multi_methods(self):
+        from src.multi_degradation import MULTI_METHODS, high_boost_sharpen, dcp_dehaze
+        self.assertEqual(len(MULTI_METHODS), 8)
+
+        sharpened = high_boost_sharpen(self.sample_img)
+        self.assertEqual(sharpened.shape, self.sample_img.shape)
+        self.assertEqual(sharpened.dtype, np.uint8)
+
+        dehazed = dcp_dehaze(self.sample_img)
+        self.assertEqual(dehazed.shape, self.sample_img.shape)
+        self.assertEqual(dehazed.dtype, np.uint8)
+
 
 if __name__ == "__main__":
     unittest.main()

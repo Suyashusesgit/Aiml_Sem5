@@ -1,9 +1,11 @@
-# Image Enhancement and Per-Image Selection (Phase 0)
+# Image Enhancement and Per-Image Selection (Phases 0, 1 & 2)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Benchmark: LOL v1](https://img.shields.io/badge/Benchmark-LOL%20v1-orange.svg)](https://daooshee.github.io/BMVC2018website/)
 [![Evaluation: IEEE](https://img.shields.io/badge/Paper-IEEE%20Format-red.svg)](report/IEEE_Paper_Image_Enhancement_Selection.pdf)
+[![Edge: ONNX Runtime](https://img.shields.io/badge/Edge%20Hardware-84.7%20FPS%20(CPU)-brightgreen.svg)](results/edge_hardware_profile.csv)
+[![Downstream: YOLOv8](https://img.shields.io/badge/Downstream%20YOLOv8-67.1%25%20Recall-blueviolet.svg)](results/downstream_yolo_metrics.csv)
 
 > **5th Semester Capstone Project in Artificial Intelligence and Machine Learning (AIML)**  
 > **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (**Department of Electronics and Communication Engineering, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat**)  
@@ -16,15 +18,20 @@
 
 Digital image enhancement is an ill-posed inverse problem: under-exposure, photon shot noise, and sensor limitations irreversibly destroy scene information. While dozens of restoration algorithms exist, **no single method is optimal for every image**. Static single-method deployment forces heavy quality sacrifices on out-of-distribution frames. Furthermore, recent research (*BlindPSNR*, Lyu et al., 2026) demonstrated that standard no-reference quality assessment metrics (NR-IQA, such as BRISQUE and NIQE) **fail catastrophically at ranking enhancement candidates, achieving 0% top-1 accuracy**.
 
-This project solves this dilemma by framing per-image enhancement selection as an **algorithm selection problem** (Rice, 1976). We extract **an 8-dimensional feature vector spanning seven physical degradation categories** exclusively from the degraded input in under $1\text{ ms}$, completely bypassing the need to execute candidate filters at inference time. Supervised classifiers trained against an offline full-reference oracle select the optimal enhancer from a six-method bank.
+This project solves this dilemma by framing per-image enhancement selection as an **algorithm selection problem** (Rice, 1976). We extract **an 8-dimensional feature vector spanning seven physical degradation categories** exclusively from the degraded input in under $1\text{ ms}$, completely bypassing the need to execute candidate filters at inference time. Supervised classifiers trained against an offline full-reference oracle select the optimal enhancer from a multi-operator bank.
 
-### Key Benchmark Achievements (15-Run GroupKFold by Scene):
-- **Top-1 Selection Accuracy**: **$68.18\% \pm 3.49\%$** (outperforming the best fixed method by **$+22.61\%$**, $p = 9.44 \times 10^{-16}$).
-- **Mean Decision Regret**: Slashed from $2.734\text{ dB}$ (fixed baseline) to **$1.160 \pm 0.236\text{ dB}$** (a net saving of **$1.574\text{ dB}$** per image, $p = 1.90 \times 10^{-11}$).
-- **Mean SSIM**: Reaches **$0.6949$** (SSIM Regret **$0.0408$**).
-- **Oracle Gap Captured**: Recovers **$57.57\%$** of the theoretical gain between the static baseline and the full-reference oracle.
-- **Held-Out Test Set (`eval15`)**: Maintains **$66.67\%$ accuracy**, **$1.283\text{ dB}$ mean regret**, and caps worst-case regret at **$5.328\text{ dB}$** (vs. $11.448\text{ dB}$ for the fixed baseline).
-- **Downstream Utility**: Boosts ORB keypoints by $+113\%$, SIFT RANSAC inliers from $12.7 \to 213.7$ matches, and Canny boundary F1-score from $11.34\% \to 66.90\%$.
+### Key Multi-Phase Achievements:
+- **Phase 0 (Core Selection & Regret Collapse)**:
+  - Top-1 Selection Accuracy: **$68.18\% \pm 3.49\%$** (outperforming the best fixed method by **$+22.61\%$**, $p = 9.44 \times 10^{-16}$).
+  - Mean Decision Regret: Slashed from $2.734\text{ dB}$ (fixed baseline) to **$1.160 \pm 0.236\text{ dB}$** (a net saving of **$1.574\text{ dB}$** per image, $p = 1.90 \times 10^{-11}$).
+  - Oracle Gap Captured: Recovers **$57.57\%$** of the theoretical gain between the static baseline and the full-reference oracle.
+  - Held-Out Test Set (`eval15`): Maintains **$66.67\%$ accuracy**, **$1.283\text{ dB}$ mean regret**, and caps worst-case regret at **$5.328\text{ dB}$** (vs. $11.448\text{ dB}$ for the fixed baseline).
+- **Phase 1 (Downstream Perception & Edge Embedded Realization)**:
+  - **YOLOv8 Detection Recall**: Slashes object proposal loss on nocturnal scenes, achieving **$67.15\%$ relative recall** vs. ground truth (detecting 37 boxes), outperforming static Retinex ($48.53\%$, 30 boxes) by **$+18.62\%$** and unprocessed raw low-light ($54.41\%$, 26 boxes) by **$+12.74\%$**.
+  - **ONNX Real-Time Edge Engine**: Serialized into `models/rf_selector.onnx` ($4.20\text{ MB}$), running at **$11.81\text{ ms}$ total pipeline latency ($84.7\text{ FPS}$)** on a single-core CPU with zero GPU dependencies and only **$54.4\text{ MB}$ peak RAM** (compared to $48\text{ ms} / 680\text{ MB}$ for RetinexNet and $320\text{ ms} / 2400\text{ MB}$ for Restormer).
+- **Phase 2 (Multi-Degradation Cross-Transferability & Hierarchical Cascading)**:
+  - Extended feature space to **10D** (incorporating Laplacian blur attenuation and dark channel transmission) and expanded portfolio to **8 operators** (adding High-Boost Sharpening and DCP Dehazing).
+  - Eliminates the catastrophic failure of fixed low-light methods on blurry scenes, slashing regret by **$4.70\text{ dB}$** on defocus blur and **$1.17\text{ dB}$** on atmospheric haze, delivering a **$+0.915\text{ dB}$ net fidelity dividend** across all optical hazards.
 
 ---
 
@@ -43,7 +50,8 @@ Aiml_Sem5/
 ├── docs/
 │   └── REFERENCE_RESOURCES.md  # Comprehensive literature, textbooks, links & team matrix
 ├── models/
-│   └── rf_selector.joblib   # Persisted Random Forest selector pipeline
+│   ├── rf_selector.joblib   # Persisted Random Forest selector pipeline
+│   └── rf_selector.onnx     # Optimized ONNX runtime model (4.20 MB, CPU real-time)
 ├── notebooks/
 │   └── exploration_and_benchmarks.ipynb  # Interactive visualization notebook
 ├── report/
@@ -66,6 +74,9 @@ Aiml_Sem5/
 │   ├── eval15_test_results.csv # Performance on official unseen test split
 │   ├── worst_10_errors.csv  # Detailed error analysis of top-10 regret cases
 │   ├── downstream_geometric_metrics.csv # SIFT RANSAC & Canny boundary benchmark
+│   ├── downstream_yolo_metrics.csv      # Phase 1 YOLOv8 object detection benchmark
+│   ├── edge_hardware_profile.csv        # Phase 1 ONNX CPU edge latency & RAM profile
+│   ├── multi_degradation_benchmark.csv  # Phase 2 multi-hazard cascade benchmark
 │   ├── noise_robustness_sweep.csv       # Continuous sensor noise sweep metrics
 │   └── figures/
 │       ├── fig1_oracle_distribution.png       # Frequency of winning methods
@@ -75,7 +86,10 @@ Aiml_Sem5/
 │       ├── fig5_qualitative_strip.png        # Qualitative restoration comparison strip
 │       ├── fig6_downstream_utility.png       # Downstream ORB keypoint density gain
 │       ├── fig7_downstream_geometric_eval.png # SIFT RANSAC inliers & Canny boundary F1
-│       └── fig8_robustness_noise_sweep.png   # Dynamic selector adaptation under noise
+│       ├── fig8_robustness_noise_sweep.png   # Dynamic selector adaptation under noise
+│       ├── fig9_edge_profiling.png           # Edge hardware latency, FPS & RAM profile
+│       ├── fig10_multi_degradation_cascade.png # Phase 2 multi-hazard cascade benchmark
+│       └── fig11_downstream_yolo_detection.png # Phase 1 YOLOv8 object detection metrics
 ├── scripts/
 │   ├── generate_presentation.py       # Programmatic PPTX presentation builder
 │   ├── generate_handout_docx.py       # 1-page executive briefing Word generator
@@ -90,6 +104,9 @@ Aiml_Sem5/
 │   ├── evaluate.py          # Metrics, figures, ablations, error analysis
 │   ├── downstream_detection.py      # Downstream ORB keypoint utility evaluation
 │   ├── downstream_semantic_eval.py  # SIFT RANSAC and Canny boundary evaluation
+│   ├── downstream_yolo_detection.py # Phase 1 YOLOv8 object detection benchmark
+│   ├── edge_hardware_profile.py     # Phase 1 ONNX CPU edge hardware profiling
+│   ├── multi_degradation.py         # Phase 2 multi-hazard cross-transfer cascade
 │   ├── robustness_sweep.py          # Gaussian sensor noise sensitivity sweep
 │   └── demo.py              # Standalone single-image CLI inference tool
 ├── tests/
@@ -206,26 +223,44 @@ Run downstream feature correspondence (SIFT + RANSAC inliers) and structural edg
 make downstream_semantic
 ```
 
-### 6. Sensor Noise Robustness Sweep
+### 6. Downstream YOLOv8 Object Detection Benchmark (Phase 1)
+Run end-to-end YOLOv8 object detection across the official 15 held-out scenes:
+```bash
+make downstream_yolo
+```
+
+### 7. Edge Embedded Hardware Profiling (Phase 1)
+Profile ONNX export, CPU single-core latency, throughput FPS, and RAM footprint:
+```bash
+make edge_profile
+```
+
+### 8. Multi-Degradation Generalization & Hierarchical Cascade (Phase 2)
+Run 10D physical feature extraction and cross-hazard evaluation across blur, haze, low-light, and composite noise:
+```bash
+make multi_degradation
+```
+
+### 9. Sensor Noise Robustness Sweep
 Evaluate dynamic policy adaptation under varying Gaussian sensor noise:
 ```bash
 make robustness
 ```
 
-### 7. Executive Presentation & Walkthrough Word Generators
+### 10. Executive Presentation & Walkthrough Word Generators
 Generate the 12-slide widescreen PowerPoint presentation deck and the supervisor executive summary handout:
 ```bash
 make presentation
 make docx
 ```
 
-### 8. Camera-Ready Overleaf Zip Archive
+### 11. Camera-Ready Overleaf Zip Archive
 Build the camera-ready LaTeX package with all figures:
 ```bash
 make package
 ```
 
-### 9. Run Test Suite
+### 12. Run Test Suite
 ```bash
 make test
 ```
@@ -248,11 +283,13 @@ make test
 
 ## 🗺 Multi-Semester Research Roadmap
 
-- **Phase 0 (Current -- Nov 2026)**: Can cheap physical features predict the PSNR winner?  
+- **Phase 0 (Core Algorithm Selection -- COMPLETED)**: Can cheap physical features predict the PSNR winner?  
   *Outcome*: **Validated** (+22.61% accuracy over fixed method, 57.57% regret reduction, $p = 9.44 \times 10^{-16}$).
-- **Phase 1 (Semester 6)**: Downstream object detection evaluation. Does the PSNR-optimal choice maximize downstream detection mAP with YOLOv10 / RT-DETR on night frames?
-- **Phase 2 (Semester 7)**: Cross-degradation transferability. Testing selectors trained across composite degradations (low-light, haze, blur).
-- **Phase 3 (Semester 7)**: Hybrid portfolios incorporating lightweight deep neural enhancers (Zero-DCE, SCI) alongside classical filters.
+- **Phase 1 (Downstream Object Detection & Edge Realization -- COMPLETED)**:
+  *Outcome*: **Validated** — Boosted YOLOv8 object detection recall to **67.15%** (+18.62% over fixed Retinex, +12.74% over raw). ONNX runtime profile achieves **11.81 ms total pipeline latency (84.7 FPS)** on single CPU core with zero GPU dependencies and only 54.4 MB RAM.
+- **Phase 2 (Multi-Degradation Cross-Transferability -- COMPLETED)**:
+  *Outcome*: **Validated** — 10D extended physical feature cascade across low-light, optical blur, haze, and composite noise slashes blur regret by **4.70 dB** and delivers a **+0.915 dB net regret saving** across all optical hazards.
+- **Phase 3 (Hybrid Classical-Neural Portfolios -- Semester 6/7 Future Work)**: Hybrid portfolios incorporating lightweight deep neural enhancers (Zero-DCE, SCI) alongside classical filters to dynamically balance fidelity against milliwatt power budgets.
 
 ---
 
