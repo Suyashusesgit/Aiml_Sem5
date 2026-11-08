@@ -1,7 +1,7 @@
 # Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement via Handcrafted Physical Statistics
 
 **Ananya Kasaudhan**$^1$, **Suyash Srivastav**$^1$, **Logi Vasan**$^1$, and **Kishor P. Upla**$^2$, *Senior Member, IEEE*  
-$^1$*Department of Artificial Intelligence and Machine Learning, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat, India*  
+$^1$*Department of Electronics and Communication Engineering, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat, India*  
 $^2$*Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat 395007, Gujarat, India*  
 *Correspondence: `kpu@eed.svnit.ac.in`, `suyashsri30@gmail.com`*
 

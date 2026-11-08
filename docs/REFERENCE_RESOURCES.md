@@ -1,7 +1,7 @@
 # Project Triathlon — Reference Resources
 
 **Team Triathlon**: Logi Vasan, Suyash Srivastav, Ananya Kasaudhan  
-**Institution**: Department of Artificial Intelligence and Machine Learning, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat, India  
+**Institution**: Department of Electronics and Communication Engineering, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat, India  
 **Course**: AIML 5th Semester Capstone Project  
 **Supervisor**: Prof. Kishor P. Upla, *Senior Member, IEEE*  
 **Supervisor Affiliation**: Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat 395007, Gujarat, India  
@@ -112,3 +112,4 @@
 - [x] **Working Demo Script**: Interactive CLI tool (`src/demo.py`).
 - [x] **Interactive Web App**: Running at `http://localhost:8501` (`app.py`).
 - [x] **One-Page Monday Update for Prof. Upla**: Day-5 gate progress report (`report/Monday_Update_Prof_Upla_Nov9.md`).
+

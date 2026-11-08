@@ -209,6 +209,6 @@ jupyter notebook notebooks/exploration_and_benchmarks.ipynb
 
 ## 👥 Team & Acknowledgments
 
-- **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (5th Semester B.Tech, Artificial Intelligence and Machine Learning, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat).
+- **Students**: Ananya Kasaudhan, Suyash Srivastav, Logi Vasan (5th Semester B.Tech, Department of Electronics and Communication Engineering, Gati Shakti Vishwavidyalaya, Vadodara 390004, Gujarat).
 - **Supervisor**: Prof. Kishor P. Upla (*Senior Member, IEEE*), Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat 395007, Gujarat.
 - **Reference**: Prepared according to the handbook *"Image Enhancement and Per-Image Selection: from pixels and histograms to classical learning, regret, and the research frontier"* (SVNIT, Nov 2026).

@@ -2,7 +2,7 @@
 
 **To**: Prof. Kishor P. Upla, *Senior Member, IEEE* (Supervisor, SVNIT Surat)  
 **From**: Team Triathlon — Suyash Srivastav, Ananya Kasaudhan, Logi Vasan (Gati Shakti Vishwavidyalaya, Vadodara)  
-**Course**: 5th Semester B.Tech Capstone Project, AIML  
+**Course**: 5th Semester B.Tech Capstone Project, ECE  
 **Date**: Monday, November 9, 2026  
 **Project**: Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement via Handcrafted Physical Statistics  
 
@@ -60,3 +60,4 @@ On the unseen 15 official test scenes:
 1. **LOL-v2 Synthetic Verification**: Test selector transferability on synthetic LOL-v2 pairs (Ananya).
 2. **Ablation Deep-Dive**: Quantify impact of omitting Dark Channel Prior vs. Noise estimators in the report (Suyash).
 3. **Stand-Alone Demo CLI Validation**: Validate zero-reference inference on consumer camera night images (Logi).
+
