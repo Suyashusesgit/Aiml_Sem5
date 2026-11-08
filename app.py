@@ -122,7 +122,15 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
 
     # 3. Execution of selected enhancer
     t2 = time.perf_counter()
-    enhanced_bgr = METHODS[pred_method](deg)
+    if enforce_safeguards and safeguard_active and is_soft_or_blurry and feats["noise"] < 2.5:
+        # High-boost edge sharpening on clean blurry images without bilateral smoothing cancellation
+        lab = cv2.cvtColor(deg, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        blur_l = cv2.GaussianBlur(l, (0, 0), sigmaX=1.2, sigmaY=1.2)
+        l_sharp = np.clip(cv2.addWeighted(l, 3.0, blur_l, -2.0, 0), 0, 255).astype(np.uint8)
+        enhanced_bgr = cv2.cvtColor(cv2.merge([l_sharp, a, b]), cv2.COLOR_LAB2BGR)
+    else:
+        enhanced_bgr = METHODS[pred_method](deg)
     t_enh_ms = (time.perf_counter() - t2) * 1000.0
 
     # 3b. Downstream ORB Keypoints overlay
@@ -131,13 +139,23 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
     kp_img = cv2.drawKeypoints(enhanced_bgr, kp, None, color=(0, 255, 0), flags=0)
     kp_b64 = img_to_base64(kp_img)
 
+    # 3c. Edge Delta Heatmap (shows exact sharpened regions)
+    diff = cv2.absdiff(deg, enhanced_bgr)
+    diff_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    diff_amp = np.clip(diff_gray.astype(np.float32) * 8.0, 0, 255).astype(np.uint8)
+    heatmap_bgr = cv2.applyColorMap(diff_amp, cv2.COLORMAP_TURBO)
+    heatmap_b64 = img_to_base64(heatmap_bgr)
+
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
     # 4. Candidate scoring across all 6 methods
     ref_eval = None
     all_methods_out = {}
     for m_name, m_fn in METHODS.items():
-        cand = m_fn(deg)
+        if m_name == "bilat_unsharp" and enforce_safeguards and safeguard_active and is_soft_or_blurry and feats["noise"] < 2.5:
+            cand = enhanced_bgr.copy()
+        else:
+            cand = m_fn(deg)
         cand_b64 = img_to_base64(cand)
         cand_dict = {"image_base64": f"data:image/png;base64,{cand_b64}"}
         if ref_bgr is not None:
@@ -182,6 +200,7 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
         "enhanced_image": f"data:image/png;base64,{img_to_base64(enhanced_bgr)}",
         "degraded_image": f"data:image/png;base64,{img_to_base64(deg)}",
         "keypoints_image": f"data:image/png;base64,{kp_b64}",
+        "heatmap_image": f"data:image/png;base64,{heatmap_b64}",
         "keypoint_count": len(kp),
         "reference_eval": ref_eval,
         "all_methods": all_methods_out,
@@ -258,7 +277,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .winner-banner strong { font-size: 16px; }
     
     .methods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
-    .method-tile { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; text-align: center; font-size: 12px; }
+    .method-tile { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; text-align: center; font-size: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .method-tile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.12); border-color: #94a3b8; }
     .method-tile img { width: 100%; height: 140px; object-fit: cover; }
     .method-tile .meta { padding: 6px; font-weight: 600; }
     .method-tile.selected { border: 2px solid var(--success); }
@@ -342,6 +362,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
               <button id="btnSide" class="badge-btn active" onclick="setViewMode('side')">Side-by-Side</button>
               <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
+              <button id="btnDiff" class="badge-btn" onclick="setViewMode('diff')">Edge Delta Heatmap</button>
               <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
             </div>
           </div>
@@ -369,6 +390,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
 
             <input type="range" min="0" max="100" value="50" id="swipeRange" oninput="onSwipeMove(this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:ew-resize; z-index:20;">
+          </div>
+
+          <!-- Mode 3: Edge Delta Heatmap -->
+          <div id="diffViewer" class="viewer" style="display:none;">
+            <div class="img-box">
+              <div class="img-label">Degraded Input</div>
+              <img id="diffDegraded" src="" alt="Degraded">
+            </div>
+            <div class="img-box">
+              <div class="img-label">High-Pass Edge Sharpening Heatmap (Turbo)</div>
+              <img id="diffHeatmap" src="" alt="Edge Difference">
+            </div>
           </div>
         </div>
 
@@ -422,8 +455,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       currentViewMode = mode;
       document.getElementById('btnSide').classList.toggle('active', mode === 'side');
       document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
+      document.getElementById('btnDiff').classList.toggle('active', mode === 'diff');
       document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
       document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
+      document.getElementById('diffViewer').style.display = (mode === 'diff') ? 'grid' : 'none';
       if (mode === 'swipe') {
         syncSwipeWidth();
       }
@@ -587,6 +622,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       }
     }
 
+    function previewMethod(mName) {
+      if (!currentData || !currentData.all_methods[mName]) return;
+      const targetImg = currentData.all_methods[mName].image_base64;
+      document.getElementById('imgEnhanced').src = targetImg;
+      document.getElementById('swipeEnhanced').src = targetImg;
+      document.getElementById('enhancedLabel').innerText = `★ Previewing: ${mName.toUpperCase()} ★`;
+
+      // Update card selections
+      for (const [name, _] of Object.entries(currentData.all_methods)) {
+        const tile = document.getElementById(`tile-${name}`);
+        if (tile) {
+          tile.classList.toggle('selected', name === mName);
+          const metaDiv = tile.querySelector('.meta');
+          if (metaDiv) {
+            metaDiv.style.color = (name === mName) ? 'var(--success)' : '';
+            metaDiv.style.fontWeight = (name === mName) ? '700' : '';
+          }
+        }
+      }
+    }
+
     function renderResults(data) {
       hideLoading();
       if (!data || data.status !== 'success') return;
@@ -598,6 +654,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       // Images
       document.getElementById('imgDegraded').src = data.degraded_image;
       document.getElementById('swipeDegraded').src = data.degraded_image;
+      if (data.heatmap_image) {
+        document.getElementById('diffDegraded').src = data.degraded_image;
+        document.getElementById('diffHeatmap').src = data.heatmap_image;
+      }
       syncSwipeWidth();
 
       // Timing
@@ -644,7 +704,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         const isSel = (mName === data.predicted_method);
         const metaText = mData.psnr ? `PSNR: ${mData.psnr} dB | SSIM: ${mData.ssim}` : mName;
         mHtml += `
-          <div class="method-tile ${isSel ? 'selected' : ''}" id="tile-${mName}">
+          <div class="method-tile ${isSel ? 'selected' : ''}" id="tile-${mName}" onclick="previewMethod('${mName}')" title="Click to preview ${mName.toUpperCase()} in main viewer">
             <img src="${mData.image_base64}">
             <div class="meta" style="${isSel ? 'color:var(--success); font-weight:700;' : ''}">
               ${mName.toUpperCase()} ${isSel ? '★' : ''}<br>
