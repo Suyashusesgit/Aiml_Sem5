@@ -53,11 +53,18 @@ def img_to_base64(img_bgr: np.ndarray) -> str:
 
 def base64_to_img(b64_str: str) -> np.ndarray:
     """Decodes base64 string to BGR image."""
-    if "," in b64_str:
-        b64_str = b64_str.split(",")[1]
-    data = base64.b64decode(b64_str)
-    arr = np.frombuffer(data, dtype=np.uint8)
-    return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    try:
+        if not b64_str:
+            return None
+        if "," in b64_str:
+            b64_str = b64_str.split(",", 1)[1]
+        b64_clean = b64_str.strip().replace("\n", "").replace("\r", "")
+        data = base64.b64decode(b64_clean)
+        arr = np.frombuffer(data, dtype=np.uint8)
+        return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        print(f"Base64 decoding error: {e}")
+        return None
 
 
 def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
@@ -232,9 +239,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <div>
         <div class="card">
           <h2>1. Select or Upload Image</h2>
-          <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="uploadImage(event)">
-            <div>📁 <strong>Click to Upload Image</strong></div>
+            <div id="uploadBoxContent">📁 <strong>Click or Drag Image Here</strong></div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">JPG, PNG, WebP</div>
           </div>
           <div style="margin-top:14px; font-size:13px; font-weight:600;">Or Pick LOL v1 Benchmark Sample:</div>
@@ -324,6 +331,37 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     let showingKeypoints = false;
     let currentViewMode = 'side';
 
+    // Drag & drop handlers
+    window.addEventListener('DOMContentLoaded', () => {
+      const dropZone = document.getElementById('dropZone');
+      if (dropZone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'var(--accent)';
+            dropZone.style.background = '#eff6ff';
+          }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = '#cbd5e1';
+            dropZone.style.background = '#f8fafc';
+          }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+          const files = e.dataTransfer.files;
+          if (files && files.length > 0) {
+            processUploadedFile(files[0]);
+          }
+        }, false);
+      }
+      // Load initial benchmark sample
+      loadSample('102');
+    });
+
     function setViewMode(mode) {
       currentViewMode = mode;
       document.getElementById('btnSide').classList.toggle('active', mode === 'side');
@@ -344,7 +382,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     function syncSwipeWidth() {
       const container = document.getElementById('swipeViewer');
       const innerImg = document.getElementById('swipeEnhanced');
-      if (container && innerImg) {
+      if (container && innerImg && container.offsetWidth > 0) {
         innerImg.style.width = container.offsetWidth + 'px';
       }
     }
@@ -357,34 +395,86 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const targetSrc = showingKeypoints ? currentData.keypoints_image : currentData.enhanced_image;
       document.getElementById('imgEnhanced').src = targetSrc;
       document.getElementById('swipeEnhanced').src = targetSrc;
-      document.getElementById('enhancedLabel').innerText = showingKeypoints ? `★ Selected Output (ORB Keypoints: ${currentData.keypoint_count}) ★` : `★ Selected: ${currentData.predicted_method.toUpperCase()} ★`;
+      document.getElementById('enhancedLabel').innerText = showingKeypoints 
+        ? `★ Selected Output (ORB Keypoints: ${currentData.keypoint_count}) ★` 
+        : `★ Selected: ${currentData.predicted_method.toUpperCase()} ★`;
     }
 
-    async function loadSample(name) {
-      const res = await fetch(`/api/sample?name=${name}`);
-      const data = await res.json();
-      renderResults(data);
+    function showLoading(msg) {
+      const uploadBox = document.getElementById('uploadBoxContent');
+      if (uploadBox) uploadBox.innerHTML = `⏳ <strong>${msg}</strong>`;
+      const banner = document.getElementById('resultBanner');
+      banner.style.display = 'flex';
+      banner.style.background = '#eff6ff';
+      banner.style.borderColor = '#93c5fd';
+      banner.style.color = '#1e40af';
+      document.getElementById('winnerName').innerText = 'ANALYZING...';
+      document.getElementById('timingMeta').innerText = msg;
+      document.getElementById('regretBadge').style.display = 'none';
+    }
+
+    function hideLoading() {
+      const uploadBox = document.getElementById('uploadBoxContent');
+      if (uploadBox) uploadBox.innerHTML = '📁 <strong>Click or Drag Image Here</strong>';
     }
 
     function uploadImage(e) {
-      const file = e.target.files[0];
+      const file = e.target.files ? e.target.files[0] : null;
       if (!file) return;
+      processUploadedFile(file);
+      e.target.value = ''; // Allow re-uploading the same file
+    }
+
+    async function processUploadedFile(file) {
+      showLoading('Extracting features & running portfolio...');
       const reader = new FileReader();
       reader.onload = async function() {
-        const b64 = reader.result;
-        const res = await fetch('/api/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: b64 })
-        });
-        const data = await res.json();
-        renderResults(data);
+        try {
+          const b64 = reader.result;
+          const res = await fetch('/api/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: b64 })
+          });
+          const data = await res.json();
+          if (data.status === 'success') {
+            renderResults(data);
+          } else {
+            alert('Processing error: ' + (data.message || 'Unknown server error'));
+            hideLoading();
+          }
+        } catch (err) {
+          alert('Failed to process image: ' + err.message);
+          hideLoading();
+        }
+      };
+      reader.onerror = function() {
+        alert('Could not read file from disk.');
+        hideLoading();
       };
       reader.readAsDataURL(file);
     }
 
+    async function loadSample(name) {
+      showLoading(`Loading benchmark sample #${name}...`);
+      try {
+        const res = await fetch(`/api/sample?name=${name}`);
+        const data = await res.json();
+        if (data.status === 'success') {
+          renderResults(data);
+        } else {
+          alert('Sample load error: ' + (data.message || 'Sample image missing'));
+          hideLoading();
+        }
+      } catch (err) {
+        alert('Error loading sample: ' + err.message);
+        hideLoading();
+      }
+    }
+
     function renderResults(data) {
-      if (data.status !== 'success') return;
+      hideLoading();
+      if (!data || data.status !== 'success') return;
       currentData = data;
       showingKeypoints = false;
       document.getElementById('btnKp').classList.remove('active');
@@ -398,8 +488,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('enhancedLabel').innerText = `★ Selected: ${data.predicted_method.toUpperCase()} ★`;
       syncSwipeWidth();
 
-      // Banner
-      document.getElementById('resultBanner').style.display = 'flex';
+      // Banner style restoration
+      const banner = document.getElementById('resultBanner');
+      banner.style.display = 'flex';
+      banner.style.background = '#dcfce7';
+      banner.style.borderColor = '#86efac';
+      banner.style.color = '#15803d';
       document.getElementById('winnerName').innerText = data.predicted_method.toUpperCase();
       document.getElementById('timingMeta').innerText = `Feature extraction: ${data.timings_ms.features} ms | Total inference: ${data.timings_ms.total} ms`;
 
@@ -453,11 +547,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       }
       document.getElementById('methodsGrid').innerHTML = mHtml;
     }
-      document.getElementById('methodsGrid').innerHTML = mHtml;
-    }
-
-    // Load initial sample on startup
-    window.onload = () => loadSample('102');
   </script>
 </body>
 </html>
@@ -496,49 +585,68 @@ class RequestHandler(BaseHTTPRequestHandler):
             high_path = next((p for p in high_candidates if os.path.exists(p)), None)
 
             if not low_path:
-                self.send_error(404, "Sample image not found")
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": f"Sample image #{sample_id} not found"}).encode("utf-8"))
                 return
 
             deg_img = cv2.imread(low_path)
             if deg_img is None:
-                self.send_error(400, f"Failed to load image from {low_path}")
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": f"Failed to load image from {low_path}"}).encode("utf-8"))
                 return
             clean_img = cv2.imread(high_path) if high_path else None
             try:
                 res = process_image(deg_img, clean_img)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
             except Exception as e:
-                self.send_error(500, f"Processing error: {str(e)}")
-                return
-
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(res).encode("utf-8"))
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_error(404, "Not Found")
 
     def do_POST(self):
         if self.path == "/api/predict":
-            length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length)
-            payload = json.loads(body.decode("utf-8"))
-            b64_img = payload.get("image", "")
-
-            deg_img = base64_to_img(b64_img)
-            if deg_img is None:
-                self.send_error(400, "Invalid base64 image data")
-                return
             try:
-                res = process_image(deg_img)
-            except Exception as e:
-                self.send_error(500, f"Processing error: {str(e)}")
-                return
+                length = int(self.headers.get("Content-Length", 0))
+                if length == 0:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Empty request body"}).encode("utf-8"))
+                    return
 
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(res).encode("utf-8"))
+                body = self.rfile.read(length)
+                payload = json.loads(body.decode("utf-8"))
+                b64_img = payload.get("image", "")
+
+                deg_img = base64_to_img(b64_img)
+                if deg_img is None or deg_img.size == 0:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Could not decode image. Please upload a valid JPG, PNG, or WebP file."}).encode("utf-8"))
+                    return
+
+                res = process_image(deg_img)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_error(404, "Not Found")
