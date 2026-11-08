@@ -7,12 +7,10 @@
 \usepackage{booktabs}
 \usepackage{cite}
 \usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{microtype}
-\usepackage{subcaption}
 \usepackage{textcomp}
 \usepackage{url}
 \usepackage{xcolor}
+\usepackage{hyperref}
 
 \graphicspath{{./}{figures/}{../results/figures/}}
 
@@ -162,7 +160,7 @@ To guarantee that cross-validation yields an unbiased estimate of real-world gen
 
 \section{Methodology}
 
-\subsection{The Six-Method Enhancement Bank ($\mathcal{A}$)}
+\subsection{The Six-Method Enhancement Bank (\texorpdfstring{$\mathcal{A}$}{A})}
 To construct a diverse portfolio with complementary inductive biases, we establish a fixed bank of six distinct operators with pinned hyperparameters:
 
 \begin{enumerate}
@@ -189,7 +187,7 @@ To construct a diverse portfolio with complementary inductive biases, we establi
     \end{equation}
 \end{enumerate}
 
-\subsection{Handcrafted Physical Degradation Descriptors ($\phi(x)$)}
+\subsection{Handcrafted Physical Degradation Descriptors (\texorpdfstring{$\phi(x)$}{phi(x)})}
 Rather than utilizing opaque deep latent embeddings, we extract an 8-dimensional feature vector $\phi(x) \in \mathbb{R}^8$ spanning seven physical degradation categories:
 
 \begin{table}[!t]
