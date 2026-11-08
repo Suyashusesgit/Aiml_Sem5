@@ -22,6 +22,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+
 # Ensure package root and site-packages in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 for _site_p in [

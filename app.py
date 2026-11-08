@@ -22,6 +22,10 @@ import cv2
 import numpy as np
 import joblib
 
+# Set clean temporary directories for cache/settings
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+
 # Ensure project root and site-packages are in path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 for _site_p in [
@@ -161,7 +165,7 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
         l_sharp = np.clip(cv2.addWeighted(l, 3.0, blur_l, -2.0, 0), 0, 255).astype(np.uint8)
         enhanced_bgr = cv2.cvtColor(cv2.merge([l_sharp, a, b]), cv2.COLOR_LAB2BGR)
     else:
-        enhanced_bgr = METHODS[pred_method](deg)
+        enhanced_bgr = PORTFOLIO_METHODS[pred_method](deg)
     t_enh_ms = (time.perf_counter() - t2) * 1000.0
 
     # 3b. Downstream ORB Keypoints overlay
@@ -188,6 +192,10 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
     # 4. Candidate scoring across all 8 portfolio methods
     ref_eval = None
     all_methods_out = {}
+    clean = None
+    if ref_bgr is not None:
+        clean, _ = resize_long_side(ref_bgr, target_size=512)
+
     for m_name, m_fn in PORTFOLIO_METHODS.items():
         if m_name == "bilat_unsharp" and enforce_safeguards and safeguard_active and is_soft_or_blurry and feats["noise"] < 2.5:
             cand = enhanced_bgr.copy()
@@ -195,19 +203,17 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
             cand = m_fn(deg)
         cand_b64 = img_to_base64(cand)
         cand_dict = {"image_base64": f"data:image/png;base64,{cand_b64}"}
-        if ref_bgr is not None:
-            clean, _ = resize_long_side(ref_bgr, target_size=512)
+        if clean is not None:
             p = compute_psnr(clean, cand)
             s = compute_ssim(clean, cand)
             cand_dict["psnr"] = round(p, 2)
             cand_dict["ssim"] = round(s, 3)
         all_methods_out[m_name] = cand_dict
 
-    if ref_bgr is not None:
-        clean, _ = resize_long_side(ref_bgr, target_size=512)
-        oracle_method = max(all_methods_out.keys(), key=lambda k: all_methods_out[k]["psnr"])
-        oracle_psnr = all_methods_out[oracle_method]["psnr"]
-        selected_psnr = all_methods_out[pred_method]["psnr"]
+    if clean is not None:
+        oracle_method = max(all_methods_out.keys(), key=lambda k: all_methods_out[k].get("psnr", 0.0))
+        oracle_psnr = all_methods_out[oracle_method].get("psnr", 0.0)
+        selected_psnr = all_methods_out.get(pred_method, {}).get("psnr", 0.0)
         regret_db = max(0.0, oracle_psnr - selected_psnr)
         ref_eval = {
             "oracle_method": oracle_method,
