@@ -385,10 +385,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             
             # Check eval15 or our485
             low_candidates = [
+                f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
+                f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
                 f"data/lol_dataset/our485/low/{sample_id}.png",
                 f"data/lol_dataset/eval15/low/{sample_id}.png",
             ]
             high_candidates = [
+                f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
+                f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
                 f"data/lol_dataset/our485/high/{sample_id}.png",
                 f"data/lol_dataset/eval15/high/{sample_id}.png",
             ]

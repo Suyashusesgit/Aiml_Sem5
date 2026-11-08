@@ -35,11 +35,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from src.methods import METHODS
 from src.features import extract_features, FEATURE_NAMES
-from src.dataset import load_and_preprocess_pair
+from src.dataset import load_and_preprocess_pair, resolve_dataset_dir
 
 
 def evaluate_downstream_keypoints(
-    data_dir: str = "data/lol_dataset",
+    data_dir: str = "/Users/home/Desktop/LOLdataset",
     split: str = "eval15",
     model_path: str = "models/rf_selector.joblib",
     output_csv: str = "results/downstream_metrics.csv",
@@ -47,6 +47,7 @@ def evaluate_downstream_keypoints(
     n_features: int = 1000,
 ) -> pd.DataFrame:
     """Evaluates downstream keypoint recovery across the test set."""
+    data_dir = resolve_dataset_dir(data_dir)
     print("=" * 70)
     print("DOWNSTREAM COMPUTER VISION UTILITY BENCHMARK (Phase 1 Preview)")
     print("=" * 70)

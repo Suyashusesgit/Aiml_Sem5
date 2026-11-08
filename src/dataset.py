@@ -83,6 +83,37 @@ def compute_perceptual_hash(img: np.ndarray) -> str:
     return "".join("1" if b else "0" for b in bits)
 
 
+def resolve_dataset_dir(candidate_path: Optional[str] = None) -> str:
+    """
+    Resolves the dataset directory with priority:
+    1. candidate_path (if provided and valid)
+    2. /Users/home/Desktop/LOLdataset (external Desktop dataset)
+    3. data/lol_dataset (project-local)
+    4. data
+    """
+    candidates = []
+    if candidate_path:
+        candidates.append(candidate_path)
+    candidates.extend([
+        "/Users/home/Desktop/LOLdataset",
+        "data/lol_dataset",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "lol_dataset")),
+        "data",
+    ])
+    for c in candidates:
+        if c and os.path.exists(c):
+            try:
+                test_sub = os.path.join(c, "our485")
+                if os.path.isdir(test_sub) and len(os.listdir(test_sub)) > 0:
+                    return c
+                test_nested = os.path.join(c, "lol_dataset", "our485")
+                if os.path.isdir(test_nested) and len(os.listdir(test_nested)) > 0:
+                    return c
+            except (PermissionError, OSError):
+                continue
+    return candidate_path or "data/lol_dataset"
+
+
 def get_dataset_manifest(
     data_dir: str,
     split_name: str = "our485"
@@ -97,6 +128,7 @@ def get_dataset_manifest(
     Returns:
         List of dicts containing pair paths, filename, and scene grouping ID.
     """
+    data_dir = resolve_dataset_dir(data_dir)
     split_dir = os.path.join(data_dir, split_name)
     low_dir = os.path.join(split_dir, "low")
     high_dir = os.path.join(split_dir, "high")

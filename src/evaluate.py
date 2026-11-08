@@ -456,7 +456,11 @@ def plot_qualitative_strip(
     """
     import cv2
     from src.labels import compute_psnr, compute_ssim
-    from src.dataset import resize_long_side
+    from src.dataset import resize_long_side, resolve_dataset_dir
+
+    base_dir = resolve_dataset_dir()
+    if os.path.exists(os.path.join(base_dir, "our485")):
+        data_dir = os.path.join(base_dir, "our485")
 
     set_publication_style()
     selected_cases = [
