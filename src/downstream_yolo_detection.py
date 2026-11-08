@@ -15,7 +15,7 @@ using YOLOv8 across:
 import os
 import sys
 import time
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import cv2
 import numpy as np
 import pandas as pd
@@ -38,6 +38,20 @@ from src.methods import METHODS
 from src.features import extract_features, FEATURE_NAMES
 
 
+def _extract_yolo_boxes_and_conf(detector_fn: Any, img: np.ndarray, conf_thresh: float = 0.15) -> Tuple[Any, int, float]:
+    """Safely extracts YOLO detection result, box count, and mean confidence for Pyrefly type compliance."""
+    preds: Any = list(detector_fn(img, conf=conf_thresh, verbose=False))
+    res: Any = preds[0]
+    boxes: Any = getattr(res, "boxes", None)
+    n_boxes: int = len(boxes) if boxes is not None else 0
+    if n_boxes > 0 and hasattr(boxes, "conf") and boxes.conf is not None:
+        mean_val = boxes.conf.mean()
+        mean_conf: float = float(mean_val.item() if hasattr(mean_val, "item") else mean_val)
+    else:
+        mean_conf = 0.0
+    return res, n_boxes, mean_conf
+
+
 def run_yolo_downstream_eval(
     eval15_low_dir: str = "data/lol_dataset/eval15/low",
     eval15_high_dir: str = "data/lol_dataset/eval15/high",
@@ -55,7 +69,7 @@ def run_yolo_downstream_eval(
         raise ImportError("ultralytics package is required. Install via pip install ultralytics.")
 
     print("Loading pretrained YOLOv8n detector (COCO 80 classes)...")
-    detector = YOLO("yolov8n.pt")
+    detector: Any = YOLO("yolov8n.pt")
 
     if not os.path.exists(eval15_low_dir):
         eval15_low_dir = "/Users/home/Desktop/LOLdataset/eval15/low"
@@ -79,6 +93,8 @@ def run_yolo_downstream_eval(
 
         raw_bgr = cv2.imread(low_p)
         ref_bgr = cv2.imread(high_p)
+        if raw_bgr is None or ref_bgr is None:
+            continue
 
         # 1. Selector prediction
         feats = extract_features(raw_bgr)
@@ -90,20 +106,11 @@ def run_yolo_downstream_eval(
         selector_bgr = METHODS[sel_method](raw_bgr)
 
         # 3. YOLO Detections across all 4 images
-        res_raw = detector(raw_bgr, conf=0.15, verbose=False)[0]
-        res_retinex = detector(retinex_bgr, conf=0.15, verbose=False)[0]
-        res_selector = detector(selector_bgr, conf=0.15, verbose=False)[0]
-        res_ref = detector(ref_bgr, conf=0.15, verbose=False)[0]
-
-        n_raw = len(res_raw.boxes)
-        n_ret = len(res_retinex.boxes)
-        n_sel = len(res_selector.boxes)
-        n_ref = max(1, len(res_ref.boxes))
-
-        conf_raw = float(res_raw.boxes.conf.mean()) if n_raw > 0 else 0.0
-        conf_ret = float(res_retinex.boxes.conf.mean()) if n_ret > 0 else 0.0
-        conf_sel = float(res_selector.boxes.conf.mean()) if n_sel > 0 else 0.0
-        conf_ref = float(res_ref.boxes.conf.mean()) if len(res_ref.boxes) > 0 else 0.0
+        res_raw, n_raw, conf_raw = _extract_yolo_boxes_and_conf(detector, raw_bgr, conf_thresh=0.15)
+        res_retinex, n_ret, conf_ret = _extract_yolo_boxes_and_conf(detector, retinex_bgr, conf_thresh=0.15)
+        res_selector, n_sel, conf_sel = _extract_yolo_boxes_and_conf(detector, selector_bgr, conf_thresh=0.15)
+        res_ref, n_ref_cnt, conf_ref = _extract_yolo_boxes_and_conf(detector, ref_bgr, conf_thresh=0.15)
+        n_ref = max(1, n_ref_cnt)
 
         results.append({
             "image": base_name,
@@ -111,7 +118,7 @@ def run_yolo_downstream_eval(
             "raw_boxes": n_raw,
             "retinex_boxes": n_ret,
             "selector_boxes": n_sel,
-            "ref_boxes": len(res_ref.boxes),
+            "ref_boxes": n_ref_cnt,
             "raw_conf": round(conf_raw, 3),
             "retinex_conf": round(conf_ret, 3),
             "selector_conf": round(conf_sel, 3),

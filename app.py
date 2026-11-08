@@ -18,6 +18,7 @@ import time
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
+from typing import Optional, Dict, Any, Tuple
 import cv2
 import numpy as np
 import joblib
@@ -52,17 +53,20 @@ MODEL = None
 YOLO_MODEL = None
 
 
-def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20):
+def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20) -> Tuple[np.ndarray, int, float]:
     """Executes YOLOv8n object detection and renders bounding boxes."""
     global YOLO_MODEL
     try:
         if YOLO_MODEL is None:
             from ultralytics import YOLO
             YOLO_MODEL = YOLO("yolov8n.pt")
-        res = YOLO_MODEL.predict(img_bgr, conf=conf_thresh, verbose=False)[0]
-        annotated = res.plot()
-        n_boxes = len(res.boxes)
-        mean_conf = float(res.boxes.conf.mean().item()) if n_boxes > 0 else 0.0
+        predict_fn: Any = getattr(YOLO_MODEL, "predict", YOLO_MODEL)
+        results: Any = list(predict_fn(img_bgr, conf=conf_thresh, verbose=False))
+        res: Any = results[0]
+        annotated: np.ndarray = res.plot()
+        boxes: Any = getattr(res, "boxes", None)
+        n_boxes = len(boxes) if boxes is not None else 0
+        mean_conf = float(boxes.conf.mean().item()) if (boxes is not None and hasattr(boxes, "conf") and n_boxes > 0) else 0.0
         return annotated, n_boxes, round(mean_conf, 3)
     except Exception as e:
         print(f"YOLO detection warning: {e}")
@@ -86,7 +90,7 @@ def img_to_base64(img_bgr: np.ndarray) -> str:
     return base64.b64encode(buffer).decode("utf-8")
 
 
-def base64_to_img(b64_str: str) -> np.ndarray:
+def base64_to_img(b64_str: str) -> Optional[np.ndarray]:
     """Decodes base64 string to BGR image."""
     try:
         if not b64_str:
@@ -96,13 +100,14 @@ def base64_to_img(b64_str: str) -> np.ndarray:
         b64_clean = b64_str.strip().replace("\n", "").replace("\r", "")
         data = base64.b64decode(b64_clean)
         arr = np.frombuffer(data, dtype=np.uint8)
-        return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        decoded = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        return decoded if decoded is not None else None
     except Exception as e:
         print(f"Base64 decoding error: {e}")
         return None
 
 
-def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeguards: bool = True):
+def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enforce_safeguards: bool = True):
     """Executes feature extraction, prediction, and enhancement with domain safeguards."""
     if img_bgr is None or not isinstance(img_bgr, np.ndarray) or img_bgr.size == 0:
         raise ValueError("Invalid image: could not be decoded or input is empty")
@@ -130,8 +135,8 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
     gray = cv2.cvtColor(deg, cv2.COLOR_BGR2GRAY)
     lap_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
 
-    is_well_exposed = bool(feats["brightness"] > 55.0 or (feats["brightness"] > 45.0 and feats["dark_channel"] > 25.0))
-    is_soft_or_blurry = bool(lap_var < 300.0 or (feats["edge_p90"] < 85.0 and feats["contrast"] > 40.0))
+    is_well_exposed = feats["brightness"] > 55.0 or (feats["brightness"] > 45.0 and feats["dark_channel"] > 25.0)
+    is_soft_or_blurry = lap_var < 300.0 or (feats["edge_p90"] < 85.0 and feats["contrast"] > 40.0)
 
     safeguard_active = False
     safeguard_method = raw_pred_method
@@ -169,9 +174,9 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
     t_enh_ms = (time.perf_counter() - t2) * 1000.0
 
     # 3b. Downstream ORB Keypoints overlay
-    orb = cv2.ORB_create(nfeatures=400)
+    orb: Any = getattr(cv2, "ORB_create", cv2.ORB.create)(nfeatures=400)
     kp = orb.detect(enhanced_bgr, None)
-    kp_img = cv2.drawKeypoints(enhanced_bgr, kp, None, color=(0, 255, 0), flags=0)
+    kp_img = cv2.drawKeypoints(enhanced_bgr, kp, enhanced_bgr.copy(), color=(0, 255, 0), flags=0)
     kp_b64 = img_to_base64(kp_img)
 
     # 3c. Edge Delta Heatmap (shows exact sharpened regions)
@@ -202,7 +207,7 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
         else:
             cand = m_fn(deg)
         cand_b64 = img_to_base64(cand)
-        cand_dict = {"image_base64": f"data:image/png;base64,{cand_b64}"}
+        cand_dict: Dict[str, Any] = {"image_base64": f"data:image/png;base64,{cand_b64}"}
         if clean is not None:
             p = compute_psnr(clean, cand)
             s = compute_ssim(clean, cand)
