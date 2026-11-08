@@ -174,9 +174,10 @@ def run_cross_validation(
         for m in models_to_test
     }
 
-    # Tracking for confusion matrices and error analysis
-    fold_predictions = {m: [] for m in models_to_test}
-    true_labels = []
+    # Tracking for confusion matrices and error analysis (aligned strictly by dataset index)
+    n_samples = len(df_scores)
+    oof_predictions = {m: np.empty(n_samples, dtype=object) for m in models_to_test}
+    oof_true_labels = np.empty(n_samples, dtype=object)
 
     for seed in seeds:
         seed_everything(seed)
@@ -189,7 +190,7 @@ def run_cross_validation(
             feats_va = df_features.iloc[va_idx]
 
             if seed == seeds[0]:
-                true_labels.extend(y_va)
+                oof_true_labels[va_idx] = y_va
 
             # 1. Random Choice Baseline
             np.random.seed(seed + fold * 17)
@@ -200,7 +201,7 @@ def run_cross_validation(
             results["Random Choice"]["mean_regret"].append(float(np.mean(rand_reg)))
             results["Random Choice"]["max_regret"].append(float(np.max(rand_reg)))
             if seed == seeds[0]:
-                fold_predictions["Random Choice"].extend(rand_preds)
+                oof_predictions["Random Choice"][va_idx] = rand_preds
 
             # 2. Best Fixed Method Baseline (trained on training fold majority)
             fold_best_fixed = pd.Series(y_tr).value_counts().index[0]
@@ -211,7 +212,7 @@ def run_cross_validation(
             results["Best Fixed Method"]["mean_regret"].append(float(np.mean(fixed_reg)))
             results["Best Fixed Method"]["max_regret"].append(float(np.max(fixed_reg)))
             if seed == seeds[0]:
-                fold_predictions["Best Fixed Method"].extend(fixed_preds)
+                oof_predictions["Best Fixed Method"][va_idx] = fixed_preds
 
             # 3. Hand-written Domain Rule Baseline
             rule_preds = np.array([
@@ -224,7 +225,7 @@ def run_cross_validation(
             results["Hand-Written Rule"]["mean_regret"].append(float(np.mean(rule_reg)))
             results["Hand-Written Rule"]["max_regret"].append(float(np.max(rule_reg)))
             if seed == seeds[0]:
-                fold_predictions["Hand-Written Rule"].extend(rule_preds)
+                oof_predictions["Hand-Written Rule"][va_idx] = rule_preds
 
             # 4. Supervised ML Classifiers with Scaler inside Pipeline
             classifiers = {
@@ -281,7 +282,7 @@ def run_cross_validation(
                 results[model_name]["mean_regret"].append(float(np.mean(reg)))
                 results[model_name]["max_regret"].append(float(np.max(reg)))
                 if seed == seeds[0]:
-                    fold_predictions[model_name].extend(preds)
+                    oof_predictions[model_name][va_idx] = preds
 
     summary = []
     for model_name, metrics in results.items():
@@ -302,8 +303,8 @@ def run_cross_validation(
 
     return {
         "summary": df_summary,
-        "fold_predictions": fold_predictions,
-        "true_labels": np.array(true_labels),
+        "fold_predictions": oof_predictions,
+        "true_labels": oof_true_labels,
         "best_fixed_method": best_fixed_method,
         "raw_fold_results": results,
     }

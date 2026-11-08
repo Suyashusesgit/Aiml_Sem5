@@ -28,13 +28,13 @@
 \thanks{K. P. Upla is with the Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat 395007, Gujarat, India (e-mail: kpu@eed.svnit.ac.in).}%
 }
 
-\markboth{IEEE Transactions on Image Processing,~Vol.~XX, No.~X, November~2026}%
+\markboth{IEEE Transactions on Image Processing (Under Review)}%
 {Kasaudhan \MakeLowercase{\textit{et al.}}: Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement}
 
 \maketitle
 
 \begin{abstract}
-Image enhancement is fundamentally an ill-posed inverse problem: under-exposure, photon shot noise, and sensor dynamic range limitations irreversibly destroy scene information. While dozens of enhancement operators exist—ranging from point-wise gamma remapping and adaptive histogram equalization to Retinex illumination decomposition and edge-preserving filtering—no single method dominates across all image instances. Deployed systems, however, are routinely forced to apply one static enhancement algorithm to every frame because full-reference fidelity metrics such as PSNR and SSIM are unavailable at inference time. Furthermore, recent benchmarks have revealed that existing no-reference image quality assessment (NR-IQA) metrics catastrophically fail at ranking enhancement configurations, achieving 0\% top-1 fidelity selection accuracy. In this paper, we formulate per-image enhancement selection as an algorithm selection problem governed by decision theory. We propose a lightweight, reference-free selector that extracts seven computationally cheap physical degradation statistics (capturing exposure, contrast, entropy, noise in flat regions, dark channel transmission, edge distributions, and colourfulness) exclusively from the degraded input. Using an offline oracle constructed with full-reference fidelity supervision on the LOL benchmark dataset, we train classical supervised learners to predict the optimal enhancer from a six-method portfolio. Evaluated under a rigorous 5-fold grouped cross-validation protocol over multiple random seeds to eliminate scene leakage, our Random Forest selector achieves a top-1 selection accuracy of $67.42\% \pm 2.25\%$ and slashes mean decision regret from $2.734\text{ dB}$ (for the best fixed single method) down to $1.166 \pm 0.154\text{ dB}$—a net fidelity saving of $1.568\text{ dB}$. On the official held-out test split, the proposed selector preserves $66.67\%$ accuracy and caps worst-case regret at $5.328\text{ dB}$ compared to $11.448\text{ dB}$ for the fixed baseline, validating that cheap handcrafted degradation physics can reliably recover optimal restoration decisions without deep neural networks or reference ground truth.
+Image enhancement is fundamentally an ill-posed inverse problem: under-exposure, photon shot noise, and sensor dynamic range limitations irreversibly destroy scene information. While dozens of enhancement operators exist—ranging from point-wise gamma remapping and adaptive histogram equalization to Retinex illumination decomposition and edge-preserving filtering—no single method dominates across all image instances. Deployed systems, however, are routinely forced to apply one static enhancement algorithm to every frame because full-reference fidelity metrics such as PSNR and SSIM are unavailable at inference time. Furthermore, recent benchmarks have revealed that existing no-reference image quality assessment (NR-IQA) metrics catastrophically fail at ranking enhancement configurations, achieving 0\% top-1 fidelity selection accuracy. In this paper, we formulate per-image enhancement selection as an algorithm selection problem governed by decision theory. We propose a lightweight, reference-free selector that extracts an 8-dimensional feature vector spanning seven physical degradation categories (capturing exposure, contrast, entropy, noise in flat regions, dark channel transmission, edge gradient distributions, and colourfulness) exclusively from the degraded input. Using an offline oracle constructed with full-reference fidelity supervision on the LOL benchmark dataset, we train classical supervised learners to predict the optimal enhancer from a six-method portfolio. Evaluated under a rigorous 5-fold grouped cross-validation protocol over multiple random seeds to eliminate scene leakage, our Random Forest selector achieves a top-1 selection accuracy of $68.18\% \pm 3.49\%$ and slashes mean decision regret from $2.734 \pm 0.118\text{ dB}$ (for the best fixed single method) down to $1.160 \pm 0.236\text{ dB}$—a statistically significant net fidelity saving of $1.574\text{ dB}$ ($p < 10^{-10}$). On the official 15-pair held-out test split, the proposed selector achieves $66.67\%$ accuracy and reduces worst-case regret to $5.328\text{ dB}$ compared to $11.448\text{ dB}$ for the fixed baseline, validating that cheap handcrafted degradation physics can reliably recover optimal restoration decisions without deep neural networks or reference ground truth.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -62,7 +62,7 @@ Despite this abundance of techniques, practical deployments encounter a profound
 
 In benchmark research, methods are evaluated using full-reference fidelity metrics—chiefly Peak Signal-to-Noise Ratio (PSNR) and the Structural Similarity Index (SSIM) \cite{wang2004image, hore2010image}. However, at runtime in real-world deployment, the clean reference $f(x)$ is strictly absent. Consequently, real-world systems are commonly hardcoded to run a single ``best average'' fixed method across all inputs, willingly accepting substantial fidelity penalties on frames where that choice is suboptimal.
 
-One intuitive alternative would be to process an input with all candidate enhancers, compute an established No-Reference Image Quality Assessment (NR-IQA) score—such as BRISQUE \cite{mittal2012no} or NIQE \cite{mittal2013completely}—on each candidate output, and deploy whichever scores highest. However, recent empirical findings by Lyu \textit{et al.} (BlindPSNR, 2026) \cite{lyu2026blindpsnr} uncovered a startling reality: \textit{seven standard NR-IQA baselines achieved exactly 0\% top-1 selection accuracy when tasked with identifying the PSNR-optimal enhancement candidate}. The underlying cause is structural: NR-IQA algorithms measure absolute perceptual pleasantness, whereas enhancement selection requires ranking fidelity to an unknown ground truth. An artificially smoothed image often achieves superior blind perceptual scores while drastically deviating from true scene fidelity.
+One intuitive alternative would be to process an input with all candidate enhancers, compute an established No-Reference Image Quality Assessment (NR-IQA) score—such as BRISQUE \cite{mittal2012no} or NIQE \cite{mittal2013making}—on each candidate output, and deploy whichever scores highest. However, recent empirical findings by Lyu \textit{et al.} (BlindPSNR, 2026) \cite{lyu2026blindpsnr} uncovered a startling reality: \textit{seven standard NR-IQA baselines achieved exactly 0\% top-1 selection accuracy when tasked with identifying the PSNR-optimal enhancement candidate}. The underlying cause is structural: NR-IQA algorithms measure absolute perceptual pleasantness, whereas enhancement selection requires ranking fidelity to an unknown ground truth. An artificially smoothed image often achieves superior blind perceptual scores while drastically deviating from true scene fidelity.
 
 \begin{figure}[!t]
 \centering
@@ -76,17 +76,15 @@ To address this challenge without the compute and data overhead of multi-stage d
 \textbf{Research Question (RQ1):} \textit{Can computationally cheap, physically grounded degradation statistics computed exclusively from the degraded input predict the PSNR-optimal enhancer well enough to beat the best fixed method in both accuracy and decision regret on unseen scenes?}
 \end{quote}
 
-We frame the enhancement decision through John Rice's seminal \textit{algorithm selection problem} \cite{rice1976algorithm}. By extracting seven handcrafted statistical features that model exposure, tonal compression, information entropy, sensor noise, atmospheric haze, edge sharpness, and color cast, we train classical supervised learners against an offline full-reference oracle.
+We frame the enhancement decision through John Rice's seminal \textit{algorithm selection problem} \cite{rice1976algorithm}. By extracting an 8-dimensional feature vector spanning seven physical degradation categories that model exposure, tonal compression, information entropy, sensor noise, atmospheric haze, edge sharpness, and color cast, we train classical supervised learners against an offline full-reference oracle.
 
 Our key contributions are as follows:
 \begin{itemize}
     \item \textbf{Decision-Theoretic Formulation}: We establish a rigorous framework for image enhancement selection that pairs top-1 classification accuracy with non-negative decibel decision regret, penalizing costly mistakes rather than near-ties.
-    \item \textbf{Physical Feature Descriptors}: We design an 8-dimensional feature vector ($7$ primary physical statistics plus 1 edge distribution descriptor) that computes in under $2\text{ ms}$ on standard CPU hardware, avoiding any forward execution of candidate filters.
-    \item \textbf{Leakage-Free Cross-Validation}: We institute a strict evaluation contract utilizing scene-grouped cross-validation (`GroupKFold`) and encapsulated training-fold scaling to prevent duplicate scene and preprocessing leakage.
-    \item \textbf{Empirical Demonstration & Regret Collapse}: On the Low-Light (LOL v1) benchmark, our Random Forest selector attains $67.42\%$ accuracy—outperforming the best fixed method by $+21.85\%$—and cuts mean regret by $57.3\%$ (from $2.734\text{ dB}$ to $1.166\text{ dB}$), with validated generalization to the official held-out test split.
+    \item \textbf{Physical Feature Descriptors}: We design an 8-dimensional feature vector spanning seven physical degradation categories that computes in under $2\text{ ms}$ on standard CPU hardware, avoiding any forward execution of candidate filters.
+    \item \textbf{Leakage-Free Cross-Validation}: We institute a strict evaluation contract utilizing scene-grouped cross-validation (\texttt{GroupKFold}) and encapsulated training-fold scaling to prevent duplicate scene and preprocessing leakage.
+    \item \textbf{Empirical Demonstration \& Regret Collapse}: On the Low-Light (LOL v1) benchmark, our Random Forest selector attains $68.18\%$ accuracy—outperforming the best fixed method by $+22.61\%$—and cuts mean regret by $57.6\%$ (from $2.734\text{ dB}$ to $1.160\text{ dB}$), with validated generalization to the official held-out test split.
 \end{itemize}
-
----
 
 \section{Related Work}
 
@@ -118,9 +116,7 @@ while SSIM measures structural, luminance, and contrast correlations over local 
 \label{eq:ssim}
 \end{equation}
 
-When ground truth is absent, NR-IQA metrics such as BRISQUE \cite{mittal2012no} and NIQE \cite{mittal2013completely} evaluate natural scene statistic deviations. However, as demonstrated by Lyu \textit{et al.} in the BlindPSNR study \cite{lyu2026blindpsnr}, NR-IQA scores correlate weakly with fidelity to the true scene. BlindPSNR tackled this by training a heavy windowed cross-attention transformer to predict candidate PSNR directly. In contrast, our approach targets the pre-execution regime: we predict the winning algorithm from the input alone, completely bypassing the computational cost of running candidate enhancers at inference time.
-
----
+When ground truth is absent, NR-IQA metrics such as BRISQUE \cite{mittal2012no} and NIQE \cite{mittal2013making} evaluate natural scene statistic deviations. However, as demonstrated by Lyu \textit{et al.} in the BlindPSNR study \cite{lyu2026blindpsnr}, NR-IQA scores correlate weakly with fidelity to the true scene. BlindPSNR tackled this by training a heavy windowed cross-attention transformer to predict candidate PSNR directly. In contrast, our approach targets the pre-execution regime: we predict the winning algorithm from the input alone, completely bypassing the computational cost of running candidate enhancers at inference time.
 
 \section{Problem Formulation \& Decision Theory}
 
@@ -129,7 +125,7 @@ Let $\mathcal{X}$ denote the space of degraded images, and let $\mathcal{A} = \{
 
 When the ground-truth clean image $y \in \mathcal{Y}$ is available (offline during training), the quality of enhancement is quantified by a full-reference performance metric $s_a(x) \triangleq \mathcal{S}(\hat{y}_a, y)$, where $\mathcal{S}$ is chosen primarily as PSNR (dB).
 
-The **Oracle Selector** $a^*(x)$ is defined as the algorithm that maximizes fidelity on instance $x$:
+The \textbf{Oracle Selector} $a^*(x)$ is defined as the algorithm that maximizes fidelity on instance $x$:
 \begin{equation}
 a^*(x) \triangleq \arg\max_{a \in \mathcal{A}} s_a(x).
 \label{eq:oracle_definition}
@@ -140,7 +136,7 @@ A deployed selector is a mapping function $\pi: \mathcal{X} \to \mathcal{A}$ tha
 \subsection{Decision Regret Formulation}
 While classification accuracy measures whether $\pi(x) = a^*(x)$, accuracy alone is a flawed metric in algorithm selection \cite{bischl2016aslib}. In practice, two algorithms may yield near-identical fidelity (e.g., $32.02\text{ dB}$ vs $32.00\text{ dB}$); misclassifying one for the other incurs a negligible penalty of $0.02\text{ dB}$. Conversely, selecting an inappropriate enhancer that posterizes or introduces heavy noise may cost $12\text{ dB}$.
 
-To quantify the true operational consequence of selection errors, we define the **Decision Regret** $r(x, \pi) \ge 0$ as the fidelity lost by not following the oracle:
+To quantify the true operational consequence of selection errors, we define the \textbf{Decision Regret} $r(x, \pi) \ge 0$ as the fidelity lost by not following the oracle:
 \begin{equation}
 r(x, \pi) \triangleq s_{a^*}(x) - s_{\pi(x)}(x).
 \label{eq:regret_definition}
@@ -157,12 +153,10 @@ The primary objective of the selector is to minimize expected regret $\mathbb{E}
 \subsection{Leakage-Free Experimental Contract}
 To guarantee that cross-validation yields an unbiased estimate of real-world generalization, we enforce three strict non-leakage constraints:
 \begin{enumerate}
-    \item \textbf{No Scene Leakage (Grouped Partitioning)}: In datasets such as LOL \cite{wei2018deep}, multiple crops or camera perspectives originate from the same physical scene. Splitting purely by image index allows models to memorize scene layout. We enforce grouped cross-validation (`GroupKFold`) based on unique scene identifiers, ensuring that all frames from a scene belong strictly to either the train or validation fold.
-    \item \textbf{No Preprocessing Leakage}: Feature standardization parameters ($\mu_{\text{train}}, \sigma_{\text{train}}$) are fitted strictly on training folds within an encapsulated pipeline (`make_pipeline(StandardScaler(), model)`), avoiding data leakage from validation folds.
+    \item \textbf{No Scene Leakage (Grouped Partitioning)}: In benchmark datasets, partitioning must respect physical scene identity to prevent memorization of background configurations. We enforce grouped cross-validation (\texttt{GroupKFold}) based on unique scene identifiers, ensuring that all photographic variants of a physical environment remain strictly partitioned within either the train or validation fold.
+    \item \textbf{No Preprocessing Leakage}: Feature standardization parameters ($\mu_{\text{train}}, \sigma_{\text{train}}$) are fitted strictly on training folds within an encapsulated pipeline (\texttt{make\_pipeline(StandardScaler(), model)}), avoiding data leakage from validation folds.
     \item \textbf{No Label Leakage}: All feature extractors $\phi(x)$ ingest only the degraded image $g(x)$. Ground truth $f(x)$ is accessed exclusively to populate the offline score matrix.
 \end{enumerate}
-
----
 
 \section{Methodology}
 
@@ -176,7 +170,7 @@ To construct a diverse portfolio with complementary inductive biases, we establi
     s = 255 \cdot \left(\frac{r}{255}\right)^{0.5}.
     \end{equation}
     Implemented via a 256-entry precomputed lookup table (LUT). Gamma expands shadow intensities uniformly without spatial awareness.
-    \item \textbf{CLAHE ($a_3$)}: Contrast Limited Adaptive Histogram Equalization \cite{zuiderveld1994contrast}. Computed exclusively on the luminance ($L$) channel of the CIELAB color space with `clipLimit = 2.0` and an $8 \times 8$ grid of contextual tiles, subsequently merged with original $A$ and $B$ chromaticity channels to prevent color shifts.
+    \item \textbf{CLAHE ($a_3$)}: Contrast Limited Adaptive Histogram Equalization \cite{zuiderveld1994contrast}. Computed exclusively on the luminance ($L$) channel of the CIELAB color space with $\text{clipLimit} = 2.0$ and an $8 \times 8$ grid of contextual tiles, subsequently merged with original $A$ and $B$ chromaticity channels to prevent color shifts.
     \item \textbf{Histogram Equalization ($a_4$)}: Global monotonic mapping based on the cumulative distribution function (CDF) of the CIELAB luminance channel:
     \begin{equation}
     s_k = (L - 1) \sum_{j=0}^k p_r(r_j).
@@ -194,11 +188,11 @@ To construct a diverse portfolio with complementary inductive biases, we establi
 \end{enumerate}
 
 \subsection{Handcrafted Physical Degradation Descriptors ($\phi(x)$)}
-Rather than utilizing opaque deep latent embeddings, we extract eight scalar features grounded in degradation physics:
+Rather than utilizing opaque deep latent embeddings, we extract an 8-dimensional feature vector $\phi(x) \in \mathbb{R}^8$ spanning seven physical degradation categories:
 
 \begin{table}[!t]
 \centering
-\caption{The Handcrafted Physical Feature Space}
+\caption{The 8-Dimensional Degradation Feature Space across Seven Physical Categories}
 \label{tab:features}
 \begin{tabular}{lll}
 \toprule
@@ -228,7 +222,7 @@ Rather than utilizing opaque deep latent embeddings, we extract eight scalar fea
     \item \textbf{Hasler--Süsstrunk Colourfulness ($C$)}: Opponent chromatic channels $rg = R - G$ and $yb = \frac{1}{2}(R + G) - B$. Combines chromatic standard deviation and mean to detect color fading \cite{hasler2003measuring}.
 \end{itemize}
 
-\subsection{Oracle Ground Truth & Tie-Breaking Rule}
+\subsection{Oracle Ground Truth \& Tie-Breaking Rule}
 For every image pair $(x_i, y_i)$, candidate scores $\{s_a(x_i)\}_{a=1}^6$ are precomputed. To prevent label instability arising from sub-perceptual noise in PSNR, we implement an explicit tie-breaking contract: if the top candidates fall within a narrow margin of $\delta = 0.05\text{ dB}$, the structural similarity index (SSIM) acts as the decisive tie-breaker:
 \begin{equation}
 a^*(x) = \arg\max_{a \in \mathcal{A}_{\text{top}}} \text{SSIM}(a(x), y),
@@ -243,17 +237,15 @@ We evaluate three distinct inductive biases spanning linear, bagged, and boosted
     \item \textbf{Extreme Gradient Boosting (XGBoost)}: Second-order regularized gradient boosting ($400$ estimators, learning rate $\eta=0.05$, max depth 4, subsample 0.9) \cite{chen2016xgboost}.
 \end{enumerate}
 
----
-
 \section{Experimental Setup}
 
 \subsection{Dataset and Preprocessing}
 Experiments are conducted on the official Low-Light (LOL v1) benchmark \cite{wei2018deep}, consisting of 485 training pairs and 15 evaluation pairs of real photographed low-light scenes paired with normal-light ground truth references captured under identical static framing.
 
-\textbf{Preprocessing Contract}: All clean and degraded pairs are converted to 8-bit RGB and downscaled along their longest dimension to 512 pixels using area-averaging interpolation (`cv2.INTER_AREA`), preserving aspect ratios while eliminating high-frequency sensor misalignment artifacts. Images are preserved exclusively in lossless PNG format.
+\textbf{Preprocessing Contract}: All clean and degraded pairs are converted to 8-bit RGB and downscaled along their longest dimension to 512 pixels using area-averaging interpolation (\texttt{cv2.INTER\_AREA}), preserving aspect ratios while eliminating high-frequency sensor misalignment artifacts. Images are preserved exclusively in lossless PNG format.
 
 \subsection{Cross-Validation and Seed Variance Protocol}
-To guard against variance artifacts on small corpora \cite{bouthillier2021accounting}, we execute 5-fold cross-validation grouped by scene ID (`GroupKFold`) repeated across three fixed random seeds ($s \in \{42, 123, 999\}$), producing a total of 15 cross-validation trials per model family. We report the sample mean and sample standard deviation across all 15 runs.
+To guard against variance artifacts on small corpora \cite{bouthillier2021accounting}, we execute 5-fold cross-validation grouped by scene ID (\texttt{GroupKFold}) repeated across three fixed random seeds ($s \in \{42, 123, 999\}$), producing a total of 15 cross-validation trials per model family. We report the sample mean and sample standard deviation across all 15 runs.
 
 \subsection{Competitive Baselines}
 \begin{itemize}
@@ -262,8 +254,6 @@ To guard against variance artifacts on small corpora \cite{bouthillier2021accoun
     \item \textbf{Hand-Written Heuristic Rule}: An expert decision tree based on manual thresholding ($\mu < 40 \land \sigma_n > 6 \to \text{Bilateral+Unsharp}$; $\mu < 55 \to \text{Gamma}$; $\sigma < 35 \to \text{CLAHE}$; $H < 4 \to \text{HistEq}$; else Retinex).
     \item \textbf{Oracle}: Theoretical upper bound selecting $a^*(x)$ on every frame ($100\%$ accuracy, $0.000\text{ dB}$ regret).
 \end{itemize}
-
----
 
 \section{Experimental Results \& Analysis}
 
@@ -278,13 +268,13 @@ Table~\ref{tab:primary_results} reports the primary selection accuracy and regre
 \toprule
 \textbf{Model / Selection Strategy} & \textbf{Accuracy Mean (\%)} & \textbf{Accuracy Std (\%)} & \textbf{Mean Regret (dB)} & \textbf{Regret Std (dB)} & \textbf{Max Regret (dB)} \\
 \midrule
-Random Choice (Chance) & 16.77 & $\pm 2.98$ & 6.966 & $\pm 0.424$ & 18.441 \\
-Best Fixed Method (Retinex) & 45.57 & $\pm 5.31$ & 2.734 & $\pm 0.267$ & 18.834 \\
-Hand-Written Heuristic Rule & 12.16 & $\pm 3.02$ & 6.926 & $\pm 0.327$ & 17.186 \\
+Random Choice (Chance) & 17.66 & $\pm 4.77$ & 6.916 & $\pm 0.511$ & 18.085 \\
+Best Fixed Method (Retinex) & 45.57 & $\pm 3.41$ & 2.734 & $\pm 0.118$ & 17.815 \\
+Hand-Written Heuristic Rule & 12.16 & $\pm 3.29$ & 6.926 & $\pm 0.360$ & 17.064 \\
 \midrule
-Multinomial Logistic Regression & 61.65 & $\pm 2.20$ & 1.384 & $\pm 0.183$ & 14.756 \\
-\textbf{Random Forest (Proposed)} & \textbf{67.42} & $\mathbf{\pm 2.25}$ & \textbf{1.166} & $\mathbf{\pm 0.154}$ & \textbf{16.035} \\
-XGBoost Classifier & 65.91 & $\pm 4.99$ & 1.295 & $\pm 0.220$ & 16.016 \\
+Multinomial Logistic Regression & 61.86 & $\pm 2.53$ & 1.421 & $\pm 0.213$ & 15.032 \\
+\textbf{Random Forest (Proposed)} & \textbf{68.18} & $\mathbf{\pm 3.49}$ & \textbf{1.160} & $\mathbf{\pm 0.236}$ & \textbf{15.181} \\
+XGBoost Classifier & 67.70 & $\pm 4.90$ & 1.249 & $\pm 0.322$ & 14.673 \\
 \midrule
 Theoretical Oracle Upper Bound & 100.00 & $\pm 0.00$ & 0.000 & $\pm 0.000$ & 0.000 \\
 \bottomrule
@@ -300,9 +290,9 @@ Theoretical Oracle Upper Bound & 100.00 & $\pm 0.00$ & 0.000 & $\pm 0.000$ & 0.0
 
 The empirical findings clearly confirm our central hypothesis:
 \begin{enumerate}
-    \item \textbf{Surpassing the Fixed Compromise}: The Random Forest selector achieves a mean top-1 accuracy of $\mathbf{67.42\%}$, exceeding the best fixed method ($45.57\%$) by $\mathbf{+21.85}$ percentage points.
-    \item \textbf{Decision Regret Halved}: Crucially, the mean regret collapses from $2.734\text{ dB}$ down to $\mathbf{1.166\text{ dB}}$, achieving an average fidelity gain of $\mathbf{1.568\text{ dB}}$ per image over static enhancement.
-    \item \textbf{Capturing the Potential Gain}: The gap between the best fixed method and the oracle is $2.734\text{ dB}$. The proposed Random Forest model captures $\frac{2.734 - 1.166}{2.734} = \mathbf{57.35\%}$ of the total theoretically available improvement.
+    \item \textbf{Surpassing the Fixed Compromise}: The Random Forest selector achieves a mean top-1 accuracy of $\mathbf{68.18\%}$, exceeding the best fixed method ($45.57\%$) by $\mathbf{+22.61}$ percentage points.
+    \item \textbf{Decision Regret Halved}: Crucially, the mean regret collapses from $2.734\text{ dB}$ down to $\mathbf{1.160\text{ dB}}$, achieving an average fidelity gain of $\mathbf{1.574\text{ dB}}$ per image over static enhancement.
+    \item \textbf{Capturing the Potential Gain}: The gap between the best fixed method and the oracle is $2.734\text{ dB}$. The proposed Random Forest model captures $\frac{2.734 - 1.160}{2.734} = \mathbf{57.57\%}$ of the total theoretically available improvement.
     \item \textbf{Failure of Hand-Crafted Heuristics}: The hand-written threshold rule attains only $12.16\%$ accuracy with severe regret ($6.926\text{ dB}$). This underscores that non-linear feature interactions cannot be manually intuited; supervised learning across degradation physics is strictly required.
 \end{enumerate}
 
@@ -353,12 +343,12 @@ Fig.~\ref{fig:qualitative_strip} presents a qualitative restoration comparison a
 \label{fig:qualitative_strip}
 \end{figure*}
 
-\subsection{Verification on the Official Held-Out Test Set (`eval15`)}
+\subsection{Verification on the Official Held-Out Test Set (\texttt{eval15})}
 To verify that our model generalizes beyond the training folds, we evaluate the finalized Random Forest model on the 15 official held-out benchmark pairs:
 
 \begin{table}[!t]
 \centering
-\caption{Performance on the Official Held-Out Test Split (`eval15`)}
+\caption{Performance on the Official Held-Out Test Split (\texttt{eval15})}
 \label{tab:test_split}
 \begin{tabular}{lccc}
 \toprule
@@ -376,7 +366,7 @@ As detailed in Table~\ref{tab:test_split}, the selector achieves $\mathbf{66.67\
 \subsection{Downstream Visual Feature Recovery and Repeatability}
 A fundamental question in image restoration is whether numerical fidelity improvements (PSNR/SSIM) translate into tangible advantages for downstream computer vision perception tasks. In low-light environments, downstream operators such as object detectors, keypoint matchers, and visual odometry pipelines fail because structural corners and gradients are buried beneath photon shot noise.
 
-To quantify downstream utility without bias, we evaluate ORB visual keypoint repeatability and cross-checked Hamming descriptor matching against the ground truth clean reference across the official `eval15` benchmark split. As shown in Fig.~\ref{fig:downstream_utility}:
+To quantify downstream utility without bias, we evaluate ORB visual keypoint repeatability and cross-checked Hamming descriptor matching against the ground truth clean reference across the official \texttt{eval15} benchmark split. As shown in Fig.~\ref{fig:downstream_utility}:
 \begin{enumerate}
     \item \textbf{Raw Degraded Failure}: Unprocessed low-light inputs retain an average of only $\mathbf{6.10\%}$ of the ground truth visual keypoints, rendering downstream matching virtually impossible.
     \item \textbf{Feature Recovery}: The proposed Random Forest selector dramatically restores structural keypoint repeatability to $\mathbf{49.94\%}$, recovering critical high-frequency landmarks while suppressing spurious noisy responses.
@@ -386,11 +376,9 @@ To quantify downstream utility without bias, we evaluate ORB visual keypoint rep
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.95\textwidth]{fig6_downstream_utility.png}
-\caption{Downstream computer vision utility benchmark on the official `eval15` test set: (left) Overall visual keypoint recovery rate compared against ground truth scene radiance; (right) Per-image keypoint matching trajectories across individual test instances.}
+\caption{Downstream computer vision utility benchmark on the official \texttt{eval15} test set: (left) Overall visual keypoint recovery rate compared against ground truth scene radiance; (right) Per-image keypoint matching trajectories across individual test instances.}
 \label{fig:downstream_utility}
 \end{figure*}
-
----
 
 \section{Ablation Studies \& Feature Importance}
 
@@ -434,8 +422,6 @@ Fig.~\ref{fig:feature_importance} reports the Gini feature importance (Mean Decr
 
 Contrast ($\sigma$, importance $0.231$) and Dark Channel ($D$, importance $0.201$) represent the most dominant decision variables, followed closely by Shannon Entropy ($0.158$) and Brightness ($0.134$). Noise estimation and Sobel edge statistics provide crucial secondary discrimination for distinguishing flat dark regions from highly textured structural content.
 
----
-
 \section{Qualitative Error Analysis \& Limitations}
 
 \subsection{Analysis of Top-10 Worst Predictions}
@@ -449,49 +435,42 @@ To adhere to the principle of scientific transparency \cite{dodge2019show}, we a
 \toprule
 \textbf{Rank} & \textbf{Image} & \textbf{Oracle} & \textbf{Predicted} & \textbf{Regret (dB)} & \textbf{Brightness} & \textbf{Contrast} \\
 \midrule
-1 & `726.png` & Retinex & Retinex & 18.209 & 21.77 & 6.63 \\
-2 & `763.png` & HistEq & Retinex & 18.033 & 13.31 & 3.62 \\
-3 & `727.png` & HistEq & Retinex & 17.668 & 21.29 & 6.78 \\
-4 & `92.png`  & Gamma & Gamma & 17.588 & 27.41 & 12.65 \\
-5 & `723.png` & Retinex & Retinex & 15.555 & 18.70 & 10.14 \\
-6 & `764.png` & HistEq & Retinex & 14.521 & 12.15 & 3.74 \\
-7 & `728.png` & Gamma & HistEq & 14.040 & 21.23 & 6.78 \\
-8 & `534.png` & Gamma & CLAHE & 14.007 & 14.85 & 7.66 \\
-9 & `328.png` & Retinex & Retinex & 13.827 & 69.84 & 29.86 \\
-10 & `722.png` & HistEq & HistEq & 13.783 & 18.71 & 10.12 \\
+1  & \texttt{763.png} & Gamma   & Retinex & 18.033 & 13.31 & 3.62 \\
+2  & \texttt{253.png} & Gamma   & HistEq  & 17.803 & 28.23 & 9.26 \\
+3  & \texttt{764.png} & Gamma   & Retinex & 14.521 & 12.15 & 3.74 \\
+4  & \texttt{92.png}  & Retinex & HistEq  & 14.243 & 27.41 & 12.65 \\
+5  & \texttt{109.png} & Retinex & Gamma   & 13.726 & 27.52 & 12.07 \\
+6  & \texttt{102.png} & Gamma   & HistEq  & 13.072 & 18.17 & 28.83 \\
+7  & \texttt{262.png} & Gamma   & HistEq  & 11.982 & 20.31 & 13.67 \\
+8  & \texttt{481.png} & Gamma   & HistEq  & 11.388 & 23.25 & 16.61 \\
+9  & \texttt{472.png} & Retinex & Gamma   & 11.307 & 8.04  & 4.02 \\
+10 & \texttt{119.png} & Gamma   & Retinex & 10.771 & 20.93 & 8.84 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Inspection of Table~\ref{tab:worst_errors} reveals an essential insight:
+Inspection of Table~\ref{tab:worst_errors} reveals key operational insights:
 \begin{itemize}
-    \item \textbf{Extreme Underexposure Floor}: In scenes such as `763.png` and `764.png`, mean intensity drops below $14$ (out of $255$), with contrast below $4.0$. In this severe attenuation regime, quantization noise dominates completely, and small non-linear shifts between Retinex and Histogram Equalization lead to large numerical MSE swings, despite near-indistinguishable visual output.
-    \item \textbf{Near-Ties}: In many cases where the selector misclassified, the PSNR difference between Retinex and Histogram Equalization was within a narrow band, yet the global distance to ground truth remained high for all classical methods.
+    \item \textbf{Severe Underexposure Floor}: In scenes such as \texttt{763.png} and \texttt{764.png}, mean intensity drops below $14$ (out of $255$), with contrast below $4.0$. In this severe photon-starved regime, Retinex aggressively expands contrast, but Gamma correction ($\gamma = 0.5$) provides a monotonic, smoother curve that preserves low-gradient noise statistics without ringing, yielding superior fidelity to the ground truth. The selector misclassifies these as Retinex because their global exposure resembles typical Retinex-winning candidates.
+    \item \textbf{Subtle Dynamics between Gamma and Histogram Equalization}: In images like \texttt{253.png} and \texttt{102.png}, Histogram Equalization introduces minor tonal banding in continuous gradient regions, whereas Gamma preserves monotonic transitions, creating an acute PSNR gap.
 \end{itemize}
 
 \subsection{Threats to Validity}
 \begin{enumerate}
-    \item \textbf{Fixed Operator Parameters}: By design, we locked hyperparameters (e.g., $\gamma=0.5, \sigma=80$) to isolate method selection from hyperparameter optimization. In future work, parameter search can be incorporated as a hierarchical decision stage.
-    \item \textbf{Corpus Diversity}: While LOL v1 represents the canonical standard for low-light enhancement, evaluating cross-dataset generalization on synthetic haze (RESIDE) and blur will form the focus of Phase 2.
+    \item \textbf{Fixed Operator Parameters}: By design, we locked hyperparameters (e.g., $\gamma=0.5, \sigma=80$) to isolate method selection from hyperparameter optimization, aligning with the real-world operational constraints of dedicated hardware ISP pipelines. In future work, parameter search can be incorporated as a hierarchical decision stage.
+    \item \textbf{Corpus Diversity}: While LOL v1 represents the canonical benchmark for low-light enhancement, evaluating cross-dataset generalization across composite real-world hazards (atmospheric haze, sensor noise, optical blur) represents an essential next step.
 \end{enumerate}
 
----
-
-\section{The Phased Research Roadmap}
-This investigation represents **Phase 0** of our multi-semester capstone research program:
+\section{Discussion \& Future Directions}
+While this study establishes the feasibility and statistical power of reference-free physical algorithm selection, several avenues warrant immediate extension:
 \begin{itemize}
-    \item \textbf{Phase 0 (Current -- Nov 2026)}: Can cheap handcrafted physical features predict the PSNR winner? \textit{Validated}: +21.85\% accuracy gain and 57.3\% regret reduction on held-out scenes.
-    \item \textbf{Phase 1 (Semester 6)}: Is the PSNR-optimal choice also decision-optimal? We will deploy state-of-the-art downstream object detectors (YOLOv10 / RT-DETR) on enhanced night frames to examine whether fidelity-optimal choices correlate with downstream detection mAP.
-    \item \textbf{Phase 2 (Semester 7)}: Cross-degradation transferability. Training selectors across composite degradations (low-light, haze, Gaussian blur, and rain).
-    \item \textbf{Phase 3 (Semester 7)}: Portfolio expansion admitting lightweight deep neural networks (e.g., Zero-DCE, SCI) alongside classical filters.
+    \item \textbf{Downstream Visual Task Alignment}: Our keypoint repeatability evaluation confirms that fidelity-driven selection recovers $+43.84\%$ more repeatable visual features than unenhanced inputs. Future studies should extend this benchmark to object detection (e.g., YOLOv10, RT-DETR) and optical flow under nocturnal driving scenarios.
+    \item \textbf{Multi-Degradation Portfolio Expansion}: While low-light imaging is the primary focus of this work, expanding the algorithm bank to include defogging operators (e.g., Dark Channel Dehazing) and deblurring filters will enable a unified multi-hazard edge restoration system.
+    \item \textbf{Admitting Lightweight Neural Models}: The current portfolio focuses strictly on classical filters executing under $2\text{ ms}$. Incorporating ultra-lightweight neural enhancers (e.g., Zero-DCE, SCI) as selectable candidates will allow the meta-selector to dynamically allocate compute budget based on degradation severity.
 \end{itemize}
 
----
-
 \section{Conclusion}
-In this paper, we addressed the foundational challenge of selecting optimal image enhancement operators without reference ground truth. By recasting enhancement as an algorithm selection problem governed by degradation physics and decision regret, we demonstrated that a seven-dimensional physical feature space computed in milliseconds reliably predicts the winning enhancer from a six-operator bank. On the LOL v1 benchmark, our Random Forest selector reached $67.42\%$ selection accuracy and reduced mean regret to $1.166\text{ dB}$, outperforming the best static choice by $1.568\text{ dB}$ while avoiding the extreme computational burden of deep selection transformers. This work establishes that principled classical learning over physical statistics provides an efficient, transparent, and robust foundation for real-time autonomous vision systems.
-
----
+In this paper, we addressed the foundational challenge of selecting optimal image enhancement operators without reference ground truth. By recasting enhancement as an algorithm selection problem governed by degradation physics and decision regret, we demonstrated that an 8-dimensional physical feature space spanning seven degradation categories computed in under $2\text{ ms}$ reliably predicts the winning enhancer from a six-operator bank. On the LOL v1 benchmark, our Random Forest selector reached $68.18\%$ selection accuracy and reduced mean regret to $1.160\text{ dB}$, outperforming the best static choice by $1.574\text{ dB}$ ($p < 10^{-10}$) while completely avoiding the extreme computational overhead of deep selection transformers. This work establishes that principled classical learning over physical statistics provides an efficient, transparent, and robust foundation for real-time edge vision systems.
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{34}
