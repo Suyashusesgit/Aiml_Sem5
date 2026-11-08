@@ -62,6 +62,8 @@ def base64_to_img(b64_str: str) -> np.ndarray:
 
 def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None):
     """Executes feature extraction, prediction, and enhancement."""
+    if img_bgr is None or not isinstance(img_bgr, np.ndarray) or img_bgr.size == 0:
+        raise ValueError("Invalid image: could not be decoded or input is empty")
     t0 = time.perf_counter()
     deg, scale = resize_long_side(img_bgr, target_size=512)
 
@@ -405,8 +407,15 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
 
             deg_img = cv2.imread(low_path)
+            if deg_img is None:
+                self.send_error(400, f"Failed to load image from {low_path}")
+                return
             clean_img = cv2.imread(high_path) if high_path else None
-            res = process_image(deg_img, clean_img)
+            try:
+                res = process_image(deg_img, clean_img)
+            except Exception as e:
+                self.send_error(500, f"Processing error: {str(e)}")
+                return
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -424,7 +433,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             b64_img = payload.get("image", "")
 
             deg_img = base64_to_img(b64_img)
-            res = process_image(deg_img)
+            if deg_img is None:
+                self.send_error(400, "Invalid base64 image data")
+                return
+            try:
+                res = process_image(deg_img)
+            except Exception as e:
+                self.send_error(500, f"Processing error: {str(e)}")
+                return
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -439,6 +455,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         return
 
 
+class ReusableHTTPServer(HTTPServer):
+    allow_reuse_address = True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Project Triathlon Interactive Web App")
     parser.add_argument("--port", type=int, default=8501, help="Port to serve on (default: 8501)")
@@ -448,10 +468,27 @@ def main():
     print("Loading selector model...")
     get_model()
 
-    server = HTTPServer(("0.0.0.0", args.port), RequestHandler)
+    server = None
+    port = args.port
+    for attempt_port in range(port, port + 20):
+        try:
+            server = ReusableHTTPServer(("0.0.0.0", attempt_port), RequestHandler)
+            port = attempt_port
+            break
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                print(f"Port {attempt_port} is already in use, trying port {attempt_port + 1}...")
+                continue
+            raise
+
+    if server is None:
+        raise RuntimeError(f"Could not bind to any port in range {args.port} - {args.port + 19}")
+
     print(f"\n=======================================================")
     print(f"Project Triathlon Interactive Web App Running!")
-    print(f"Access locally at: http://localhost:{args.port}")
+    print(f"Access locally at: http://localhost:{port}")
+    if port != args.port:
+        print(f"Note: Requested port {args.port} was busy, bound to port {port}")
     print(f"Press Ctrl+C to terminate the server.")
     print(f"=======================================================\n")
 
