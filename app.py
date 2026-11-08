@@ -22,8 +22,14 @@ import cv2
 import numpy as np
 import joblib
 
-# Ensure project root is in path
+# Ensure project root and site-packages are in path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+for _site_p in [
+    "/opt/homebrew/lib/python3.14/site-packages",
+    os.path.expanduser("~/Library/Python/3.14/lib/python/site-packages"),
+]:
+    if os.path.isdir(_site_p) and _site_p not in sys.path:
+        sys.path.append(_site_p)
 
 from src.methods import METHODS
 from src.features import extract_features, FEATURE_NAMES
