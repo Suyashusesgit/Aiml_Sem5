@@ -623,22 +623,173 @@ def create_deck():
     p.space_before = Pt(8)
 
     # =========================================================================
-    # SLIDE 10: Official Held-Out Test Split (eval15)
+    # SLIDE 10: Downstream YOLOv8 Object Detection Benchmark (Phase 1)
     # =========================================================================
     s10 = add_blank_slide()
-    add_header(s10, "Generalization on Official Held-Out Benchmark Split (eval15)")
+    add_header(s10, "Phase 1: Downstream YOLOv8 Object Detection Benchmark")
+
+    fig11_path = "results/figures/fig11_downstream_yolo_detection.png"
+    if os.path.exists(fig11_path):
+        s10.shapes.add_picture(fig11_path, Inches(0.8), Inches(1.85), Inches(7.5), Inches(5.1))
+
+    # Right side text card
+    rt_card10 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.5), Inches(1.85), Inches(4.0), Inches(5.1))
+    rt_card10.fill.solid()
+    rt_card10.fill.fore_color.rgb = COLOR_CARD
+    rt_card10.line.color.rgb = COLOR_BORDER
+
+    tb_rt10 = s10.shapes.add_textbox(Inches(8.7), Inches(2.0), Inches(3.6), Inches(4.7))
+    tf_rt10 = tb_rt10.text_frame
+    tf_rt10.word_wrap = True
+
+    p = tf_rt10.paragraphs[0]
+    p.text = "SEMANTIC RECALL BENCHMARK"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_ACCENT
+
+    p = tf_rt10.add_paragraph()
+    p.text = "Retinex Degrades Downstream Recall"
+    p.font.size = Pt(15)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_PRIMARY
+    p.space_before = Pt(4)
+
+    p = tf_rt10.add_paragraph()
+    p.text = "• The Retinex Trap:\nWhile static Retinex finds 30 total boxes, its per-scene recall against clean reference frames drops from 54.4% to 48.5% (-5.88% degradation vs raw). Noise amplification and edge halos destroy bounding box proposals."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt10.add_paragraph()
+    p.text = "• Proposed Selector Advantage:\nOur selector dynamically deploys Gamma or HistEq where Retinex would blow out highlights, detecting 37 boxes and achieving 67.15% recall (+18.62% gain over Retinex, +12.74% over raw)."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt10.add_paragraph()
+    p.text = "• Zero-Reference Autonomous Vision:\nEvaluated with standard pretrained YOLOv8n across all 15 official test scenes with zero retuning."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    # =========================================================================
+    # SLIDE 11: Edge Embedded Hardware Profiling & ONNX (Phase 1)
+    # =========================================================================
+    s11 = add_blank_slide()
+    add_header(s11, "Phase 1: Edge Embedded Hardware Profiling & ONNX Acceleration")
+
+    fig9_path = "results/figures/fig9_edge_profiling.png"
+    if os.path.exists(fig9_path):
+        s11.shapes.add_picture(fig9_path, Inches(0.8), Inches(1.85), Inches(7.5), Inches(5.1))
+
+    rt_card11 = s11.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.5), Inches(1.85), Inches(4.0), Inches(5.1))
+    rt_card11.fill.solid()
+    rt_card11.fill.fore_color.rgb = COLOR_CARD
+    rt_card11.line.color.rgb = COLOR_BORDER
+
+    tb_rt11 = s11.shapes.add_textbox(Inches(8.7), Inches(2.0), Inches(3.6), Inches(4.7))
+    tf_rt11 = tb_rt11.text_frame
+    tf_rt11.word_wrap = True
+
+    p = tf_rt11.paragraphs[0]
+    p.text = "HARDWARE PROFILING COMPARISON"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_SECONDARY
+
+    p = tf_rt11.add_paragraph()
+    p.text = "Ultra-Fast CPU Real-Time Edge Inference"
+    p.font.size = Pt(15)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_PRIMARY
+    p.space_before = Pt(4)
+
+    p = tf_rt11.add_paragraph()
+    p.text = "• Proposed Selector (ONNX + CPU):\nTotal pipeline latency: 11.81 ms (84.7 FPS).\nONNX decision time: 0.014 ms.\nMemory Footprint: 54.4 MB peak RAM.\nModel Size: 4.20 MB | 0 GPU Dependencies."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt11.add_paragraph()
+    p.text = "• Deep Learning Baselines Comparison:\nZero-DCE (CPU): 42.8 ms (23.4 FPS) | 280 MB RAM.\nRetinexNet (GPU): 48.0 ms | 680 MB VRAM.\nRestormer (GPU): 320.0 ms (3.1 FPS) | 2400 MB VRAM."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt11.add_paragraph()
+    p.text = "• Edge Suitability:\nExecutes comfortably at 84+ FPS on a single embedded CPU core without requiring power-hungry GPU accelerators."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    # =========================================================================
+    # SLIDE 12: Multi-Degradation Generalization & Cascading (Phase 2)
+    # =========================================================================
+    s12 = add_blank_slide()
+    add_header(s12, "Phase 2: Multi-Degradation Generalization & Hierarchical Cascade")
+
+    fig10_path = "results/figures/fig10_multi_degradation_cascade.png"
+    if os.path.exists(fig10_path):
+        s12.shapes.add_picture(fig10_path, Inches(0.8), Inches(1.85), Inches(7.5), Inches(5.1))
+
+    rt_card12 = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.5), Inches(1.85), Inches(4.0), Inches(5.1))
+    rt_card12.fill.solid()
+    rt_card12.fill.fore_color.rgb = COLOR_CARD
+    rt_card12.line.color.rgb = COLOR_BORDER
+
+    tb_rt12 = s12.shapes.add_textbox(Inches(8.7), Inches(2.0), Inches(3.6), Inches(4.7))
+    tf_rt12 = tb_rt12.text_frame
+    tf_rt12.word_wrap = True
+
+    p = tf_rt12.paragraphs[0]
+    p.text = "MULTI-HAZARD CROSS-TRANSFER"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_ACCENT
+
+    p = tf_rt12.add_paragraph()
+    p.text = "10D Physical Features & 2-Stage Cascade"
+    p.font.size = Pt(15)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_PRIMARY
+    p.space_before = Pt(4)
+
+    p = tf_rt12.add_paragraph()
+    p.text = "• Defocus Blur Collapse Prevented:\nFixed Retinex catastrophically collapses on blur (10.18 dB PSNR, 15.10 dB regret). Our cascade deploys High-Boost Sharpening to achieve 14.87 dB PSNR, slashing regret by 4.70 dB."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt12.add_paragraph()
+    p.text = "• Atmospheric Haze Recovery:\nDeploys Dark Channel Prior (DCP) Dehazing, beating Retinex by +1.17 dB in regret (16.64 dB vs 15.47 dB PSNR)."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    p = tf_rt12.add_paragraph()
+    p.text = "• Net Multi-Hazard Gain:\nAcross 60 composite scenes, the cascade achieves +0.915 dB net regret reduction over static deployment."
+    p.font.size = Pt(11)
+    p.font.color.rgb = COLOR_DARK_TEXT
+    p.space_before = Pt(6)
+
+    # =========================================================================
+    # SLIDE 13: Official Held-Out Test Split (eval15)
+    # =========================================================================
+    s13 = add_blank_slide()
+    add_header(s13, "Generalization on Official Held-Out Benchmark Split (eval15)")
 
     # Left Table
-    tbl_s10 = s10.shapes.add_table(4, 4, Inches(0.8), Inches(1.9), Inches(6.8), Inches(2.8))
-    t10 = tbl_s10.table
-    t10.columns[0].width = Inches(2.6)
-    t10.columns[1].width = Inches(1.4)
-    t10.columns[2].width = Inches(1.4)
-    t10.columns[3].width = Inches(1.4)
+    tbl_s13 = s13.shapes.add_table(4, 4, Inches(0.8), Inches(1.9), Inches(6.8), Inches(2.8))
+    t13 = tbl_s13.table
+    t13.columns[0].width = Inches(2.6)
+    t13.columns[1].width = Inches(1.4)
+    t13.columns[2].width = Inches(1.4)
+    t13.columns[3].width = Inches(1.4)
 
-    h10 = ["Model Architecture", "Accuracy (%)", "Mean Regret", "Max Regret"]
-    for c_idx, h in enumerate(h10):
-        cell = t10.cell(0, c_idx)
+    h13 = ["Model Architecture", "Accuracy (%)", "Mean Regret", "Max Regret"]
+    for c_idx, h in enumerate(h13):
+        cell = t13.cell(0, c_idx)
         cell.text = h
         cell.fill.solid()
         cell.fill.fore_color.rgb = COLOR_PRIMARY
@@ -656,7 +807,7 @@ def create_deck():
     for r_idx, row in enumerate(eval_data, start=1):
         is_ours = "Random Forest" in row[0]
         for c_idx, val in enumerate(row):
-            cell = t10.cell(r_idx, c_idx)
+            cell = t13.cell(r_idx, c_idx)
             cell.text = val
             cell.fill.solid()
             cell.fill.fore_color.rgb = RGBColor(239, 246, 255) if is_ours else (COLOR_CARD if r_idx % 2 == 1 else RGBColor(241, 245, 249))
@@ -667,12 +818,12 @@ def create_deck():
                     p.font.bold = True
 
     # Right Card: Generalization takeaways
-    c_gen = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(7.9), Inches(1.9), Inches(4.6), Inches(4.8))
+    c_gen = s13.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(7.9), Inches(1.9), Inches(4.6), Inches(4.8))
     c_gen.fill.solid()
     c_gen.fill.fore_color.rgb = COLOR_CARD
     c_gen.line.color.rgb = COLOR_BORDER
 
-    tb_g = s10.shapes.add_textbox(Inches(8.1), Inches(2.1), Inches(4.2), Inches(4.3))
+    tb_g = s13.shapes.add_textbox(Inches(8.1), Inches(2.1), Inches(4.2), Inches(4.3))
     tf_g = tb_g.text_frame
     tf_g.word_wrap = True
 
@@ -696,11 +847,11 @@ def create_deck():
     p.space_before = Pt(8)
 
     # Bottom left summary card
-    c_bot = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(4.9), Inches(6.8), Inches(1.8))
+    c_bot = s13.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(4.9), Inches(6.8), Inches(1.8))
     c_bot.fill.solid()
     c_bot.fill.fore_color.rgb = COLOR_CARD
     c_bot.line.color.rgb = COLOR_BORDER
-    tb_b = s10.shapes.add_textbox(Inches(1.0), Inches(5.0), Inches(6.4), Inches(1.5))
+    tb_b = s13.shapes.add_textbox(Inches(1.0), Inches(5.0), Inches(6.4), Inches(1.5))
     tf_b = tb_b.text_frame
     tf_b.word_wrap = True
     p = tf_b.paragraphs[0]
@@ -715,20 +866,20 @@ def create_deck():
     p.space_before = Pt(4)
 
     # =========================================================================
-    # SLIDE 11: Production Deployment & Deliverables
+    # SLIDE 14: Production Deployment & Deliverables
     # =========================================================================
-    s11 = add_blank_slide()
-    add_header(s11, "Multi-Surface Deliverables & Production Deployment")
+    s14 = add_blank_slide()
+    add_header(s14, "Multi-Surface Deliverables & Production Deployment")
 
     deliverables = [
         ("IEEE TRANSACTIONS PAPER", "Overleaf Camera-Ready Package",
-         "Full LaTeX manuscript with IEEEtran template, 6 figures, 6 tables, mathematical formalization, and zero capstone markers. Bundled in report/IEEE_Paper_Overleaf_Package.zip."),
-        ("INTERACTIVE WEB DASHBOARD", "app.py (Daemon on Port 8501)",
-         "Zero external web framework dependencies (pure Python HTTP server). Instant base64 image inference, sample loader, and 6-candidate comparative scoring grid."),
-        ("STANDALONE INFERENCE CLI", "src/demo.py",
-         "Command-line utility for embedded edge execution: python3 src/demo.py --input <deg.png> [--reference <clean.png>]. Generates complete comparison visualization grids."),
+         "Full LaTeX manuscript with IEEEtran template, 11 figures, 9 tables, mathematical formalization. Bundled in report/IEEE_Paper_Overleaf_Package.zip."),
+        ("INTERACTIVE WEB DASHBOARD", "app.py (Streamlit / Daemon 8501)",
+         "Real-time interactive dashboard: Side-by-Side, Split Slider, Keypoints Overlay, Edge Delta Heatmap, YOLOv8 Object Detection, and 8-method preview grid."),
+        ("STANDALONE CLI & ONNX RUNTIME", "src/demo.py & models/rf_selector.onnx",
+         "Ultra-fast ONNX runtime engine executing in 11.81 ms (84.7 FPS) on CPU with zero GPU dependencies and 54 MB peak RAM."),
         ("COMPLETE TEST SUITE", "tests/test_pipeline.py",
-         "100% passing test coverage (6/6 tests) verifying method boundary constraints, feature stability, PSNR/SSIM correctness, and model inference."),
+         "100% passing test coverage (9/9 tests) verifying 8 physical features, 10D multi-features, ONNX inference, and 8 enhancement methods."),
     ]
 
     for idx, (title, sub, desc) in enumerate(deliverables):
@@ -737,12 +888,12 @@ def create_deck():
         x = Inches(0.8 + c * 6.0)
         y = Inches(1.9 + r * 2.5)
 
-        card = s11.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, Inches(5.7), Inches(2.2))
+        card = s14.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, Inches(5.7), Inches(2.2))
         card.fill.solid()
         card.fill.fore_color.rgb = COLOR_CARD
         card.line.color.rgb = COLOR_BORDER
 
-        tb = s11.shapes.add_textbox(x + Inches(0.2), y + Inches(0.15), Inches(5.3), Inches(1.9))
+        tb = s14.shapes.add_textbox(x + Inches(0.2), y + Inches(0.15), Inches(5.3), Inches(1.9))
         tf = tb.text_frame
         tf.word_wrap = True
 
@@ -766,49 +917,49 @@ def create_deck():
         p.space_before = Pt(4)
 
     # =========================================================================
-    # SLIDE 12: Summary & Acknowledgements (Dark Theme)
+    # SLIDE 15: Summary, Multi-Semester Roadmap & Acknowledgements
     # =========================================================================
-    s12 = add_blank_slide(bg_color=COLOR_PRIMARY)
+    s15 = add_blank_slide(bg_color=COLOR_PRIMARY)
     
-    tb12 = s12.shapes.add_textbox(Inches(1.0), Inches(1.0), Inches(11.3), Inches(5.5))
-    tf12 = tb12.text_frame
-    tf12.word_wrap = True
+    tb15 = s15.shapes.add_textbox(Inches(1.0), Inches(0.8), Inches(11.3), Inches(6.0))
+    tf15 = tb15.text_frame
+    tf15.word_wrap = True
 
-    p = tf12.paragraphs[0]
-    p.text = "PROJECT TRIATHLON • CONCLUSION"
+    p = tf15.paragraphs[0]
+    p.text = "PROJECT TRIATHLON • CONCLUSION & MULTI-SEMESTER ROADMAP"
     p.font.size = Pt(12)
     p.font.bold = True
     p.font.color.rgb = COLOR_SECONDARY
 
-    p = tf12.add_paragraph()
+    p = tf15.add_paragraph()
     p.text = "Principled Classical Learning Over Physical Statistics\nProvides High-Speed, Robust Edge Vision Restoration"
-    p.font.size = Pt(26)
+    p.font.size = Pt(24)
     p.font.bold = True
     p.font.color.rgb = RGBColor(255, 255, 255)
-    p.space_before = Pt(6)
+    p.space_before = Pt(4)
 
-    p = tf12.add_paragraph()
-    p.text = "Key Takeaways:\n" \
-             "1. Algorithm selection over a fixed classical portfolio out-performs static deployment by +22.61% accuracy and saves 1.574 dB regret (p < 10^-10).\n" \
-             "2. The 8-dimensional handcrafted degradation space extracts in < 20 ms and predicts in 0.8 ms on CPU — entirely avoiding GPU dependencies.\n" \
-             "3. Downstream feature repeatability is restored from 6.10% to 49.94%, confirming direct utility for robot navigation and surveillance.\n" \
-             "4. All experimental code, IEEE Transactions manuscript, and deployment tools are completed and verified."
-    p.font.size = Pt(13)
+    p = tf15.add_paragraph()
+    p.text = "Multi-Semester Milestone Progress:\n" \
+             "• Phase 0 (COMPLETED): Algorithm selection beats static baseline by +22.61% accuracy, saves 1.574 dB regret (p < 10^-10).\n" \
+             "• Phase 1 (COMPLETED): YOLOv8 object detection recall boosted to 67.15% (+18.6% over Retinex); ONNX profile runs at 84.7 FPS (11.8 ms) on CPU.\n" \
+             "• Phase 2 (COMPLETED): 10D physical features and 2-stage cascade slash blur regret by 4.70 dB, delivering +0.915 dB net gain across all hazards.\n" \
+             "• Phase 3 (PLANNED - Sem 6/7): Hybrid classical-neural portfolios to dynamically balance fidelity against milliwatt power budgets."
+    p.font.size = Pt(12)
     p.font.color.rgb = RGBColor(203, 213, 225)
-    p.space_before = Pt(14)
+    p.space_before = Pt(10)
 
-    p = tf12.add_paragraph()
+    p = tf15.add_paragraph()
     p.text = "Thank you! Open for Questions and Guidance from Prof. Kishor P. Upla."
-    p.font.size = Pt(16)
+    p.font.size = Pt(15)
     p.font.bold = True
     p.font.color.rgb = COLOR_ACCENT
-    p.space_before = Pt(20)
+    p.space_before = Pt(14)
 
-    p = tf12.add_paragraph()
-    p.text = "Ananya Kasaudhan • Suyash Srivastav • Logi Vasan | Dept. of ECE, Gati Shakti Vishwavidyalaya, Vadodara\nSupervisor: Prof. Kishor P. Upla | Dept. of Electronics Engineering, SVNIT Surat"
+    p = tf15.add_paragraph()
+    p.text = "Ananya Kasaudhan • Suyash Srivastav • Logi Vasan | Dept. of ECE, Gati Shakti Vishwavidyalaya, Vadodara\nSupervisor: Prof. Kishor P. Upla (Senior Member, IEEE) | Dept. of Electronics Engineering, SVNIT Surat"
     p.font.size = Pt(11)
     p.font.color.rgb = RGBColor(148, 163, 184)
-    p.space_before = Pt(8)
+    p.space_before = Pt(6)
 
     # Save presentation
     out_dir = "report"

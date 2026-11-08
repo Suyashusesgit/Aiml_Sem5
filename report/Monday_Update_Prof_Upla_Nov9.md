@@ -8,13 +8,15 @@
 
 ---
 
-### 1. Executive Summary & Day-5 Milestone Completion
-We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Phase 0 Kickstart Plan:
-1. **Methods & Preprocessing Contract**: Six enhancement operators (Identity, Gamma $\gamma=0.5$, CLAHE, Global Histogram Equalization, Retinex $\sigma=80$, Bilateral Filter + Unsharp Mask) locked and validated on LOL v1.
-2. **Feature Extraction Pipeline**: 7 physical degradation descriptors ($\mu, \sigma, H, \sigma_n, D, |\nabla I|, C$) extracting in $<2\text{ ms}$ exclusively on degraded inputs.
-3. **Rigorous Validation**: 5-fold `GroupKFold` cross-validation by physical scene across 3 random seeds (15 folds per model) with encapsulated scaler pipelines to prevent data leakage.
-4. **Primary Benchmark**: Random Forest selector outperforms the best fixed baseline by **$+22.61\%$ accuracy** ($p = 9.44 \times 10^{-16}$) and cuts mean regret by **$57.35\%$** (saving $1.574\text{ dB}$, $p = 1.90 \times 10^{-11}$).
-5. **Downstream CV Utility**: Demonstrates structural keypoint recovery jumping from $6.10\%$ on raw dark images up to $49.94\%$ with our selector.
+### 1. Executive Summary & Multi-Phase Milestone Completion
+We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Phase 0 Kickstart Plan, and substantially advanced into **Phase 1** and **Phase 2**:
+1. **Methods & Preprocessing Contract (Phase 0)**: Six enhancement operators locked and validated on LOL v1.
+2. **Feature Extraction Pipeline (Phase 0)**: 7 physical degradation categories (8 scalar descriptors) extracting in $<2\text{ ms}$ exclusively on degraded inputs.
+3. **Rigorous Validation (Phase 0)**: 5-fold `GroupKFold` cross-validation by physical scene across 3 random seeds (15 folds per model) with encapsulated scaler pipelines to prevent data leakage.
+4. **Primary Benchmark (Phase 0)**: Random Forest selector outperforms the best fixed baseline by **$+22.61\%$ accuracy** ($p = 9.44 \times 10^{-16}$) and cuts mean regret by **$57.35\%$** (saving $1.574\text{ dB}$, $p = 1.90 \times 10^{-11}$).
+5. **Downstream YOLOv8 Object Detection Benchmark (Phase 1)**: Demonstrated that while static Retinex degrades per-scene detection recall to $48.53\%$ (-5.88% vs raw), our selector achieves **$67.15\%$ recall** (+18.62% over Retinex, 37 boxes vs 30 boxes).
+6. **Edge Hardware Profiling & ONNX Acceleration (Phase 1)**: Serialized `models/rf_selector.onnx` (4.20 MB), running at **$11.81\text{ ms}$ total pipeline latency ($84.7\text{ FPS}$)** on a single-core CPU with zero GPU dependencies and $54.4\text{ MB}$ peak RAM.
+7. **Multi-Degradation Cross-Transferability & Hierarchical Cascading (Phase 2)**: Extended to 10D physical features and 8 operators across low-light, blur, haze, and composite noise, slashing blur regret by **$4.70\text{ dB}$** and yielding a **$+0.915\text{ dB}$ net regret saving** across all optical hazards.
 
 ---
 
@@ -34,12 +36,19 @@ We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Ph
 
 ---
 
-### 3. Official Held-Out Test Set Verification (`eval15`)
+### 3. Downstream Perception & Multi-Hazard Benchmarks
 
-On the unseen 15 official test scenes:
-- **Best Fixed Method**: $46.67\%$ accuracy, $2.777\text{ dB}$ mean regret, $11.448\text{ dB}$ max regret.
-- **Random Forest Selector**: **$66.67\%$ accuracy**, **$1.283\text{ dB}$ mean regret**, **$5.328\text{ dB}$ max regret**.
-- *Risk Capping*: The maximum worst-case fidelity error is halved from $11.45\text{ dB}$ to $5.33\text{ dB}$.
+- **YOLOv8 Object Detection (`eval15`)**:
+  - Raw Low-Light: 26 boxes (54.41% recall)
+  - Static Retinex: 30 boxes (48.53% recall — noise/halo drop)
+  - **Proposed RF Selector: 37 boxes (67.15% recall, +18.62% over Retinex)**
+- **Edge Embedded Profiling (Apple Silicon Single-Core CPU)**:
+  - Total latency: **11.81 ms** (84.7 FPS) | Peak RAM: **54.4 MB** | Model: **4.20 MB ONNX**
+  - Compared to Zero-DCE (42.8 ms CPU), RetinexNet (48.0 ms GPU), Restormer (320.0 ms GPU).
+- **Multi-Hazard Cross-Transfer Cascade**:
+  - Defocus blur regret: cut from $15.10\text{ dB} \to 10.41\text{ dB}$ (**saves 4.70 dB**).
+  - Atmospheric haze regret: cut from $3.57\text{ dB} \to 2.40\text{ dB}$ (**saves 1.17 dB**).
+  - Overall net regret saving: **+0.915 dB**.
 
 ---
 
@@ -50,14 +59,17 @@ On the unseen 15 official test scenes:
 | **Data & Scene Splits** | Ananya (GSV) | Completed | `data/lol_dataset/our485`, `eval15` |
 | **Methods & Oracle Cache** | Suyash (GSV) | Completed | `src/methods.py`, `results/scores.csv` |
 | **Features, CV & Demo** | Logi (GSV) | Completed | `src/features.py`, `src/train.py`, `src/demo.py` |
+| **YOLOv8 Detection & Edge Profiling** | Team | Completed | `src/downstream_yolo_detection.py`, `src/edge_hardware_profile.py` |
+| **Multi-Hazard Cascade Engine** | Team | Completed | `src/multi_degradation.py`, `models/rf_selector.onnx` |
 | **Interactive Web App** | Team | Running | `http://localhost:8501` (`app.py`) |
-| **IEEE Conference Paper** | Team | Camera-Ready | `report/IEEE_Paper_Image_Enhancement_Selection.tex` |
+| **IEEE Transactions Paper (11 Figs, 9 Tabs)** | Team | Camera-Ready | `report/IEEE_Paper_Image_Enhancement_Selection.tex` |
 | **Overleaf Archive** | Team | Ready | `report/IEEE_Paper_Overleaf_Package.zip` |
+| **15-Slide Presentation Deck** | Team | Ready | `report/Project_Triathlon_Executive_Presentation.pptx` |
+| **Comprehensive Word Walkthrough** | Team | Ready | `report/Project_Triathlon_Step_by_Step_Walkthrough.docx` |
 
 ---
 
-### 5. Next Steps for Week 2 (10–16 Nov 2026)
-1. **LOL-v2 Synthetic Verification**: Test selector transferability on synthetic LOL-v2 pairs (Ananya).
-2. **Ablation Deep-Dive**: Quantify impact of omitting Dark Channel Prior vs. Noise estimators in the report (Suyash).
-3. **Stand-Alone Demo CLI Validation**: Validate zero-reference inference on consumer camera night images (Logi).
-
+### 5. Next Steps for Supervisor Review & Capstone Defense
+1. **Overleaf PDF Verification**: Finalize supervisor review on the compiled camera-ready PDF.
+2. **Interactive Live Demonstration**: Present real-time Streamlit app (`app.py`) with before/after slider and YOLOv8 detection overlay during the project evaluation.
+3. **Conference Submission**: Prepare IEEE Transactions / Conference submission package.

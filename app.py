@@ -29,9 +29,34 @@ from src.methods import METHODS
 from src.features import extract_features, FEATURE_NAMES
 from src.labels import compute_psnr, compute_ssim
 from src.dataset import resize_long_side
+from src.multi_degradation import high_boost_sharpen, dcp_dehaze
+
+PORTFOLIO_METHODS = {
+    **METHODS,
+    "high_boost_sharpen": high_boost_sharpen,
+    "dcp_dehaze": dcp_dehaze,
+}
 
 MODEL_PATH = "models/rf_selector.joblib"
 MODEL = None
+YOLO_MODEL = None
+
+
+def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20):
+    """Executes YOLOv8n object detection and renders bounding boxes."""
+    global YOLO_MODEL
+    try:
+        if YOLO_MODEL is None:
+            from ultralytics import YOLO
+            YOLO_MODEL = YOLO("yolov8n.pt")
+        res = YOLO_MODEL.predict(img_bgr, conf=conf_thresh, verbose=False)[0]
+        annotated = res.plot()
+        n_boxes = len(res.boxes)
+        mean_conf = float(res.boxes.conf.mean().item()) if n_boxes > 0 else 0.0
+        return annotated, n_boxes, round(mean_conf, 3)
+    except Exception as e:
+        print(f"YOLO detection warning: {e}")
+        return img_bgr.copy(), 0, 0.0
 
 
 def get_model():
@@ -146,12 +171,18 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
     heatmap_bgr = cv2.applyColorMap(diff_amp, cv2.COLORMAP_TURBO)
     heatmap_b64 = img_to_base64(heatmap_bgr)
 
+    # 3d. Downstream YOLOv8 object detection overlay
+    yolo_deg_img, yolo_deg_boxes, yolo_deg_conf = get_yolo_detections(deg)
+    yolo_enh_img, yolo_enh_boxes, yolo_enh_conf = get_yolo_detections(enhanced_bgr)
+    yolo_deg_b64 = img_to_base64(yolo_deg_img)
+    yolo_enh_b64 = img_to_base64(yolo_enh_img)
+
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
-    # 4. Candidate scoring across all 6 methods
+    # 4. Candidate scoring across all 8 portfolio methods
     ref_eval = None
     all_methods_out = {}
-    for m_name, m_fn in METHODS.items():
+    for m_name, m_fn in PORTFOLIO_METHODS.items():
         if m_name == "bilat_unsharp" and enforce_safeguards and safeguard_active and is_soft_or_blurry and feats["noise"] < 2.5:
             cand = enhanced_bgr.copy()
         else:
@@ -202,6 +233,12 @@ def process_image(img_bgr: np.ndarray, ref_bgr: np.ndarray = None, enforce_safeg
         "keypoints_image": f"data:image/png;base64,{kp_b64}",
         "heatmap_image": f"data:image/png;base64,{heatmap_b64}",
         "keypoint_count": len(kp),
+        "yolo_deg_image": f"data:image/png;base64,{yolo_deg_b64}",
+        "yolo_enh_image": f"data:image/png;base64,{yolo_enh_b64}",
+        "yolo_deg_boxes": yolo_deg_boxes,
+        "yolo_enh_boxes": yolo_enh_boxes,
+        "yolo_deg_conf": yolo_deg_conf,
+        "yolo_enh_conf": yolo_enh_conf,
         "reference_eval": ref_eval,
         "all_methods": all_methods_out,
     }
@@ -276,7 +313,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .winner-banner { background: #dcfce7; border: 1px solid #86efac; color: #15803d; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
     .winner-banner strong { font-size: 16px; }
     
-    .methods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+    .methods-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    @media (max-width: 900px) { .methods-grid { grid-template-columns: repeat(2, 1fr); } }
     .method-tile { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; text-align: center; font-size: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
     .method-tile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.12); border-color: #94a3b8; }
     .method-tile img { width: 100%; height: 140px; object-fit: cover; }
@@ -289,7 +327,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <header>
       <h1>Project Triathlon · Low-Light Image Enhancement Selector</h1>
       <p>5th Semester Capstone Project · Gati Shakti Vishwavidyalaya, Vadodara · Supervised by Prof. Kishor P. Upla (SVNIT Surat)</p>
-      <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest</div>
+      <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest · YOLOv8 Downstream</div>
     </header>
 
     <div class="grid">
@@ -363,6 +401,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <button id="btnSide" class="badge-btn active" onclick="setViewMode('side')">Side-by-Side</button>
               <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
               <button id="btnDiff" class="badge-btn" onclick="setViewMode('diff')">Edge Delta Heatmap</button>
+              <button id="btnYolo" class="badge-btn" onclick="setViewMode('yolo')">🎯 YOLOv8 Detection (<span id="yoloCount">0</span>)</button>
               <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
             </div>
           </div>
@@ -403,10 +442,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <img id="diffHeatmap" src="" alt="Edge Difference">
             </div>
           </div>
+
+          <!-- Mode 4: YOLOv8 Object Detection Viewer -->
+          <div id="yoloViewer" class="viewer" style="display:none;">
+            <div class="img-box">
+              <div class="img-label" id="yoloDegLabel">Degraded Input · YOLOv8n (0 boxes)</div>
+              <img id="yoloDeg" src="" alt="YOLO Degraded">
+            </div>
+            <div class="img-box">
+              <div class="img-label" id="yoloEnhLabel">★ Enhanced Output · YOLOv8n (0 boxes) ★</div>
+              <img id="yoloEnh" src="" alt="YOLO Enhanced">
+            </div>
+          </div>
         </div>
 
         <div class="card">
-          <h2>Portfolio Comparison (All 6 Enhancers)</h2>
+          <h2>Portfolio Comparison (All 8 Multi-Hazard Enhancers)</h2>
           <div class="methods-grid" id="methodsGrid">
             <!-- Dynamically populated -->
           </div>
@@ -456,9 +507,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('btnSide').classList.toggle('active', mode === 'side');
       document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
       document.getElementById('btnDiff').classList.toggle('active', mode === 'diff');
+      document.getElementById('btnYolo').classList.toggle('active', mode === 'yolo');
       document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
       document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
       document.getElementById('diffViewer').style.display = (mode === 'diff') ? 'grid' : 'none';
+      document.getElementById('yoloViewer').style.display = (mode === 'yolo') ? 'grid' : 'none';
       if (mode === 'swipe') {
         syncSwipeWidth();
       }
@@ -657,6 +710,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       if (data.heatmap_image) {
         document.getElementById('diffDegraded').src = data.degraded_image;
         document.getElementById('diffHeatmap').src = data.heatmap_image;
+      }
+      if (data.yolo_enh_image) {
+        document.getElementById('yoloDeg').src = data.yolo_deg_image;
+        document.getElementById('yoloEnh').src = data.yolo_enh_image;
+        document.getElementById('yoloCount').innerText = data.yolo_enh_boxes || '0';
+        document.getElementById('yoloDegLabel').innerText = `Degraded Input · YOLOv8n: ${data.yolo_deg_boxes || 0} boxes (avg conf: ${data.yolo_deg_conf || 0})`;
+        document.getElementById('yoloEnhLabel').innerText = `★ Enhanced: ${data.yolo_enh_boxes || 0} boxes (avg conf: ${data.yolo_enh_conf || 0}) ★`;
       }
       syncSwipeWidth();
 
