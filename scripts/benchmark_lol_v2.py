@@ -24,11 +24,18 @@ import pandas as pd
 # Ensure repository root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.methods import METHODS
-from src.features import extract_features, FEATURE_NAMES
-from src.labels import compute_psnr, compute_ssim, score_pair
-from src.dataset_v2 import get_lol_v2_manifest, load_and_preprocess_pair_v2
-from src.demo import get_or_train_selector
+try:
+    from src.methods import METHODS
+    from src.features import extract_features, FEATURE_NAMES
+    from src.labels import compute_psnr, compute_ssim, score_pair
+    from src.dataset_v2 import get_lol_v2_manifest, load_and_preprocess_pair_v2
+    from src.demo import get_or_train_selector
+except ImportError:
+    from methods import METHODS  # type: ignore[import-not-found]
+    from features import extract_features, FEATURE_NAMES  # type: ignore[import-not-found]
+    from labels import compute_psnr, compute_ssim, score_pair  # type: ignore[import-not-found]
+    from dataset_v2 import get_lol_v2_manifest, load_and_preprocess_pair_v2  # type: ignore[import-not-found]
+    from demo import get_or_train_selector  # type: ignore[import-not-found]
 
 
 def evaluate_oracle_and_scores(manifest: List[Dict[str, Any]], split_name: str) -> pd.DataFrame:

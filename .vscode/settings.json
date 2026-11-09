@@ -1,10 +1,14 @@
 {
   "python.defaultInterpreterPath": "/opt/homebrew/opt/python@3.14/bin/python3.14",
   "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/src",
     "/opt/homebrew/lib/python3.14/site-packages",
     "/Users/home/Library/Python/3.14/lib/python/site-packages"
   ],
   "python.autoComplete.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/src",
     "/opt/homebrew/lib/python3.14/site-packages",
     "/Users/home/Library/Python/3.14/lib/python/site-packages"
   ],

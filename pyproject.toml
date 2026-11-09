@@ -1,5 +1,15 @@
 [tool.pyrefly]
-project-includes = ["src/**", "scripts/**", "tests/**", "app.py", "main.py"]
+disable-search-path-heuristics = true
+search-path = [".", "src"]
+
+project-includes = [
+    "src/**",
+    "scripts/**",
+    "tests/**",
+    "app.py",
+    "main.py"
+]
+
 project-excludes = [
     "notebooks/**",
     "**/*.ipynb",
@@ -10,3 +20,5 @@ project-excludes = [
     "**/__pycache__/**"
 ]
 
+[tool.pyrefly.errors]
+untyped-import = "ignore"

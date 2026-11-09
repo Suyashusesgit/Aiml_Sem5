@@ -23,12 +23,20 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import cv2
 import numpy as np
 
-from src.dataset_v2 import (
-    LOL_V2_BASE_DIR,
-    synthesize_lol_v2_pair,
-    get_lol_v2_manifest,
-    load_and_preprocess_pair_v2
-)
+try:
+    from src.dataset_v2 import (
+        LOL_V2_BASE_DIR,
+        synthesize_lol_v2_pair,
+        get_lol_v2_manifest,
+        load_and_preprocess_pair_v2
+    )
+except ImportError:
+    from dataset_v2 import (  # type: ignore[import-not-found]
+        LOL_V2_BASE_DIR,
+        synthesize_lol_v2_pair,
+        get_lol_v2_manifest,
+        load_and_preprocess_pair_v2
+    )
 
 
 def ensure_v2_directories(base_dir: str = LOL_V2_BASE_DIR):
