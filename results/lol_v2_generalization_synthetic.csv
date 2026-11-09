@@ -1,0 +1,6 @@
+Strategy,Top-1 Accuracy (%),Mean Regret (dB),Max Regret (dB),Mean PSNR (dB),Mean SSIM
+Random Choice (Chance),22.0,4.557,13.495,13.42,0.3501
+Best Fixed Method (Retinex),52.0,0.963,4.294,17.01,0.5115
+Hand-Written Heuristic Rule,4.0,8.362,13.438,9.61,0.4111
+Proposed Selector (Zero-Shot Transfer),26.0,2.316,7.483,15.66,0.4211
+Theoretical Oracle Upper Bound,100.0,0.0,0.0,17.98,0.4716

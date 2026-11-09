@@ -1,0 +1,12 @@
+[tool.pyrefly]
+project-includes = ["src/**", "scripts/**", "tests/**", "app.py", "main.py"]
+project-excludes = [
+    "notebooks/**",
+    "**/*.ipynb",
+    "report/**",
+    "data/**",
+    "results/**",
+    "**/.ipynb_checkpoints/**",
+    "**/__pycache__/**"
+]
+

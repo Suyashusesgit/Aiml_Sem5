@@ -7,6 +7,17 @@
   "python.autoComplete.extraPaths": [
     "/opt/homebrew/lib/python3.14/site-packages",
     "/Users/home/Library/Python/3.14/lib/python/site-packages"
+  ],
+  "python.pyrefly.extraProjectExcludes": [
+    "notebooks/**",
+    "**/*.ipynb",
+    "report/**",
+    "data/**",
+    "results/**"
+  ],
+  "python.analysis.ignore": [
+    "notebooks/**",
+    "*.ipynb",
+    "report/**"
   ]
 }
-

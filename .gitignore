@@ -5,6 +5,7 @@ __pycache__/
 
 # Data directories (raw image binaries)
 data/lol_dataset/
+data/lol_v2/
 data/*.zip
 
 # Virtual environments
@@ -19,7 +20,12 @@ ENV/
 
 # Demo scratch output
 results/demo_output/
-report/*.zip
+
+# Papers, Reports, and Presentations (Do NOT push to GitHub)
+report/
+*.pdf
+*.docx
+*.pptx
 
 # OS generated files
 .DS_Store
@@ -29,4 +35,3 @@ report/*.zip
 .Trashes
 ehthumbs.db
 Thumbs.db
-

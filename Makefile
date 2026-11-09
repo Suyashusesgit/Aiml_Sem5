@@ -1,4 +1,4 @@
-.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness presentation docx package pdf watch_paper test clean
+.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness ingest_lol_v2 benchmark_v2 presentation docx package pdf report_pdf watch_paper test clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
@@ -51,6 +51,12 @@ multi_degradation:
 robustness:
 	python3 src/robustness_sweep.py
 
+ingest_lol_v2:
+	python3 scripts/ingest_lol_v2.py
+
+benchmark_v2:
+	python3 scripts/benchmark_lol_v2.py --split synthetic
+
 presentation:
 	python3 scripts/generate_presentation.py
 	python3 scripts/generate_handout_docx.py
@@ -64,6 +70,10 @@ package:
 pdf:
 	cd report && tectonic IEEE_Paper_Image_Enhancement_Selection.tex
 	@echo "SUCCESS: Camera-ready PDF compiled at report/IEEE_Paper_Image_Enhancement_Selection.pdf"
+
+report_pdf:
+	cd report && tectonic Suyash_Srivastav_Completion_Report.tex
+	@echo "SUCCESS: Completion Report PDF compiled at report/Suyash_Srivastav_Completion_Report.pdf"
 
 watch_paper:
 	python3 scripts/watch_paper.py
