@@ -368,14 +368,33 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
           </div>
 
-          <div style="margin-top:14px; font-size:13px; font-weight:600;">Or Pick LOL v1 Benchmark Sample:</div>
-          <div class="samples">
-            <button class="btn-sample" onclick="loadSample('102')">102 (Gamma)</button>
-            <button class="btn-sample" onclick="loadSample('101')">101 (HistEq)</button>
-            <button class="btn-sample" onclick="loadSample('109')">109 (Retinex)</button>
-            <button class="btn-sample" onclick="loadSample('1')">1 (eval15)</button>
-            <button class="btn-sample" onclick="loadSample('22')">22 (eval15)</button>
-            <button class="btn-sample" onclick="loadSample('79')">79 (eval15)</button>
+          <div style="margin-top:14px; font-size:13px; font-weight:600;">Pick Benchmark Dataset & Sample:</div>
+
+          <div style="margin-top:6px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">LOL-v1 Benchmark (Baseline)</div>
+          <div class="samples" style="margin-top:4px;">
+            <button class="btn-sample" onclick="loadSample('102', 'v1')">102 (Gamma)</button>
+            <button class="btn-sample" onclick="loadSample('101', 'v1')">101 (HistEq)</button>
+            <button class="btn-sample" onclick="loadSample('109', 'v1')">109 (Retinex)</button>
+            <button class="btn-sample" onclick="loadSample('1', 'v1')">1 (eval15)</button>
+            <button class="btn-sample" onclick="loadSample('22', 'v1')">22 (eval15)</button>
+            <button class="btn-sample" onclick="loadSample('79', 'v1')">79 (eval15)</button>
+          </div>
+
+          <div style="margin-top:10px; font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">LOL-v2 Real (Cross-Sensor Hardware)</div>
+          <div class="samples" style="margin-top:4px;">
+            <button class="btn-sample" onclick="loadSample('151', 'v2_real')">151 (Retinex)</button>
+            <button class="btn-sample" onclick="loadSample('152', 'v2_real')">152 (HistEq)</button>
+            <button class="btn-sample" onclick="loadSample('154', 'v2_real')">154 (Gamma)</button>
+            <button class="btn-sample" onclick="loadSample('160', 'v2_real')">160 (Real)</button>
+            <button class="btn-sample" onclick="loadSample('167', 'v2_real')">167 (Real)</button>
+          </div>
+
+          <div style="margin-top:10px; font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">LOL-v2 Synthetic (Physical Poisson Degrader)</div>
+          <div class="samples" style="margin-top:4px;">
+            <button class="btn-sample" onclick="loadSample('10', 'v2_synthetic')">10 (Gamma)</button>
+            <button class="btn-sample" onclick="loadSample('100', 'v2_synthetic')">100 (HistEq)</button>
+            <button class="btn-sample" onclick="loadSample('105', 'v2_synthetic')">105 (Retinex)</button>
+            <button class="btn-sample" onclick="loadSample('104', 'v2_synthetic')">104 (Syn)</button>
           </div>
         </div>
 
@@ -674,11 +693,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       reader.readAsDataURL(file);
     }
 
-    async function loadSample(name) {
+    async function loadSample(name, dataset = '') {
       showLoading(`Loading benchmark sample #${name}...`);
       const isSafeguard = document.getElementById('chkSafeguard').checked;
       try {
-        const res = await fetch(`/api/sample?name=${name}&safeguard=${isSafeguard}`);
+        const res = await fetch(`/api/sample?name=${name}&dataset=${dataset}&safeguard=${isSafeguard}`);
         const data = await res.json();
         if (data.status === 'success') {
           renderResults(data);
@@ -815,21 +834,47 @@ class RequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/sample":
             params = urllib.parse.parse_qs(parsed.query)
             sample_id = params.get("name", ["102"])[0]
+            dataset_choice = params.get("dataset", [""])[0].lower()
             safeguard = params.get("safeguard", ["true"])[0].lower() in ["true", "1"]
             
-            # Check eval15 or our485
-            low_candidates = [
-                f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
-                f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
-                f"data/lol_dataset/our485/low/{sample_id}.png",
-                f"data/lol_dataset/eval15/low/{sample_id}.png",
-            ]
-            high_candidates = [
-                f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
-                f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
-                f"data/lol_dataset/our485/high/{sample_id}.png",
-                f"data/lol_dataset/eval15/high/{sample_id}.png",
-            ]
+            low_candidates = []
+            high_candidates = []
+
+            if dataset_choice == "v2_real":
+                low_candidates = [
+                    f"data/lol_v2/real/low/{sample_id}.png",
+                    f"data/lol_v2/real/low/{sample_id}.jpg",
+                ]
+                high_candidates = [
+                    f"data/lol_v2/real/high/{sample_id}.png",
+                    f"data/lol_v2/real/high/{sample_id}.jpg",
+                ]
+            elif dataset_choice == "v2_synthetic":
+                low_candidates = [
+                    f"data/lol_v2/synthetic/low/{sample_id}.png",
+                    f"data/lol_v2/synthetic/low/{sample_id}.jpg",
+                ]
+                high_candidates = [
+                    f"data/lol_v2/synthetic/high/{sample_id}.png",
+                    f"data/lol_v2/synthetic/high/{sample_id}.jpg",
+                ]
+            else:
+                low_candidates = [
+                    f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
+                    f"data/lol_dataset/our485/low/{sample_id}.png",
+                    f"data/lol_dataset/eval15/low/{sample_id}.png",
+                    f"data/lol_v2/real/low/{sample_id}.png",
+                    f"data/lol_v2/synthetic/low/{sample_id}.png",
+                ]
+                high_candidates = [
+                    f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
+                    f"data/lol_dataset/our485/high/{sample_id}.png",
+                    f"data/lol_dataset/eval15/high/{sample_id}.png",
+                    f"data/lol_v2/real/high/{sample_id}.png",
+                    f"data/lol_v2/synthetic/high/{sample_id}.png",
+                ]
 
             low_path = next((p for p in low_candidates if os.path.exists(p)), None)
             high_path = next((p for p in high_candidates if os.path.exists(p)), None)
