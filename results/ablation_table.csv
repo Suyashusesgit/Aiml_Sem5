@@ -1,31 +1,31 @@
 Ablation_Group,Num_Features,Model,Accuracy_Mean (%),Accuracy_Std (%),Mean_Regret_dB,Mean_Regret_Std_dB
-All Physical (8),8,Random Choice,17.66,4.77,6.916,0.511
-All Physical (8),8,Best Fixed Method,45.57,3.41,2.734,0.118
-All Physical (8),8,Hand-Written Rule,12.16,3.29,6.926,0.36
-All Physical (8),8,Logistic Regression,61.86,2.53,1.421,0.213
-All Physical (8),8,Random Forest,68.18,3.49,1.16,0.236
-All Physical (8),8,XGBoost,67.7,4.9,1.249,0.322
-Without Colour (7),7,Random Choice,17.66,4.77,6.916,0.511
-Without Colour (7),7,Best Fixed Method,45.57,3.41,2.734,0.118
-Without Colour (7),7,Hand-Written Rule,12.16,3.29,6.926,0.36
-Without Colour (7),7,Logistic Regression,60.0,2.47,1.46,0.145
-Without Colour (7),7,Random Forest,66.74,2.54,1.241,0.22
-Without Colour (7),7,XGBoost,67.22,3.39,1.24,0.246
-Without Noise & Edges (5),5,Random Choice,17.66,4.77,6.916,0.511
-Without Noise & Edges (5),5,Best Fixed Method,45.57,3.41,2.734,0.118
-Without Noise & Edges (5),5,Hand-Written Rule,12.16,3.29,6.926,0.36
-Without Noise & Edges (5),5,Logistic Regression,59.38,2.81,1.515,0.166
-Without Noise & Edges (5),5,Random Forest,65.91,5.04,1.261,0.346
-Without Noise & Edges (5),5,XGBoost,65.36,2.98,1.34,0.184
-Brightness & Contrast Only (2),2,Random Choice,17.66,4.77,6.916,0.511
-Brightness & Contrast Only (2),2,Best Fixed Method,45.57,3.41,2.734,0.118
-Brightness & Contrast Only (2),2,Hand-Written Rule,12.16,3.29,6.926,0.36
-Brightness & Contrast Only (2),2,Logistic Regression,53.4,4.94,1.885,0.304
-Brightness & Contrast Only (2),2,Random Forest,61.24,3.19,1.528,0.215
-Brightness & Contrast Only (2),2,XGBoost,56.77,4.78,1.894,0.427
-With Engineered Interactions (10),10,Random Choice,17.66,4.77,6.916,0.511
-With Engineered Interactions (10),10,Best Fixed Method,45.57,3.41,2.734,0.118
-With Engineered Interactions (10),10,Hand-Written Rule,12.16,3.29,6.926,0.36
-With Engineered Interactions (10),10,Logistic Regression,61.24,2.89,1.408,0.165
-With Engineered Interactions (10),10,Random Forest,67.22,3.61,1.231,0.161
-With Engineered Interactions (10),10,XGBoost,68.32,3.81,1.206,0.184
+All Physical (8),8,Random Choice,17.46,4.71,6.95,0.499
+All Physical (8),8,Best Fixed Method,45.57,4.67,2.734,0.342
+All Physical (8),8,Hand-Written Rule,12.16,3.71,6.926,0.582
+All Physical (8),8,Logistic Regression,60.62,3.15,1.389,0.205
+All Physical (8),8,Random Forest,53.47,2.09,1.888,0.174
+All Physical (8),8,XGBoost,50.17,2.96,2.15,0.306
+Without Colour (7),7,Random Choice,17.46,4.71,6.95,0.499
+Without Colour (7),7,Best Fixed Method,45.57,4.67,2.734,0.342
+Without Colour (7),7,Hand-Written Rule,12.16,3.71,6.926,0.582
+Without Colour (7),7,Logistic Regression,59.79,4.28,1.395,0.215
+Without Colour (7),7,Random Forest,53.26,2.05,1.986,0.321
+Without Colour (7),7,XGBoost,50.31,1.85,2.214,0.331
+Without Noise & Edges (5),5,Random Choice,17.46,4.71,6.95,0.499
+Without Noise & Edges (5),5,Best Fixed Method,45.57,4.67,2.734,0.342
+Without Noise & Edges (5),5,Hand-Written Rule,12.16,3.71,6.926,0.582
+Without Noise & Edges (5),5,Logistic Regression,57.32,5.93,1.62,0.306
+Without Noise & Edges (5),5,Random Forest,51.07,5.59,1.895,0.402
+Without Noise & Edges (5),5,XGBoost,50.79,4.23,2.144,0.381
+Brightness & Contrast Only (2),2,Random Choice,17.46,4.71,6.95,0.499
+Brightness & Contrast Only (2),2,Best Fixed Method,45.57,4.67,2.734,0.342
+Brightness & Contrast Only (2),2,Hand-Written Rule,12.16,3.71,6.926,0.582
+Brightness & Contrast Only (2),2,Logistic Regression,55.26,5.4,1.847,0.388
+Brightness & Contrast Only (2),2,Random Forest,46.53,7.14,2.234,0.36
+Brightness & Contrast Only (2),2,XGBoost,49.35,9.71,2.226,0.5
+With Engineered Interactions (10),10,Random Choice,17.46,4.71,6.95,0.499
+With Engineered Interactions (10),10,Best Fixed Method,45.57,4.67,2.734,0.342
+With Engineered Interactions (10),10,Hand-Written Rule,12.16,3.71,6.926,0.582
+With Engineered Interactions (10),10,Logistic Regression,60.82,4.47,1.358,0.232
+With Engineered Interactions (10),10,Random Forest,55.19,1.5,1.874,0.265
+With Engineered Interactions (10),10,XGBoost,51.62,2.98,2.094,0.294
