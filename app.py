@@ -860,20 +860,20 @@ class RequestHandler(BaseHTTPRequestHandler):
                 ]
             else:
                 low_candidates = [
-                    f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
                     f"data/lol_dataset/our485/low/{sample_id}.png",
                     f"data/lol_dataset/eval15/low/{sample_id}.png",
                     f"data/lol_v2/real/low/{sample_id}.png",
                     f"data/lol_v2/synthetic/low/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
                 ]
                 high_candidates = [
-                    f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
                     f"data/lol_dataset/our485/high/{sample_id}.png",
                     f"data/lol_dataset/eval15/high/{sample_id}.png",
                     f"data/lol_v2/real/high/{sample_id}.png",
                     f"data/lol_v2/synthetic/high/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
+                    f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
                 ]
 
             low_path = next((p for p in low_candidates if os.path.exists(p)), None)
@@ -922,7 +922,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 body = self.rfile.read(length)
                 payload = json.loads(body.decode("utf-8"))
-                b64_img = payload.get("image", "")
+                b64_img = payload.get("image") or payload.get("image_base64") or ""
                 enforce_safeguard = payload.get("safeguard", True)
 
                 deg_img = base64_to_img(b64_img)
