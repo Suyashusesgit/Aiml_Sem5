@@ -128,6 +128,37 @@ class TestMultiDegradationPipeline(unittest.TestCase):
         self.assertEqual(dehazed.dtype, np.uint8)
 
 
+class TestDatasetAndSceneSplits(unittest.TestCase):
+    def test_parse_scene_id_grouping(self):
+        from src.dataset import parse_scene_id
+        # Multi-shot variants must share identical scene group
+        self.assertEqual(parse_scene_id("1_0.png"), "1")
+        self.assertEqual(parse_scene_id("1_1.png"), "1")
+        self.assertEqual(parse_scene_id("1_2.png"), "1")
+        self.assertEqual(parse_scene_id("1_ambient.png"), "1")
+        self.assertEqual(parse_scene_id("2_0.png"), "2")
+        self.assertEqual(parse_scene_id("10_1.png"), "10")
+        # Standard numeric stems
+        self.assertEqual(parse_scene_id("1.png"), "1")
+        self.assertEqual(parse_scene_id("10.png"), "10")
+        self.assertEqual(parse_scene_id("100.png"), "100")
+        self.assertEqual(parse_scene_id("780.png"), "780")
+
+    def test_scene_splits_csv_integrity(self):
+        import pandas as pd
+        csv_path = "data/scene_splits.csv"
+        if not os.path.exists(csv_path):
+            from src.dataset import export_scene_splits_csv
+            export_scene_splits_csv()
+
+        self.assertTrue(os.path.exists(csv_path))
+        df = pd.read_csv(csv_path)
+        self.assertEqual(list(df.columns), ["filename", "scene_id"])
+        self.assertEqual(len(df), 485)
+        self.assertEqual(df["filename"].isnull().sum(), 0)
+        self.assertEqual(df["scene_id"].isnull().sum(), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
 

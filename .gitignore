@@ -3,10 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Data directories (raw image binaries)
-data/lol_dataset/
-data/lol_v2/
-data/*.zip
+# Data directories (raw image binaries and local data)
+data/
+*.zip
 
 # Virtual environments
 .env

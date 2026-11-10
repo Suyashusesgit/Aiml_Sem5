@@ -74,6 +74,19 @@ def load_and_preprocess_pair(
     return clean_resized, deg_resized, scale
 
 
+def parse_scene_id(filename: str) -> str:
+    """
+    Parses a scene identifier from an image filename.
+    If the filename contains multi-shot or variant patterns (e.g. '1_0.png', '1_1.png', '1_low.png'),
+    all '1_*' files share the same physical scene group '1'.
+    For standard numeric filenames (e.g. '10.png'), returns the base stem '10'.
+    """
+    stem = os.path.splitext(os.path.basename(filename))[0]
+    if "_" in stem:
+        return stem.split("_")[0]
+    return stem
+
+
 def compute_perceptual_hash(img: np.ndarray) -> str:
     """Computes a 64-bit perceptual average hash for grouping duplicate scenes."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -154,7 +167,7 @@ def get_dataset_manifest(
         low_p = os.path.join(low_dir, f)
         high_p = os.path.join(high_dir, f)
         if os.path.exists(high_p):
-            scene_id = os.path.splitext(f)[0]
+            scene_id = parse_scene_id(f)
             manifest.append({
                 "filename": f,
                 "low_path": low_p,
@@ -163,3 +176,31 @@ def get_dataset_manifest(
             })
 
     return manifest
+
+
+def export_scene_splits_csv(
+    data_dir: str = "data/lol_dataset",
+    split_name: str = "our485",
+    output_csv_path: str = "data/scene_splits.csv"
+) -> str:
+    """
+    Parses filenames from low/ folder, groups scenes by prefix (so all 1_* share the same group),
+    and exports a clean CSV with columns: filename, scene_id.
+
+    Args:
+        data_dir: Base directory for the dataset.
+        split_name: 'our485' or 'eval15'.
+        output_csv_path: Destination path for the exported CSV.
+
+    Returns:
+        Absolute path to the created CSV file.
+    """
+    import csv
+    manifest = get_dataset_manifest(data_dir=data_dir, split_name=split_name)
+    os.makedirs(os.path.dirname(os.path.abspath(output_csv_path)), exist_ok=True)
+    with open(output_csv_path, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["filename", "scene_id"])
+        for item in manifest:
+            writer.writerow([item["filename"], item["scene_id"]])
+    return os.path.abspath(output_csv_path)
