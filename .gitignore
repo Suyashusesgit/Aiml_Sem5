@@ -6,6 +6,7 @@ __pycache__/
 # Data directories (raw image binaries and local data)
 data/
 *.zip
+*.pt
 
 # Virtual environments
 .env

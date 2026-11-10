@@ -23,8 +23,7 @@ import cv2
 import numpy as np
 import joblib
 
-# Set clean temporary directories for cache/settings
-os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+# Set clean temporary directory for matplotlib cache
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
 # Ensure project root and site-packages are in path
@@ -50,27 +49,6 @@ PORTFOLIO_METHODS = {
 
 MODEL_PATH = "models/rf_selector.joblib"
 MODEL = None
-YOLO_MODEL = None
-
-
-def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20) -> Tuple[np.ndarray, int, float]:
-    """Executes YOLOv8n object detection and renders bounding boxes."""
-    global YOLO_MODEL
-    try:
-        if YOLO_MODEL is None:
-            from ultralytics import YOLO
-            YOLO_MODEL = YOLO("yolov8n.pt")
-        predict_fn: Any = getattr(YOLO_MODEL, "predict", YOLO_MODEL)
-        results: Any = list(predict_fn(img_bgr, conf=conf_thresh, verbose=False))
-        res: Any = results[0]
-        annotated: np.ndarray = res.plot()
-        boxes: Any = getattr(res, "boxes", None)
-        n_boxes = len(boxes) if boxes is not None else 0
-        mean_conf = float(boxes.conf.mean().item()) if (boxes is not None and hasattr(boxes, "conf") and n_boxes > 0) else 0.0
-        return annotated, n_boxes, round(mean_conf, 3)
-    except Exception as e:
-        print(f"YOLO detection warning: {e}")
-        return img_bgr.copy(), 0, 0.0
 
 
 def get_model():
@@ -186,12 +164,6 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
     heatmap_bgr = cv2.applyColorMap(diff_amp, cv2.COLORMAP_TURBO)
     heatmap_b64 = img_to_base64(heatmap_bgr)
 
-    # 3d. Downstream YOLOv8 object detection overlay
-    yolo_deg_img, yolo_deg_boxes, yolo_deg_conf = get_yolo_detections(deg)
-    yolo_enh_img, yolo_enh_boxes, yolo_enh_conf = get_yolo_detections(enhanced_bgr)
-    yolo_deg_b64 = img_to_base64(yolo_deg_img)
-    yolo_enh_b64 = img_to_base64(yolo_enh_img)
-
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
     # 4. Candidate scoring across all 8 portfolio methods
@@ -250,12 +222,6 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
         "keypoints_image": f"data:image/png;base64,{kp_b64}",
         "heatmap_image": f"data:image/png;base64,{heatmap_b64}",
         "keypoint_count": len(kp),
-        "yolo_deg_image": f"data:image/png;base64,{yolo_deg_b64}",
-        "yolo_enh_image": f"data:image/png;base64,{yolo_enh_b64}",
-        "yolo_deg_boxes": yolo_deg_boxes,
-        "yolo_enh_boxes": yolo_enh_boxes,
-        "yolo_deg_conf": yolo_deg_conf,
-        "yolo_enh_conf": yolo_enh_conf,
         "reference_eval": ref_eval,
         "all_methods": all_methods_out,
     }
@@ -344,7 +310,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <header>
       <h1>Project Triathlon · Low-Light Image Enhancement Selector</h1>
       <p>5th Semester Capstone Project · Gati Shakti Vishwavidyalaya, Vadodara · Supervised by Prof. Kishor P. Upla (SVNIT Surat)</p>
-      <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest · YOLOv8 Downstream</div>
+      <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest Classifier · Real-Time Edge Restoration</div>
     </header>
 
     <div class="grid">
@@ -437,7 +403,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <button id="btnSide" class="badge-btn active" onclick="setViewMode('side')">Side-by-Side</button>
               <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
               <button id="btnDiff" class="badge-btn" onclick="setViewMode('diff')">Edge Delta Heatmap</button>
-              <button id="btnYolo" class="badge-btn" onclick="setViewMode('yolo')">🎯 YOLOv8 Detection (<span id="yoloCount">0</span>)</button>
               <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
             </div>
           </div>
@@ -476,18 +441,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="img-box">
               <div class="img-label">High-Pass Edge Sharpening Heatmap (Turbo)</div>
               <img id="diffHeatmap" src="" alt="Edge Difference">
-            </div>
-          </div>
-
-          <!-- Mode 4: YOLOv8 Object Detection Viewer -->
-          <div id="yoloViewer" class="viewer" style="display:none;">
-            <div class="img-box">
-              <div class="img-label" id="yoloDegLabel">Degraded Input · YOLOv8n (0 boxes)</div>
-              <img id="yoloDeg" src="" alt="YOLO Degraded">
-            </div>
-            <div class="img-box">
-              <div class="img-label" id="yoloEnhLabel">★ Enhanced Output · YOLOv8n (0 boxes) ★</div>
-              <img id="yoloEnh" src="" alt="YOLO Enhanced">
             </div>
           </div>
         </div>
@@ -543,11 +496,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('btnSide').classList.toggle('active', mode === 'side');
       document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
       document.getElementById('btnDiff').classList.toggle('active', mode === 'diff');
-      document.getElementById('btnYolo').classList.toggle('active', mode === 'yolo');
       document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
       document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
       document.getElementById('diffViewer').style.display = (mode === 'diff') ? 'grid' : 'none';
-      document.getElementById('yoloViewer').style.display = (mode === 'yolo') ? 'grid' : 'none';
       if (mode === 'swipe') {
         syncSwipeWidth();
       }
@@ -746,13 +697,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       if (data.heatmap_image) {
         document.getElementById('diffDegraded').src = data.degraded_image;
         document.getElementById('diffHeatmap').src = data.heatmap_image;
-      }
-      if (data.yolo_enh_image) {
-        document.getElementById('yoloDeg').src = data.yolo_deg_image;
-        document.getElementById('yoloEnh').src = data.yolo_enh_image;
-        document.getElementById('yoloCount').innerText = data.yolo_enh_boxes || '0';
-        document.getElementById('yoloDegLabel').innerText = `Degraded Input · YOLOv8n: ${data.yolo_deg_boxes || 0} boxes (avg conf: ${data.yolo_deg_conf || 0})`;
-        document.getElementById('yoloEnhLabel').innerText = `★ Enhanced: ${data.yolo_enh_boxes || 0} boxes (avg conf: ${data.yolo_enh_conf || 0}) ★`;
       }
       syncSwipeWidth();
 
