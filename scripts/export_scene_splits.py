@@ -48,9 +48,30 @@ def parse_low_directory(low_dir: str) -> List[Dict[str, str]]:
         if f.lower().endswith(valid_extensions) and not f.startswith(".")
     ])
 
+    # Check if official scene mapping is available
+    official_mapping = {}
+    for ref_path in [
+        os.path.join(REPO_ROOT, "results", "official_scene_splits.csv"),
+        os.path.join(REPO_ROOT, "data", "official_scene_splits.csv"),
+    ]:
+        if os.path.exists(ref_path):
+            try:
+                df_ref = pd.read_csv(ref_path)
+                num_sorted = sorted(all_files, key=lambda x: int(os.path.splitext(x)[0]) if os.path.splitext(x)[0].isdigit() else 999999)
+                for idx, fname in enumerate(num_sorted):
+                    if idx < len(df_ref):
+                        official_mapping[fname] = str(df_ref.iloc[idx]["scene_id"])
+                if official_mapping:
+                    break
+            except Exception:
+                pass
+
     records = []
     for f in all_files:
-        sid = parse_scene_id(f)
+        if "_" in f:
+            sid = parse_scene_id(f)
+        else:
+            sid = official_mapping.get(f, parse_scene_id(f))
         records.append({
             "filename": f,
             "scene_id": sid

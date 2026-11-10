@@ -163,11 +163,26 @@ def get_dataset_manifest(
     ])
 
     manifest = []
+    scene_mapping: Dict[str, str] = {}
+    for candidate_csv in ["results/scene_splits.csv", "data/scene_splits.csv"]:
+        if os.path.exists(candidate_csv):
+            try:
+                import csv
+                with open(candidate_csv, "r", encoding="utf-8") as cfp:
+                    reader = csv.DictReader(cfp)
+                    for r in reader:
+                        if "filename" in r and "scene_id" in r:
+                            scene_mapping[r["filename"]] = str(r["scene_id"])
+                if scene_mapping:
+                    break
+            except Exception:
+                pass
+
     for f in low_files:
         low_p = os.path.join(low_dir, f)
         high_p = os.path.join(high_dir, f)
         if os.path.exists(high_p):
-            scene_id = parse_scene_id(f)
+            scene_id = scene_mapping.get(f, parse_scene_id(f))
             manifest.append({
                 "filename": f,
                 "low_path": low_p,
