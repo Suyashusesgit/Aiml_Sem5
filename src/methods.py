@@ -112,6 +112,55 @@ def bilat_unsharp(
     return unsharp(bilat, sigma=unsharp_sigma, amount=unsharp_amount, threshold=0)
 
 
+def invert_dehaze(
+    img: np.ndarray,
+    omega: float = 0.95,
+    t0: float = 0.1,
+    r: int = 7
+) -> np.ndarray:
+    """
+    Physical Inversion-Dehazing Operator (Dong et al., 2011 / He et al., 2011).
+    Exploits the optical duality between Koschmieder's atmospheric scattering model
+    and inverted low-light irradiance:
+        I_inv(x) = (1 - R(x)) * T(x) + A * (1 - T(x))
+    Inverts the low-light input, executes single-image dark channel dehazing to estimate
+    the volumetric transmission map T(x), recovers scene radiance, and re-inverts.
+    
+    Guaranteed SOP compliance: ends with np.clip(I_out, 0, 255).astype(np.uint8).
+    """
+    inv = 255 - img
+    inv_f = inv.astype(np.float32) / 255.0
+    h, w, _ = img.shape
+
+    # Multi-scale fast transmission path for sub-10ms real-time edge budget
+    small_w, small_h = max(16, w // 2), max(16, h // 2)
+    small = cv2.resize(inv_f, (small_w, small_h), interpolation=cv2.INTER_AREA)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (r, r))
+    min_c = np.min(small, axis=2)
+    dark_c = cv2.erode(min_c, kernel)
+
+    # Atmospheric light A: top 0.1% brightest pixels in dark channel of inverted image
+    num_bright = max(1, int(small_h * small_w * 0.001))
+    flat_dark = dark_c.ravel()
+    indices = np.argpartition(flat_dark, -num_bright)[-num_bright:]
+    flat_inv = small.reshape(-1, 3)
+    A = np.median(flat_inv[indices], axis=0)
+    A = np.clip(A, 0.1, 1.0)
+
+    # Transmission map t(x) = 1 - omega * dark(inv / A)
+    norm_small = small / A
+    dark_norm = cv2.erode(np.min(norm_small, axis=2), kernel)
+    t_small = 1.0 - omega * dark_norm
+    t_small = cv2.GaussianBlur(t_small, (7, 7), 0)
+    t = cv2.resize(t_small, (w, h), interpolation=cv2.INTER_LINEAR)
+    t = np.clip(t, t0, 1.0)[:, :, np.newaxis]
+
+    # Scene radiance recovery J_inv(x) = (inv - A) / t + A, re-inverted
+    J_inv = (inv_f - A) / t + A
+    J_out = 1.0 - J_inv
+    return np.clip(J_out * 255.0, 0, 255).astype(np.uint8)
+
+
 # Dictionary mapping method names to callable enhancement functions
 METHODS: Dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "identity": identity,
@@ -120,4 +169,5 @@ METHODS: Dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "hist_eq": hist_eq,
     "retinex": retinex,
     "bilat_unsharp": bilat_unsharp,
+    "invert_dehaze": invert_dehaze,
 }

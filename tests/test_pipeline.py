@@ -21,7 +21,7 @@ class TestEnhancementMethods(unittest.TestCase):
         self.sample_img = np.random.randint(10, 60, (100, 100, 3), dtype=np.uint8)
 
     def test_all_methods_exist(self):
-        expected_methods = {"identity", "gamma", "clahe", "hist_eq", "retinex", "bilat_unsharp"}
+        expected_methods = {"identity", "gamma", "clahe", "hist_eq", "retinex", "bilat_unsharp", "invert_dehaze"}
         self.assertEqual(set(METHODS.keys()), expected_methods)
 
     def test_method_output_shapes_and_types(self):
