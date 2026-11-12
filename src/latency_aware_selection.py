@@ -105,3 +105,4 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     pareto_df.to_csv("results/latency_regret_frontier.csv", index=False)
     print("\nSaved Pareto frontier to results/latency_regret_frontier.csv")
+

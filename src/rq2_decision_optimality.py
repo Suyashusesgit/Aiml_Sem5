@@ -96,3 +96,4 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     df_rq2.to_csv("results/rq2_decision_optimality.csv", index=False)
     print("\nSaved RQ2 results to results/rq2_decision_optimality.csv")
+

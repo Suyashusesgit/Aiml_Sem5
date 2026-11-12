@@ -137,3 +137,4 @@ def evaluate_enhancement_matching_gain(
         "canvas_bgr": enhanced_res["canvas_bgr"],
         "latency_ms": round(baseline_res["latency_ms"] + enhanced_res["latency_ms"], 2),
     }
+
