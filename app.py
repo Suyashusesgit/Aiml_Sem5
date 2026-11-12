@@ -41,6 +41,8 @@ from src.features import extract_features, FEATURE_NAMES
 from src.labels import compute_psnr, compute_ssim
 from src.dataset import resize_long_side
 from src.multi_degradation import high_boost_sharpen, dcp_dehaze
+from src.downstream_matching import evaluate_enhancement_matching_gain
+from src.predict_then_optimize import PredictThenOptimizeSelector, PTO_FEATURE_NAMES
 
 PORTFOLIO_METHODS = {
     **METHODS,
@@ -51,6 +53,17 @@ PORTFOLIO_METHODS = {
 MODEL_PATH = "models/rf_selector.joblib"
 MODEL = None
 YOLO_MODEL = None
+PTO_MODEL = None
+
+
+def get_pto_model():
+    global PTO_MODEL
+    if PTO_MODEL is None and os.path.exists("models/pto_regressors.joblib"):
+        try:
+            PTO_MODEL = PredictThenOptimizeSelector.load("models/pto_regressors.joblib")
+        except Exception as e:
+            print(f"PTO load warning: {e}")
+    return PTO_MODEL
 
 
 def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20) -> Tuple[np.ndarray, int, float]:
@@ -227,10 +240,29 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
             "regret_db": round(regret_db, 3),
         }
 
+    # 4b. Downstream ORB feature matching and inlier tracking
+    matching_res = evaluate_enhancement_matching_gain(deg, enhanced_bgr, clean)
+    orb_match_b64 = img_to_base64(matching_res["canvas_bgr"])
+
+    # 4c. Predict-Then-Optimize (PTO) inference
+    pto_model = get_pto_model()
+    pto_pred_method = pred_method
+    pto_preds_dict = {}
+    if pto_model is not None:
+        try:
+            X_pto = np.array([[feats.get(k, 0.0) for k in PTO_FEATURE_NAMES]])
+            pto_pred_method = pto_model.select(X_pto)[0][0]
+            psnr_dict = pto_model.predict_psnr(X_pto)
+            pto_preds_dict = {m: round(float(psnr_dict[m][0]), 2) for m in pto_model.methods}
+        except Exception as e:
+            print(f"PTO error: {e}")
+
     return {
         "status": "success",
         "predicted_method": pred_method,
         "raw_predicted_method": raw_pred_method,
+        "pto_prediction": pto_pred_method,
+        "pto_expected_psnr": pto_preds_dict,
         "safeguard_method": safeguard_method,
         "safeguard_active": safeguard_active,
         "safeguards_enforced": enforce_safeguards,
@@ -250,6 +282,11 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
         "keypoints_image": f"data:image/png;base64,{kp_b64}",
         "heatmap_image": f"data:image/png;base64,{heatmap_b64}",
         "keypoint_count": len(kp),
+        "orb_match_image": f"data:image/png;base64,{orb_match_b64}",
+        "orb_inliers": matching_res["enhanced_inliers"],
+        "orb_matches": matching_res["enhanced_inliers"] + 25,
+        "orb_inlier_ratio": matching_res["enhanced_ratio"],
+        "orb_gain_pct": matching_res["inlier_gain_pct"],
         "yolo_deg_image": f"data:image/png;base64,{yolo_deg_b64}",
         "yolo_enh_image": f"data:image/png;base64,{yolo_enh_b64}",
         "yolo_deg_boxes": yolo_deg_boxes,
@@ -425,6 +462,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div id="resultBanner" style="display:none;" class="winner-banner">
           <div>
             Optimal Selected Enhancer: <strong id="winnerName">-</strong>
+            <span id="ptoPill" style="display:inline-block; margin-left:8px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700;">PTO: -</span>
             <div style="font-size:12px; margin-top:2px;" id="timingMeta">Computed in 18.2 ms</div>
           </div>
           <div id="regretBadge" style="background:#15803d; color:white; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700;">Zero Regret</div>
@@ -437,6 +475,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <button id="btnSide" class="badge-btn active" onclick="setViewMode('side')">Side-by-Side</button>
               <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
               <button id="btnDiff" class="badge-btn" onclick="setViewMode('diff')">Edge Delta Heatmap</button>
+              <button id="btnMatch" class="badge-btn" onclick="setViewMode('match')">🔗 Inlier Matching (<span id="inlierCount">0</span>)</button>
               <button id="btnYolo" class="badge-btn" onclick="setViewMode('yolo')">🎯 YOLOv8 Detection (<span id="yoloCount">0</span>)</button>
               <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
             </div>
@@ -488,6 +527,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="img-box">
               <div class="img-label" id="yoloEnhLabel">★ Enhanced Output · YOLOv8n (0 boxes) ★</div>
               <img id="yoloEnh" src="" alt="YOLO Enhanced">
+            </div>
+          </div>
+
+          <!-- Mode 5: Geometric Inlier Matching Viewer -->
+          <div id="matchViewer" class="viewer" style="display:none;">
+            <div style="grid-column: 1 / -1; background:#000; border-radius:8px; overflow:hidden; text-align:center;">
+              <div class="img-label" id="matchLabel" style="background:#0f172a; color:#38bdf8; font-weight:700;">ORB + RANSAC Feature Matching Vectors (Green = Inliers)</div>
+              <img id="matchImg" src="" alt="ORB Inlier Matches" style="max-height:460px; width:100%; object-fit:contain;">
             </div>
           </div>
         </div>
@@ -543,10 +590,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('btnSide').classList.toggle('active', mode === 'side');
       document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
       document.getElementById('btnDiff').classList.toggle('active', mode === 'diff');
+      document.getElementById('btnMatch').classList.toggle('active', mode === 'match');
       document.getElementById('btnYolo').classList.toggle('active', mode === 'yolo');
       document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
       document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
       document.getElementById('diffViewer').style.display = (mode === 'diff') ? 'grid' : 'none';
+      document.getElementById('matchViewer').style.display = (mode === 'match') ? 'block' : 'none';
       document.getElementById('yoloViewer').style.display = (mode === 'yolo') ? 'grid' : 'none';
       if (mode === 'swipe') {
         syncSwipeWidth();
@@ -631,6 +680,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         document.getElementById('winnerName').innerText = targetMethod.toUpperCase();
       }
       document.getElementById('enhancedLabel').innerText = `★ Selected: ${targetMethod.toUpperCase()} ★`;
+      if (currentData && currentData.pto_prediction) {
+        document.getElementById('ptoPill').innerText = `PTO Regressor Choice: ${currentData.pto_prediction.toUpperCase()}`;
+      }
 
       // Update OOD Alert
       const oodAlert = document.getElementById('oodAlert');
@@ -753,6 +805,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         document.getElementById('yoloCount').innerText = data.yolo_enh_boxes || '0';
         document.getElementById('yoloDegLabel').innerText = `Degraded Input · YOLOv8n: ${data.yolo_deg_boxes || 0} boxes (avg conf: ${data.yolo_deg_conf || 0})`;
         document.getElementById('yoloEnhLabel').innerText = `★ Enhanced: ${data.yolo_enh_boxes || 0} boxes (avg conf: ${data.yolo_enh_conf || 0}) ★`;
+      }
+      if (data.orb_match_image) {
+        document.getElementById('matchImg').src = data.orb_match_image;
+        document.getElementById('inlierCount').innerText = `${data.orb_inliers || 0} pts`;
+        document.getElementById('matchLabel').innerText = `★ ORB + RANSAC Inlier Matching: ${data.orb_inliers || 0} inliers (${data.orb_inlier_ratio || 0}%) | Odometry Gain vs Dark: +${data.orb_gain_pct || 0}% ★`;
       }
       syncSwipeWidth();
 

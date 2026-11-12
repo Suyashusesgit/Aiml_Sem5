@@ -1,0 +1,16 @@
+image,psnr_winner,decision_winner,is_aligned,psnr_winner_val,decision_regret
+1.png,hist_eq,invert_dehaze,0,18.13,13.87
+111.png,retinex,hist_eq,0,20.68,71.08
+146.png,invert_dehaze,invert_dehaze,1,21.96,0.0
+179.png,gamma,hist_eq,0,20.32,307.77
+22.png,hist_eq,invert_dehaze,0,19.21,1.45
+23.png,hist_eq,hist_eq,1,16.38,0.0
+493.png,invert_dehaze,hist_eq,0,19.8,112.67
+547.png,invert_dehaze,hist_eq,0,20.53,31.46
+55.png,retinex,hist_eq,0,18.61,17.11
+665.png,retinex,hist_eq,0,18.88,135.41
+669.png,invert_dehaze,hist_eq,0,18.91,41.79
+748.png,invert_dehaze,hist_eq,0,19.6,101.58
+778.png,retinex,hist_eq,0,17.5,113.07
+780.png,invert_dehaze,hist_eq,0,19.34,77.83
+79.png,retinex,hist_eq,0,18.33,128.88
