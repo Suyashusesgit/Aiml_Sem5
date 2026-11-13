@@ -16,7 +16,7 @@ import json
 import base64
 import time
 import argparse
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 from typing import Optional, Dict, Any, Tuple
 import cv2
@@ -1119,6 +1119,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
 class RequestHandler(BaseHTTPRequestHandler):
+    def _safe_write(self, data: bytes):
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path in ("/", "/index.html"):
@@ -1126,15 +1132,24 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
             return
+        elif parsed.path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
         self.send_error(404, "Not Found")
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/" or parsed.path == "/index.html":
+        if parsed.path in ("/", "/index.html"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(HTML_TEMPLATE.encode("utf-8"))
+            self._safe_write(HTML_TEMPLATE.encode("utf-8"))
+            return
+
+        if parsed.path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
             return
 
         if parsed.path == "/api/sample":
@@ -1189,7 +1204,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": f"Sample image #{sample_id} not found"}).encode("utf-8"))
+                self._safe_write(json.dumps({"status": "error", "message": f"Sample image #{sample_id} not found"}).encode("utf-8"))
                 return
 
             deg_img = cv2.imread(low_path)
@@ -1197,7 +1212,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": f"Failed to load image from {low_path}"}).encode("utf-8"))
+                self._safe_write(json.dumps({"status": "error", "message": f"Failed to load image from {low_path}"}).encode("utf-8"))
                 return
             clean_img = cv2.imread(high_path) if high_path else None
             try:
@@ -1205,12 +1220,12 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps(res).encode("utf-8"))
+                self._safe_write(json.dumps(res).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
+                self._safe_write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_error(404, "Not Found")
@@ -1223,7 +1238,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     self.send_response(400)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"status": "error", "message": "Empty request body"}).encode("utf-8"))
+                    self._safe_write(json.dumps({"status": "error", "message": "Empty request body"}).encode("utf-8"))
                     return
 
                 body = self.rfile.read(length)
@@ -1236,19 +1251,19 @@ class RequestHandler(BaseHTTPRequestHandler):
                     self.send_response(400)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"status": "error", "message": "Could not decode image. Please upload a valid JPG, PNG, or WebP file."}).encode("utf-8"))
+                    self._safe_write(json.dumps({"status": "error", "message": "Could not decode image. Please upload a valid JPG, PNG, or WebP file."}).encode("utf-8"))
                     return
 
                 res = process_image(deg_img, enforce_safeguards=enforce_safeguard)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps(res).encode("utf-8"))
+                self._safe_write(json.dumps(res).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
+                self._safe_write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
             return
 
         elif self.path == "/api/export_pdf":
@@ -1270,12 +1285,12 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Disposition", f"attachment; filename=\"Project_Triathlon_{sel_m}_Report.pdf\"")
                 self.send_header("Content-Length", str(len(pdf_bytes)))
                 self.end_headers()
-                self.wfile.write(pdf_bytes)
+                self._safe_write(pdf_bytes)
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": f"PDF Generation Error: {str(e)}"}).encode("utf-8"))
+                self._safe_write(json.dumps({"status": "error", "message": f"PDF Generation Error: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_error(404, "Not Found")
@@ -1285,8 +1300,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         return
 
 
-class ReusableHTTPServer(HTTPServer):
+class ReusableHTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
+    daemon_threads = True
 
 
 def main():
