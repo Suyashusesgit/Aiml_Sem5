@@ -25,6 +25,7 @@ report/
 *.pdf
 *.docx
 *.pptx
+*.gif
 
 # OS generated files
 .DS_Store
