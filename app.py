@@ -1119,6 +1119,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
 class RequestHandler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path in ("/", "/index.html"):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            return
+        self.send_error(404, "Not Found")
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/" or parsed.path == "/index.html":
