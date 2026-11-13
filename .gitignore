@@ -22,6 +22,7 @@ results/demo_output/
 
 # Papers, Reports, and Presentations (Do NOT push to GitHub)
 report/
+JOURNAL_SUBMISSION/
 *.pdf
 *.docx
 *.pptx
