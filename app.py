@@ -1080,7 +1080,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           captureWebcamFrame(false);
         }, 500);
       } catch (err) {
-        alert('Webcam Access Error: ' + err.message + '\nPlease check camera permissions in your browser settings.');
+        alert('Webcam Access Error: ' + err.message + ' (Please check camera permissions in browser settings)');
       }
     }
 
