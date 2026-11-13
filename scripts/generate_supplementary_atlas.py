@@ -30,6 +30,8 @@ from src.multi_degradation import high_boost_sharpen, dcp_dehaze
 from src.downstream_matching import evaluate_enhancement_matching_gain
 from src.predict_then_optimize import PredictThenOptimizeSelector, PTO_FEATURE_NAMES
 
+from typing import Any
+
 ALL_METHODS = {
     **METHODS,
     "high_boost_sharpen": high_boost_sharpen,
@@ -39,9 +41,15 @@ ALL_METHODS = {
 def get_yolo_detections(img_bgr, conf_thresh=0.20):
     try:
         from ultralytics import YOLO
-        model = YOLO("yolov8n.pt")
-        res = list(model.predict(img_bgr, conf=conf_thresh, verbose=False))[0]
-        return res.plot(), len(res.boxes) if res.boxes is not None else 0
+        model: Any = YOLO("yolov8n.pt")
+        predict_fn: Any = getattr(model, "predict", model)
+        res_list: Any = list(predict_fn(img_bgr, conf=conf_thresh, verbose=False))
+        res: Any = res_list[0]
+        boxes: Any = getattr(res, "boxes", None)
+        n_boxes = len(boxes) if boxes is not None else 0
+        plot_fn: Any = getattr(res, "plot", None)
+        annotated = plot_fn() if callable(plot_fn) else img_bgr.copy()
+        return annotated, n_boxes
     except Exception:
         return img_bgr.copy(), 0
 
@@ -70,6 +78,8 @@ def build_atlas():
             high_path = os.path.join(high_dir, scene_name)
 
             deg = cv2.imread(low_path)
+            if deg is None:
+                continue
             clean = cv2.imread(high_path) if os.path.exists(high_path) else None
             
             deg, _ = resize_long_side(deg, 512)
@@ -115,34 +125,34 @@ def build_atlas():
             
             # 6 Panels Grid
             # Row 1: Degraded | Selected Output | Reference
-            ax1 = fig.add_axes([0.05, 0.52, 0.28, 0.36])
+            ax1 = fig.add_axes((0.05, 0.52, 0.28, 0.36))
             ax1.imshow(deg[:, :, ::-1])
             ax1.set_title(f"Degraded Input (Luminance: {feats['brightness']:.1f})", fontsize=9, weight="bold", pad=4)
             ax1.axis("off")
 
-            ax2 = fig.add_axes([0.36, 0.52, 0.28, 0.36])
+            ax2 = fig.add_axes((0.36, 0.52, 0.28, 0.36))
             ax2.imshow(enhanced[:, :, ::-1])
             ax2.set_title(f"★ Selected: {pred_method.upper()} ({psnr_val:.2f} dB) ★", fontsize=9, weight="bold", color="#15803d", pad=4)
             ax2.axis("off")
 
-            ax3 = fig.add_axes([0.67, 0.52, 0.28, 0.36])
+            ax3 = fig.add_axes((0.67, 0.52, 0.28, 0.36))
             if clean is not None:
                 ax3.imshow(clean[:, :, ::-1])
                 ax3.set_title("Ground-Truth Clean Reference", fontsize=9, weight="bold", pad=4)
             ax3.axis("off")
 
             # Row 2: Heatmap | ORB RANSAC Inliers | YOLO Proposals
-            ax4 = fig.add_axes([0.05, 0.12, 0.28, 0.36])
+            ax4 = fig.add_axes((0.05, 0.12, 0.28, 0.36))
             ax4.imshow(heatmap[:, :, ::-1])
             ax4.set_title("High-Pass Edge Delta Heatmap (Turbo)", fontsize=9, weight="bold", pad=4)
             ax4.axis("off")
 
-            ax5 = fig.add_axes([0.36, 0.12, 0.28, 0.36])
+            ax5 = fig.add_axes((0.36, 0.12, 0.28, 0.36))
             ax5.imshow(match_canvas[:, :, ::-1])
             ax5.set_title(f"ORB Inliers: {matching_res['enhanced_inliers']} ({matching_res['inlier_gain_pct']:+.1f}% gain)", fontsize=9, weight="bold", color="#0284c7", pad=4)
             ax5.axis("off")
 
-            ax6 = fig.add_axes([0.67, 0.12, 0.28, 0.36])
+            ax6 = fig.add_axes((0.67, 0.12, 0.28, 0.36))
             ax6.imshow(yolo_enh[:, :, ::-1])
             ax6.set_title(f"YOLOv8 Objects: {n_enh} (Raw Input had: {n_deg})", fontsize=9, weight="bold", pad=4)
             ax6.axis("off")

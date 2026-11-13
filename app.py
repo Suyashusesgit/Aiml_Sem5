@@ -138,12 +138,12 @@ def generate_pdf_audit_report(deg_bgr: np.ndarray, enh_bgr: np.ndarray, meta: Di
     fig.add_artist(line)
 
     # 2. Side-by-Side Images
-    ax1 = fig.add_axes([0.10, 0.64, 0.38, 0.25])
+    ax1 = fig.add_axes((0.10, 0.64, 0.38, 0.25))
     ax1.imshow(deg_bgr[:, :, ::-1])
     ax1.set_title("Degraded Input (Low-Light)", fontsize=9.5, weight="bold", color="#0f172a", pad=5)
     ax1.axis("off")
 
-    ax2 = fig.add_axes([0.52, 0.64, 0.38, 0.25])
+    ax2 = fig.add_axes((0.52, 0.64, 0.38, 0.25))
     ax2.imshow(enh_bgr[:, :, ::-1])
     sel_name = str(meta.get("predicted_method", "ENHANCED")).upper()
     ax2.set_title(f"★ Selected Output: {sel_name} ★", fontsize=9.5, weight="bold", color="#15803d", pad=5)
@@ -177,7 +177,7 @@ def generate_pdf_audit_report(deg_bgr: np.ndarray, enh_bgr: np.ndarray, meta: Di
         ["8. Colourfulness (C)", "Hasler-S\u00fcsstrunk metric", f"{float(f_dict.get('colourfulness', 0.0)):.2f}", "< 15.0", "Chromatic Desaturation"],
     ]
 
-    ax_table = fig.add_axes([0.10, 0.15, 0.80, 0.38])
+    ax_table = fig.add_axes((0.10, 0.15, 0.80, 0.38))
     ax_table.axis("off")
     tbl = ax_table.table(
         cellText=table_data,

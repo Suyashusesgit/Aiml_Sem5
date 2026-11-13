@@ -13,6 +13,7 @@ import glob
 import cv2
 import numpy as np
 from PIL import Image
+from typing import Any
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.video_pipeline import VideoStreamProcessor
@@ -185,7 +186,8 @@ def build_demo_video():
     
     # Save as MP4 Video
     mp4_path = "results/video_demo_anti_flicker.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fourcc_fn: Any = getattr(cv2, "VideoWriter_fourcc", getattr(cv2.VideoWriter, "fourcc", None))
+    fourcc = fourcc_fn(*"mp4v") if callable(fourcc_fn) else 0x7634706d
     vw = cv2.VideoWriter(mp4_path, fourcc, 20.0, (canvas_w, canvas_h))
     for f in out_frames_bgr:
         vw.write(f)
