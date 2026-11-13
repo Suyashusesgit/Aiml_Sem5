@@ -84,6 +84,7 @@ def create_anonymized_paper():
     ]
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         z.write(out_tex, arcname="IEEE_Paper_Anonymized.tex")
+        z.write(out_tex, arcname="main.tex")
         for fname in figure_names:
             found = False
             for parent in ["report", "results/figures", "."]:
@@ -95,6 +96,19 @@ def create_anonymized_paper():
             if not found:
                 print(f"Warning: could not find {fname}")
     print(f"Created submission bundle: {zip_path} ({os.path.getsize(zip_path) / (1024*1024):.2f} MB)")
+
+    # Also Package Camera-Ready Overleaf ZIP
+    overleaf_zip_path = "report/IEEE_Paper_Overleaf_Package.zip"
+    with zipfile.ZipFile(overleaf_zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(tex_path, arcname="IEEE_Paper_Image_Enhancement_Selection.tex")
+        z.write(tex_path, arcname="main.tex")
+        for fname in figure_names:
+            for parent in ["report", "results/figures", "."]:
+                fpath = os.path.join(parent, fname)
+                if os.path.exists(fpath):
+                    z.write(fpath, arcname=fname)
+                    break
+    print(f"Created Overleaf camera-ready bundle: {overleaf_zip_path} ({os.path.getsize(overleaf_zip_path) / (1024*1024):.2f} MB)")
 
 if __name__ == "__main__":
     create_anonymized_paper()
