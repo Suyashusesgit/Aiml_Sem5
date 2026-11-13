@@ -593,13 +593,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
           <!-- Mode 1: Side by Side -->
           <div id="sideViewer" class="viewer">
-            <div class="img-box">
+            <div class="img-box" style="position:relative; min-height:260px; display:flex; flex-direction:column;">
               <div class="img-label">Degraded Input (Low-Light)</div>
-              <img id="imgDegraded" src="" alt="Degraded">
+              <div id="degradedLoading" style="display:flex; align-items:center; justify-content:center; flex:1; min-height:220px; color:#94a3b8; font-size:13px; font-weight:600; background:#0f172a;">
+                ⏳ Loading Degraded Image...
+              </div>
+              <img id="imgDegraded" src="" alt="Degraded" style="display:none; width:100%; height:auto; object-fit:contain; max-height:420px;">
             </div>
-            <div class="img-box">
+            <div class="img-box" style="position:relative; min-height:260px; display:flex; flex-direction:column;">
               <div class="img-label" id="enhancedLabel">★ Selected Output ★</div>
-              <img id="imgEnhanced" src="" alt="Enhanced">
+              <div id="enhancedLoading" style="display:flex; align-items:center; justify-content:center; flex:1; min-height:220px; color:#22c55e; font-size:13px; font-weight:600; background:#0f172a;">
+                ⏳ Selecting & Enhancing...
+              </div>
+              <img id="imgEnhanced" src="" alt="Enhanced" style="display:none; width:100%; height:auto; object-fit:contain; max-height:420px;">
             </div>
           </div>
 
@@ -665,7 +671,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     let currentViewMode = 'side';
 
     // Drag & drop handlers
-    window.addEventListener('DOMContentLoaded', () => {
+    function setupDropZone() {
       const dropZone = document.getElementById('dropZone');
       if (dropZone) {
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -691,9 +697,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           }
         }, false);
       }
-      // Load initial benchmark sample
-      loadSample('102');
-    });
+    }
+
+    function init() {
+      setupDropZone();
+      loadSample('102', 'v1');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
 
     function setViewMode(mode) {
       currentViewMode = mode;
@@ -743,13 +758,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const uploadBox = document.getElementById('uploadBoxContent');
       if (uploadBox) uploadBox.innerHTML = `⏳ <strong>${msg}</strong>`;
       const banner = document.getElementById('resultBanner');
-      banner.style.display = 'flex';
-      banner.style.background = '#eff6ff';
-      banner.style.borderColor = '#93c5fd';
-      banner.style.color = '#1e40af';
-      document.getElementById('winnerName').innerText = 'ANALYZING...';
-      document.getElementById('timingMeta').innerText = msg;
-      document.getElementById('regretBadge').style.display = 'none';
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.style.background = '#eff6ff';
+        banner.style.borderColor = '#93c5fd';
+        banner.style.color = '#1e40af';
+      }
+      const winName = document.getElementById('winnerName');
+      if (winName) winName.innerText = 'ANALYZING...';
+      const timeMeta = document.getElementById('timingMeta');
+      if (timeMeta) timeMeta.innerText = msg;
+      const regBadge = document.getElementById('regretBadge');
+      if (regBadge) regBadge.style.display = 'none';
+
+      const degLoad = document.getElementById('degradedLoading');
+      const enhLoad = document.getElementById('enhancedLoading');
+      if (degLoad) {
+        degLoad.style.display = 'flex';
+        degLoad.innerText = `⏳ ${msg}`;
+      }
+      if (enhLoad) {
+        enhLoad.style.display = 'flex';
+        enhLoad.innerText = '⏳ Extracting features & enhancing...';
+      }
     }
 
     function hideLoading() {
@@ -772,7 +803,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       
       // Update displayed images
       const targetImg = currentData.all_methods[targetMethod].image_base64;
-      document.getElementById('imgEnhanced').src = targetImg;
+      const imgEnh = document.getElementById('imgEnhanced');
+      if (imgEnh) {
+        imgEnh.style.display = 'block';
+        imgEnh.src = targetImg;
+      }
+      const enhLoad = document.getElementById('enhancedLoading');
+      if (enhLoad) enhLoad.style.display = 'none';
       document.getElementById('swipeEnhanced').src = targetImg;
       
       // Update banner
@@ -876,7 +913,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     function previewMethod(mName) {
       if (!currentData || !currentData.all_methods[mName]) return;
       const targetImg = currentData.all_methods[mName].image_base64;
-      document.getElementById('imgEnhanced').src = targetImg;
+      const imgEnh = document.getElementById('imgEnhanced');
+      if (imgEnh) {
+        imgEnh.style.display = 'block';
+        imgEnh.src = targetImg;
+      }
+      const enhLoad = document.getElementById('enhancedLoading');
+      if (enhLoad) enhLoad.style.display = 'none';
       document.getElementById('swipeEnhanced').src = targetImg;
       document.getElementById('enhancedLabel').innerText = `★ Previewing: ${mName.toUpperCase()} ★`;
 
@@ -902,8 +945,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('btnKp').classList.remove('active');
       document.getElementById('kpCount').innerText = data.keypoint_count || '0';
 
+      const degLoad = document.getElementById('degradedLoading');
+      const enhLoad = document.getElementById('enhancedLoading');
+      if (degLoad) degLoad.style.display = 'none';
+      if (enhLoad) enhLoad.style.display = 'none';
+
       // Images
-      document.getElementById('imgDegraded').src = data.degraded_image;
+      const imgDeg = document.getElementById('imgDegraded');
+      if (imgDeg) {
+        imgDeg.style.display = 'block';
+        imgDeg.src = data.degraded_image;
+      }
+      const imgEnh = document.getElementById('imgEnhanced');
+      if (imgEnh) {
+        imgEnh.style.display = 'block';
+        imgEnh.src = data.enhanced_image;
+      }
       document.getElementById('swipeDegraded').src = data.degraded_image;
       if (data.heatmap_image) {
         document.getElementById('diffDegraded').src = data.degraded_image;
