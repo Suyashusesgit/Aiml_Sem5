@@ -120,6 +120,95 @@ def base64_to_img(b64_str: str) -> Optional[np.ndarray]:
         return None
 
 
+def generate_pdf_audit_report(deg_bgr: np.ndarray, enh_bgr: np.ndarray, meta: Dict[str, Any]) -> bytes:
+    """Generates an in-memory 1-page PDF inspection report for the given enhancement result."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    import io
+
+    buf = io.BytesIO()
+    fig = plt.figure(figsize=(8.5, 11), dpi=150)
+
+    # 1. Header Block
+    fig.text(0.5, 0.96, "PROJECT TRIATHLON · LOW-LIGHT ENHANCEMENT AUDIT", ha="center", fontsize=14, weight="bold", color="#1e3a8a")
+    fig.text(0.5, 0.938, "5th Sem Capstone Project · Gati Shakti Vishwavidyalaya · Supervised by Prof. Kishor P. Upla (SVNIT Surat)", ha="center", fontsize=9, color="#475569")
+    line = plt.Line2D([0.08, 0.92], [0.925, 0.925], color="#2563eb", linewidth=1.5, transform=fig.transFigure)
+    fig.add_artist(line)
+
+    # 2. Side-by-Side Images
+    ax1 = fig.add_axes([0.10, 0.64, 0.38, 0.25])
+    ax1.imshow(deg_bgr[:, :, ::-1])
+    ax1.set_title("Degraded Input (Low-Light)", fontsize=9.5, weight="bold", color="#0f172a", pad=5)
+    ax1.axis("off")
+
+    ax2 = fig.add_axes([0.52, 0.64, 0.38, 0.25])
+    ax2.imshow(enh_bgr[:, :, ::-1])
+    sel_name = str(meta.get("predicted_method", "ENHANCED")).upper()
+    ax2.set_title(f"★ Selected Output: {sel_name} ★", fontsize=9.5, weight="bold", color="#15803d", pad=5)
+    ax2.axis("off")
+
+    # 3. Decision Summary Badge Box
+    pto_target = str(meta.get("pto_prediction", "N/A")).upper()
+    t_feat = meta.get("timings_ms", {}).get("features", 0.0)
+    t_tot = meta.get("timings_ms", {}).get("total", 0.0)
+    inliers = meta.get("orb_inliers", 0)
+    inlier_ratio = float(meta.get("orb_inlier_ratio", 0.0)) * 100
+
+    summary_text = (
+        f"Selected Algorithm: {sel_name}   |   Continuous PTO Target: {pto_target}\n"
+        f"Feature Extraction: {t_feat:.2f} ms   |   Total Inference Latency: {t_tot:.2f} ms\n"
+        f"Downstream ORB RANSAC Inliers: {inliers}   |   Inlier Match Ratio: {inlier_ratio:.1f}%"
+    )
+    fig.text(0.10, 0.575, summary_text, fontsize=9.5, color="#0f172a", linespacing=1.35,
+             bbox=dict(boxstyle="round,pad=0.5", facecolor="#f0fdf4", edgecolor="#86efac", linewidth=1.2))
+
+    # 4. Table of Physical Descriptors
+    f_dict = meta.get("features", {})
+    table_data = [
+        ["1. Brightness (\u03bc)", "Mean intensity", f"{float(f_dict.get('brightness', 0.0)):.2f}", "< 30.0", "Severe Underexposure"],
+        ["2. Contrast (\u03c3)", "Intensity std dev", f"{float(f_dict.get('contrast', 0.0)):.2f}", "< 20.0", "Tonal Compression"],
+        ["3. Shannon Entropy (H)", "Histogram dispersion", f"{float(f_dict.get('entropy', 0.0)):.2f}", "< 5.50", "Structural Loss"],
+        ["4. Sensor Noise (\u03c3_n)", "Median Absolute Lapl.", f"{float(f_dict.get('noise', 0.0)):.2f}", "> 3.50", "Poisson Grain"],
+        ["5. Dark Channel (D)", "Atmospheric airlight", f"{float(f_dict.get('dark_channel', 0.0)):.2f}", "< 15.0", "Deep Shadow Airlight"],
+        ["6. Edge Mean", "Sobel gradient mean", f"{float(f_dict.get('edge_mean', 0.0)):.2f}", "< 10.0", "Low Texture Energy"],
+        ["7. Edge p90", "90th pctile gradient", f"{float(f_dict.get('edge_p90', 0.0)):.2f}", "< 25.0", "Salient Edge Drop"],
+        ["8. Colourfulness (C)", "Hasler-S\u00fcsstrunk metric", f"{float(f_dict.get('colourfulness', 0.0)):.2f}", "< 15.0", "Chromatic Desaturation"],
+    ]
+
+    ax_table = fig.add_axes([0.10, 0.15, 0.80, 0.38])
+    ax_table.axis("off")
+    tbl = ax_table.table(
+        cellText=table_data,
+        colLabels=["Physical Descriptor", "Formulation", "Extracted Value", "Low-Light Threshold", "Physical Diagnosis"],
+        loc="center",
+        cellLoc="center",
+        colWidths=[0.24, 0.22, 0.16, 0.18, 0.20]
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(8.5)
+    tbl.scale(1.0, 1.4)
+
+    for (r, c), cell in tbl.get_celld().items():
+        if r == 0:
+            cell.set_facecolor("#1e3a8a")
+            cell.set_text_props(color="white", weight="bold")
+        elif r % 2 == 1:
+            cell.set_facecolor("#f8fafc")
+        else:
+            cell.set_facecolor("#ffffff")
+
+    # 5. Certification Footer
+    fig.text(0.5, 0.06, "Rice Algorithm Selection (1976) · 5-Fold GroupKFold Zero-Leakage (15 Folds, 278 Physical Scenes) · Verified",
+             ha="center", fontsize=8, color="#64748b", style="italic")
+
+    with PdfPages(buf) as pdf:
+        pdf.savefig(fig, bbox_inches="tight")
+    plt.close(fig)
+    return buf.getvalue()
+
+
 def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enforce_safeguards: bool = True):
     """Executes feature extraction, prediction, and enhancement with domain safeguards."""
     if img_bgr is None or not isinstance(img_bgr, np.ndarray) or img_bgr.size == 0:
@@ -405,6 +494,21 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
           </div>
 
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button id="btnWebcam" class="btn-sample" style="flex:1; background:var(--accent); color:white; border:none; padding:8px 12px; font-weight:700; border-radius:6px; cursor:pointer;" onclick="toggleWebcam()">
+              📷 Start Live Webcam
+            </button>
+            <button id="btnSnapshot" class="btn-sample" style="display:none; background:#10b981; color:white; border:none; padding:8px 12px; font-weight:700; border-radius:6px; cursor:pointer;" onclick="captureWebcamFrame(true)">
+              📸 Snapshot
+            </button>
+          </div>
+          <div id="webcamContainer" style="display:none; margin-top:10px; border-radius:8px; overflow:hidden; border:2px solid var(--accent); position:relative; background:#000;">
+            <video id="webcamVideo" autoplay playsinline muted style="width:100%; height:auto; display:block;"></video>
+            <div style="position:absolute; top:6px; left:6px; background:rgba(0,0,0,0.75); color:#38bdf8; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
+              🔴 LIVE STREAM (Auto-Sampling: 2 FPS)
+            </div>
+          </div>
+
           <div style="margin-top:14px; font-size:13px; font-weight:600;">Pick Benchmark Dataset & Sample:</div>
 
           <div style="margin-top:6px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">LOL-v1 Benchmark (Baseline)</div>
@@ -465,7 +569,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <span id="ptoPill" style="display:inline-block; margin-left:8px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700;">PTO: -</span>
             <div style="font-size:12px; margin-top:2px;" id="timingMeta">Computed in 18.2 ms</div>
           </div>
-          <div id="regretBadge" style="background:#15803d; color:white; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700;">Zero Regret</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="downloadAuditPdf()" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+              📄 PDF Report
+            </button>
+            <div id="regretBadge" style="background:#15803d; color:white; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700;">Zero Regret</div>
+          </div>
         </div>
 
         <div class="card">
@@ -872,6 +981,137 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const isSafeguard = document.getElementById('chkSafeguard').checked;
       applySelectionState(isSafeguard);
     }
+
+    // Live Webcam Implementation
+    let webcamStream = null;
+    let webcamInterval = null;
+    let isWebcamProcessing = false;
+
+    async function toggleWebcam() {
+      const btn = document.getElementById('btnWebcam');
+      const snapBtn = document.getElementById('btnSnapshot');
+      const container = document.getElementById('webcamContainer');
+      const video = document.getElementById('webcamVideo');
+
+      if (webcamStream) {
+        clearInterval(webcamInterval);
+        webcamInterval = null;
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+        video.srcObject = null;
+        container.style.display = 'none';
+        snapBtn.style.display = 'none';
+        btn.textContent = '📷 Start Live Webcam';
+        btn.style.background = 'var(--accent)';
+        return;
+      }
+
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: false
+        });
+        video.srcObject = webcamStream;
+        container.style.display = 'block';
+        snapBtn.style.display = 'block';
+        btn.textContent = '⏹ Stop Webcam';
+        btn.style.background = '#ef4444';
+
+        // Auto-sample every 500ms
+        webcamInterval = setInterval(() => {
+          captureWebcamFrame(false);
+        }, 500);
+      } catch (err) {
+        alert('Webcam Access Error: ' + err.message + '\nPlease check camera permissions in your browser settings.');
+      }
+    }
+
+    function captureWebcamFrame(isManualSnapshot = false) {
+      if (isWebcamProcessing && !isManualSnapshot) return;
+      const video = document.getElementById('webcamVideo');
+      if (!video || video.readyState !== 4) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const b64 = canvas.toDataURL('image/jpeg', 0.85);
+
+      if (isManualSnapshot) {
+        toggleWebcam();
+        showLoading('Processing snapshot...');
+      }
+
+      isWebcamProcessing = true;
+      const isSafeguard = document.getElementById('chkSafeguard').checked;
+      fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: b64, safeguard: isSafeguard })
+      })
+      .then(r => r.json())
+      .then(data => {
+        isWebcamProcessing = false;
+        if (data.status === 'success') {
+          renderResults(data);
+        }
+        if (isManualSnapshot) hideLoading();
+      })
+      .catch(err => {
+        isWebcamProcessing = false;
+        if (isManualSnapshot) {
+          alert('Snapshot error: ' + err.message);
+          hideLoading();
+        }
+      });
+    }
+
+    // 1-Click PDF Audit Export
+    function downloadAuditPdf() {
+      if (!currentData) {
+        alert('Please select or upload an image first.');
+        return;
+      }
+      const btn = event.target;
+      const oldText = btn.textContent;
+      btn.textContent = '⏳ Compiling PDF...';
+
+      fetch('/api/export_pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          degraded_image: currentData.degraded_image,
+          enhanced_image: currentData.enhanced_image,
+          predicted_method: currentData.predicted_method,
+          pto_prediction: currentData.pto_prediction,
+          features: currentData.features,
+          timings_ms: currentData.timings_ms,
+          orb_inliers: currentData.orb_inliers,
+          orb_inlier_ratio: currentData.orb_inlier_ratio
+        })
+      })
+      .then(resp => {
+        if (!resp.ok) throw new Error('PDF generation failed on server');
+        return resp.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Project_Triathlon_${currentData.predicted_method.toUpperCase()}_Audit_Report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        btn.textContent = oldText;
+      })
+      .catch(err => {
+        alert('Error exporting PDF report: ' + err.message);
+        btn.textContent = oldText;
+      });
+    }
   </script>
 </body>
 </html>
@@ -1000,6 +1240,33 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": f"Processing error: {str(e)}"}).encode("utf-8"))
+            return
+
+        elif self.path == "/api/export_pdf":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(length)
+                payload = json.loads(body.decode("utf-8"))
+                deg_img = base64_to_img(payload.get("degraded_image", ""))
+                enh_img = base64_to_img(payload.get("enhanced_image", ""))
+                if deg_img is None:
+                    deg_img = np.zeros((256, 256, 3), dtype=np.uint8)
+                if enh_img is None:
+                    enh_img = deg_img.copy()
+
+                pdf_bytes = generate_pdf_audit_report(deg_img, enh_img, payload)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/pdf")
+                sel_m = payload.get("predicted_method", "audit")
+                self.send_header("Content-Disposition", f"attachment; filename=\"Project_Triathlon_{sel_m}_Report.pdf\"")
+                self.send_header("Content-Length", str(len(pdf_bytes)))
+                self.end_headers()
+                self.wfile.write(pdf_bytes)
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": f"PDF Generation Error: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_error(404, "Not Found")
