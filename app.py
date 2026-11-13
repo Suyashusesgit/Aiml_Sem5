@@ -16,6 +16,7 @@ import json
 import base64
 import time
 import argparse
+import socket
 from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 from typing import Optional, Dict, Any, Tuple
@@ -1296,13 +1297,21 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.send_error(404, "Not Found")
 
     def log_message(self, format, *args):
-        # Quiet standard HTTP access logs
-        return
+        sys.stdout.write(f"[{time.strftime('%H:%M:%S')}] {self.address_string()} - {format % args}\n")
+        sys.stdout.flush()
 
 
 class ReusableHTTPServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
     allow_reuse_address = True
     daemon_threads = True
+
+    def server_bind(self):
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        except (AttributeError, OSError):
+            pass
+        super().server_bind()
 
 
 def main():
@@ -1318,7 +1327,7 @@ def main():
     port = args.port
     for attempt_port in range(port, port + 20):
         try:
-            server = ReusableHTTPServer(("0.0.0.0", attempt_port), RequestHandler)
+            server = ReusableHTTPServer(("", attempt_port), RequestHandler)
             port = attempt_port
             break
         except OSError as e:
@@ -1333,6 +1342,7 @@ def main():
     print(f"\n=======================================================")
     print(f"Project Triathlon Interactive Web App Running!")
     print(f"Access locally at: http://localhost:{port}")
+    print(f"Direct IPv4:      http://127.0.0.1:{port}")
     if port != args.port:
         print(f"Note: Requested port {args.port} was busy, bound to port {port}")
     print(f"Press Ctrl+C to terminate the server.")
