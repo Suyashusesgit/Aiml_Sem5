@@ -59,3 +59,65 @@ Any non-duplicate files previously placed in `_archive/` have been restored to s
   - Examination of the generated contact sheet confirms that images grouped within the same cluster represent identical spatial viewpoint scenes captured under differing camera exposures and subtle viewpoint jitter.
   - No synthetic scene leakage crosses cluster boundaries.
   - Per Rule 2 & Section 6, this threshold ($\le 10$) is locked without post-hoc tuning.
+
+---
+
+## 5. Experiment E5 Control (a) Score Permutation Analysis & Null Distribution Audit
+- **Issue**: In `results/decision/verdict.json`, `all_controls_pass` was evaluated as `False` because Control (a) failed its automated single-seed check (`status: FAIL`).
+- **Investigation**:
+  - In Control (a), score rows were permuted across images using a single seed (seed 42).
+  - Under permuted labels, feature-label correspondence was completely decoupled. Logistic Regression fell back on its prior/intercept, predicting primarily the majority class (`retinex`, 45.6%) and second-majority class (`hist_eq`, 35.3%).
+  - When evaluated against true unpermuted image ground truth, LR's mixture of `retinex` and `hist_eq` achieved 2.33 dB regret versus 2.74 dB for static `retinex` (an apparent +0.507 dB advantage over Best-Fixed on that single realization).
+  - The script's strict test `ca_pass = (lr_a_lo <= 0.0) and (rf_a_lo <= 0.0)` tested the lower bound of a cluster bootstrap on that single permutation; because `lr_a_lo = +0.232 > 0.0`, it triggered a failure.
+- **100-Permutation Monte Carlo Null Distribution**:
+  - To test whether this was an artifact of a single seed or genuine signal, a 100-permutation null distribution was computed:
+    - **Chance Levels**: Uniform 1/6 chance = 16.67%; Majority class rate (`retinex`) = 45.57%.
+    - **Top-1 Accuracy on Permuted Labels**: LR mean = 43.70% (std = 1.46%, 95% range: [40.92%, 46.39%]); RF mean = 40.53% (std = 2.44%, 95% range: [36.18%, 44.85%]). Both center squarely on the majority baseline.
+    - **Advantage over Best-Fixed (dB)**:
+      - LR: mean = +0.1568 dB (std = 0.2343 dB, 95% empirical range: [-0.2801, +0.5773] dB). Zero is well within the null distribution ($z = 1.49$, empirical $p \approx 0.07$).
+      - RF: mean = -0.1304 dB (std = 0.2314 dB, 95% empirical range: [-0.5864, +0.2889] dB). Zero is well within the null distribution.
+- **Resolution & Protocol Adherence**:
+  - In strict compliance with Non-Negotiable Rule 2, `docs/DECISION_RULE.md` was **NOT modified**.
+  - The pre-committed verdict remains **`TIE` $\rightarrow$ Deploy Multinomial Logistic Regression** because Conditions 1, 2, and 3 failed independently on their own, and under a tie Occam's razor selects LR.
+  - This deviation is recorded here in accordance with instructions.
+
+---
+
+## 6. Experiment E4 External Validity & Sensitivity Analysis (Both Directions)
+
+### Forward Direction: LOL-v1 Train (485) $\rightarrow$ LOL-v2 Real Test (100)
+- **Nearest-Neighbor Hamming Distance Histogram (LOL-v2 Real Test vs. LOL-v1 our485)**:
+  - `[0, 2)`: 88 images (exact or 1-bit difference from training images)
+  - `[2, 4)`: 3 images
+  - `[4, 12)`: 0 images
+  - `[12, 14)`: 4 images
+  - `[14, 16)`: 3 images
+  - `[20, 22)`: 2 images
+  - Min dist: 0, Max dist: 21, Median: 0.0.
+- **Why $d_{\text{real\_test}} = 0.0000$ dB**:
+  - Across all threshold settings (Exact $d=0$, Thr 4, Thr 6, Thr 10), exactly 91 images are excluded, leaving exactly 9 images ($N_{\text{after}} = 9$, not an empty set).
+  - On these 9 images, both Logistic Regression and Random Forest select **100% `retinex`** (`['retinex', ..., 'retinex']`), yielding identical predictions on 100% of the images.
+  - Because their selections are identical, both models achieve identical mean regret (2.839 dB), giving $d_{\text{real\_test}} = \text{RF} - \text{LR} = 0.0000$ dB and 95% CI $[0.0000, 0.0000]$ dB.
+
+### Reverse Direction: LOL-v2 Real Train (689) $\rightarrow$ LOL-v1 our485 (485)
+- **Nearest-Neighbor Hamming Distance Histogram (LOL-v1 our485 vs. LOL-v2 Real Train)**:
+  - `[0, 2)`: 399 images
+  - `[2, 12)`: 0 images
+  - `[12, 22)`: 86 images
+- **Sensitivity Analysis Across Exclusion Thresholds**:
+  - **No Exclusion (Unfiltered)**: $N_{\text{before}} = 485$, Excluded = 0, $N_{\text{after}} = 485$ | LR: 1.506 dB, RF: 0.585 dB | $d_{\text{reverse}} = \mathbf{-0.9208\text{ dB}}$ (or $-0.5669$ dB on original E4 split) [95% CI: $-1.1371, -0.7097$ dB] | Same picks: 66.0%. This setting suffered massive train-test contamination (399 of the 485 test images were present in the training set).
+  - **Exact / Thr 4 / Thr 6 / Thr 10 (De-duplicated)**: $N_{\text{before}} = 485$, Excluded = 399, $N_{\text{after}} = 86$ clean images | LR: 3.163 dB, RF: 3.301 dB | $d = \mathbf{+0.1380\text{ dB}}$ [95% CI: $-0.2202, +0.5999$ dB] | Same picks: 76.7%.
+  - When train-test contamination is removed, Logistic Regression outperforms Random Forest ($d > 0$), and the difference is statistically indistinguishable from zero (95% CI spans zero). RF not demonstrably better in-distribution.
+
+---
+
+## 7. Protected Assets Audit & Relocation Verification
+
+| Asset Keyword | Permanent Active Location | Archived / Duplicate Location | Status & Notes |
+| :--- | :--- | :--- | :--- |
+| **yolo** | `extensions/downstream/yolov8n.pt`, `extensions/downstream/downstream_yolo_detection.py` | None | Fully active on CPU; +15.4% box recall gain verified. |
+| **orb / ransac** | `extensions/downstream/downstream_matching.py` | None | Fully active on CPU; +72.9% inlier gain verified in 68 ms. |
+| **flicker** | `extensions/video/video_demo_anti_flicker.mp4`, `extensions/video/generate_video_demo.py`, `extensions/video/video_pipeline.py` | None | Temporal hysteresis gating active (0 switches vs 8 raw switches across 60 frames). |
+| **app.py** | `apps/web/app.py` (canonical app) & `app.py` (root forwarder) | None | Verified via socket HTTP test on port 8599 (HTTP 200 OK). |
+| **JOURNAL_SUBMISSION** | `paper/submission/` (contains all 5 submission files: `IEEE_Paper_To_Submit_Anonymized.pdf`, `IEEE_Paper_CameraReady_With_Authors.pdf`, `Supplementary_Visual_Atlas.pdf`, `Project_Triathlon_Basic_vs_Extra_Comparison.pdf`, `IEEE_LaTeX_Source_Package.zip`) | `_archive/report/` (exact SHA-256 bitwise duplicates retained per Rule 4) | Fully live and structured in `paper/submission/`. |
+

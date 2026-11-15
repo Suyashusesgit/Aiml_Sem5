@@ -16,18 +16,18 @@
 | **Deployed Architecture** | **`Logistic Regression (Burden of proof on complex model; LR selected)`** | `models/selector.joblib` |
 | **Primary Decision Quantity ($d$)** | **$-0.1048$ dB** (95% CI: $[-0.2720, +0.0639]$ dB) | `results/decision/e1_tuning/e1_tuning_summary.csv` |
 | **Condition 1 ($d_{hi} < -0.10$ dB)** | **`False`** ($d_{hi} = +0.0639$ dB) | Rule Section 6.2 |
-| **Condition 2 ($d < 0$ on External)** | **`False`** (Real Test = $+0.0000$, Reverse = $-0.5669$) | `results/decision/e4_external/external_validity_e4.csv` |
+| **Condition 2 ($d < 0$ on External)** | **`False`** (Real Test: $d_{\text{real\_test}} = +0.0000\text{ dB}$; Reverse: $d_{\text{reverse}} = -0.5669\text{ dB}$ before exclusion, $+0.1380\text{ dB}$ after exclusion) | `results/decision/e4_external/external_validity_e4.csv` |
 | **Condition 3 ($d_{hi} < 0$ at Thr 18)** | **`False`** ($d_{hi} = +0.3637$ dB) | `results/decision/e2_leakage/e2b_threshold_sweep.csv` |
 | **Condition 4 (All Controls Pass)** | **`False`** | `results/decision/e5_controls/controls_summary.csv` |
 
 **Decision Rationalization**:
 Under the pre-registered decision rule committed before running experiments, the burden of proof rests strictly on the more complex model (Random Forest, $300$ trees, ~7.2 MB, non-linear partitioning). To justify deploying Random Forest, it was required to demonstrate a statistically significant and practically meaningful regret reduction of at least $0.10$ dB ($d_{hi} < -0.10$ dB), while maintaining superior generalization across independent hardware shifts (LOL-v2 Real Test) and robust scene grouping.
 
-Random Forest failed all necessary conditions:
+RF not demonstrably better in-distribution:
 1. In fair nested tuning (E1), the 95% bootstrap confidence interval of $d = \text{regret}(\text{RF}) - \text{regret}(\text{LR})$ spans zero ($[-0.2720, +0.0639]$ dB), failing to reject practical equivalence.
-2. In out-of-distribution hardware shifts (E4 LOL-v2 Real Test), Random Forest achieved $0.000$ dB advantage over Logistic Regression.
+2. In out-of-distribution hardware shifts (E4 LOL-v2 Real Test), Random Forest achieved $0.0000$ dB advantage over Logistic Regression ($d_{\text{real\_test}} = 0.0000$ dB; identical predictions on 100% of the 9 retained non-duplicate pairs).
 3. In coarse grouping sensitivity (E2b, Hamming threshold 18), Random Forest underperformed Logistic Regression ($d = +0.1229$ dB, $d_{hi} = +0.3637$ dB).
-4. By Occam's razor and the pre-committed decision protocol, the verdict is **`TIE`**, and **Multinomial Logistic Regression** is the designated, deployed champion.
+4. By Occam's razor and the pre-committed decision protocol, the verdict is **`TIE`**, and **Multinomial Logistic Regression** is the designated, deployed champion. Under scene-grouped CV, folds asserted disjoint, un-grouped claims (such as 0.430 dB) were not reproduced under scene-grouped CV.
 
 ---
 
@@ -113,11 +113,12 @@ Across all grouping granularities (Hamming $6$ to $18$), Logistic Regression con
 
 | Evaluation Benchmark | Excluded Near-Dupes | Evaluated Pairs | LR Regret (dB) | RF Regret (dB) | $d = \text{RF} - \text{LR}$ (dB) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **LOL-v2 Real Test** | 91 | 9 | 2.839 | 2.839 | **+0.0000** |
+| **LOL-v2 Real Test (Forward)** | 91 | 9 | 2.839 | 2.839 | **+0.0000** |
 | **LOL-v1 eval15** | 14 | 1 | 0.000 | 0.000 | **+0.0000** |
-| **Reverse: Real Train $\rightarrow$ LOL-v1** | 0 | 197 | 2.812 | 2.246 | **-0.5669** |
+| **Reverse: Real Train $\rightarrow$ LOL-v1 (Unfiltered)** | 0 | 485 | 2.812 | 2.246 | **-0.5669** |
+| **Reverse: Real Train $\rightarrow$ LOL-v1 (Clean, Thr $\le 10$)** | 399 | 86 | 3.163 | 3.301 | **+0.1380** |
 
-**Observation**: In the forward zero-shot transfer from LOL-v1 to LOL-v2 Real Test, Random Forest fails to outperform Logistic Regression ($d = 0.000$ dB).
+**Observation**: In the forward zero-shot transfer from LOL-v1 to LOL-v2 Real Test, Random Forest achieves identical picks on 100% of non-duplicate pairs ($d_{\text{real\_test}} = 0.0000$ dB). In the reverse transfer with near-duplicates excluded (leaving 86 truly distinct pairs), Logistic Regression outperforms Random Forest ($d = +0.1380$ dB [95% CI: $-0.2202, +0.5999$ dB]). RF not demonstrably better in-distribution.
 
 ---
 

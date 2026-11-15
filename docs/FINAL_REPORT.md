@@ -17,7 +17,7 @@ The central architectural debate—whether to deploy **Multinomial Logistic Regr
 | Pre-Registered Condition | Mathematical Formulation | Empirical Result | Status |
 | :--- | :--- | :---: | :---: |
 | **Condition 1 (Margin of Superiority)** | $d_{hi} < -0.10\text{ dB}$ ($d = \text{RF}_{\text{tuned}} - \text{LR}_{\text{tuned}}$) | $d = -0.1048\text{ dB}$ (95% CI: $[-0.2720, \mathbf{+0.0639}]\text{ dB}$) | **FAIL** |
-| **Condition 2 (External Validity)** | $d < 0\text{ dB}$ on LOL-v2 Real Test AND Reverse Transfer | Real Test: $d = \mathbf{0.0000}\text{ dB}$; Reverse: $d = -0.5669\text{ dB}$ | **FAIL** |
+| **Condition 2 (External Validity)** | $d < 0\text{ dB}$ on LOL-v2 Real Test AND Reverse Transfer | Real Test: $d = \mathbf{0.0000}\text{ dB}$; Reverse: $d_{\text{reverse}} = -0.5669\text{ dB}$ (before exclusion) / $+0.1380\text{ dB}$ (after exclusion) | **FAIL** |
 | **Condition 3 (Grouping Robustness)** | $d_{hi} < 0\text{ dB}$ at coarse Hamming threshold 18 | $d = +0.1229\text{ dB}$ (95% CI: $[-0.0576, \mathbf{+0.3637}]\text{ dB}$) | **FAIL** |
 | **Condition 4 (Sanity Controls)** | Negative controls beat neither; positive control $\ge 95\%$ | Permutation: FAIL; Noise: PASS; Label positive: $\mathbf{99.8\%}$ | **FAIL** |
 | **Final Pre-Committed Verdict** | Occam's Razor / Burden of proof on complex model | **`TIE` $\rightarrow$ Deploy Logistic Regression** | **WINNER: LR** |
@@ -25,8 +25,8 @@ The central architectural debate—whether to deploy **Multinomial Logistic Regr
 ### Verdict Justification
 Per Section 6.2 of the pre-committed protocol: *"If $d_{hi} \ge -0.10\text{ dB}$ and $d_{lo} \le 0.00\text{ dB}$ (the 95% CI spans practical equivalence or zero), declare a TIE. Under a tie, by Occam's razor the simpler linear model (Logistic Regression) is deployed because it has fewer parameters, zero tree variance, smaller checkpoint size, and lower latency."*
 
-Random Forest failed to establish a statistically significant or practically meaningful advantage over Logistic Regression. Furthermore:
-1. **Scene Leakage Vulnerability**: Random Forest exhibited **$3.7\times$ higher sensitivity to scene leakage** ($+0.4787\text{ dB}$ plain CV inflation versus $+0.1290\text{ dB}$ for LR), explaining why earlier un-grouped ad-hoc scripts produced inflated numbers for RF.
+RF not demonstrably better in-distribution. In fair nested tuning (E1), the 95% bootstrap confidence interval of $d = \text{regret}(\text{RF}) - \text{regret}(\text{LR})$ spans zero ($[-0.2720, +0.0639]$ dB), failing to reject practical equivalence. Furthermore:
+1. **Scene Leakage Vulnerability**: Under scene-grouped CV, folds asserted disjoint, un-grouped claims (such as 0.430 dB) were not reproduced under scene-grouped CV. Random Forest exhibited **$3.7\times$ higher sensitivity to scene leakage** ($+0.4787\text{ dB}$ plain CV inflation versus $+0.1290\text{ dB}$ for LR).
 2. **Production Efficiency**: Logistic Regression is **$2992\times$ more compact** ($2.4\text{ KB}$ vs. $7.2\text{ MB}$) and **$5\times$ faster** ($<1.0\text{ ms}$ vs. $5.0\text{ ms}$ on CPU).
 
 The winning champion model is permanently deployed to `models/selector.joblib` and configured in `configs/base.yaml`.

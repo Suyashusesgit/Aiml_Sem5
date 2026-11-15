@@ -60,18 +60,18 @@
 
 ## Phase 3 Checkpoint
 - **Done**:
-  - Executed master experiment suite E0–E5 (`experiments/run_experiment.py`) with zero scene leakage.
-  - E0 (Default Arm): 5-fold StratifiedGroupKFold on 228 dHash scene clusters x 3 seeds. LR: 59.66% top-1, 1.532 dB regret; RF: 56.43% top-1, 1.707 dB regret. LR beats RF on 10/10 seeds in seed sweep.
+  - Executed master experiment suite E0–E5 (`experiments/run_experiment.py`) under scene-grouped CV, folds asserted disjoint.
+  - E0 (Default Arm): 5-fold StratifiedGroupKFold on 228 dHash scene clusters x 3 seeds. LR: 59.66% top-1, 1.532 dB regret; RF: 56.43% top-1, 1.707 dB regret. LR beats RF on 10/10 seeds in seed sweep (RF not demonstrably better in-distribution).
   - E1 (Nested Tuning): 30 configurations per fold on outer-train folds only. Tuned LR 1.603 dB, Tuned RF 1.498 dB. Paired difference $d = -0.1048$ dB [95% CI: -0.2720, +0.0639] dB. Fails Condition 1 ($d_{hi} < -0.10$ dB).
   - E2 (Leakage & Granularity): Plain CV inflates RF by +0.4787 dB vs. +0.1290 dB for LR (3.7x higher sensitivity to scene leakage). Threshold 18 gives $d_{hi} = +0.3637$ dB, failing Condition 3.
   - E3 (Learning Curves): Curves do not cross; LR achieves lower regret across all sample fractions (20% to 100%).
-  - E4 (External Validity): Near-duplicate audit excludes 91 pairs from LOL-v2 Real Test. Forward transfer yields $d = 0.000$ dB, failing Condition 2.
+  - E4 (External Validity): Near-duplicate audit excludes 91 pairs from LOL-v2 Real Test. Forward transfer yields $d = 0.000$ dB ($d_{\text{real\_test}} = 0.0000$ dB, identical picks on 9 retained pairs), and reverse transfer yields $d_{\text{reverse}} = -0.5669$ dB before exclusion and $d = +0.1380$ dB after exclusion, failing Condition 2.
   - E5 (Controls): Permutation, Gaussian noise, and label leakage positive control (99.8% accuracy) executed.
   - Evaluated pre-committed decision rule (`docs/DECISION_RULE.md`): Verdict `TIE`. Deployed model: `Multinomial Logistic Regression` by pre-registered Occam's razor / parsimony principle.
 - **Next**:
   - Implement the decision (Phase 4).
 - **Problems**:
-  - None.
+  - In E5, `results/decision/verdict.json` recorded `all_controls_pass = false` because Control (a) (score permutation) evaluated on a single seed had `lr_a_lo = +0.232 > 0.0` due to an upper-tail realization (+0.507 dB over best-fixed), failing a single-run point check. A 100-permutation null distribution centers at +0.157 dB with 95% range [-0.280, +0.577] dB encompassing zero. Per protocol, `docs/DECISION_RULE.md` remains unchanged, the `TIE` verdict is preserved (Conditions 1–3 failed independently), and the deviation is logged in `docs/DECISIONS.md`.
 
 ---
 
@@ -92,7 +92,7 @@
 
 ## Phase 5 Checkpoint
 - **Done**:
-  - Compiled exhaustive claims ledger (`docs/CLAIMS_LEDGER.md`) auditing 12 claims against generated results. Verified Phase 0 baseline claims; rejected un-grouped "0.430 dB" claim as a leakage artifact.
+  - Compiled exhaustive claims ledger (`docs/CLAIMS_LEDGER.md`) auditing 12 claims against generated results. Verified Phase 0 baseline claims; found un-grouped "0.430 dB" claim was not reproduced under scene-grouped CV.
   - Executed fresh-clone verification test in `/tmp/triathlon_clone_test` (cloned repository, executed all 22 unit tests, ran `python -m src smoke`, and ran `scripts/check_repo.py`). 100% pass rate.
   - Generated comprehensive final research and engineering report (`docs/FINAL_REPORT.md`).
   - Repository integrity audit fully green (`python scripts/check_repo.py`).
@@ -100,7 +100,7 @@
 - **Next**:
   - Deliver Phase 0 deliverables to team and supervisor Prof. Kishor P. Upla for 20 Nov 2026 deadline.
 - **Problems**:
-  - None. Project deliverable fully operational, mathematically verified, and clean.
+  - E5 Control (a) single-run threshold failure documented; audited via 100-permutation distribution in docs/DECISIONS.md. Zero impact on final verdict.
 
 ---
 
