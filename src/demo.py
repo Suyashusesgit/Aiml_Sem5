@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib_cache")
 
 import argparse
-from typing import Any
+from typing import Any, Optional, Dict, List
 import pickle
 import joblib
 import cv2
@@ -108,7 +108,7 @@ def get_or_train_selector(
 
 def run_demo(
     input_path: str,
-    reference_path: str = None,
+    reference_path: Optional[str] = None,
     output_dir: str = "results/demo_output",
     model_path: str = "models/selector.joblib",
     target_long_side: int = 512,
@@ -146,7 +146,7 @@ def run_demo(
     deg, scale = resize_long_side(deg_raw, target_size=target_long_side)
     print(f"Dimensions  : {deg_raw.shape[1]}x{deg_raw.shape[0]} -> Resized to {deg.shape[1]}x{deg.shape[0]} (scale={scale:.3f})")
 
-    clean = None
+    clean: Optional[np.ndarray] = None
     if reference_path is None:
         # Automatically detect matching reference pair if available
         cand_ref = input_path.replace("/low/", "/high/").replace("\\low\\", "\\high\\")
@@ -159,8 +159,11 @@ def run_demo(
             print(f"Warning: Reference image not found at {reference_path}. Proceeding reference-free.")
         else:
             clean_raw = cv2.imread(reference_path, cv2.IMREAD_COLOR)
-            clean, _ = resize_long_side(clean_raw, target_size=target_long_side)
-            print(f"Reference   : {reference_path} (Loaded clean ground truth)")
+            if clean_raw is not None:
+                clean, _ = resize_long_side(clean_raw, target_size=target_long_side)
+                print(f"Reference   : {reference_path} (Loaded clean ground truth)")
+            else:
+                print(f"Warning: Failed to read reference image at {reference_path}. Proceeding reference-free.")
 
     # 2. Handcrafted Physical Feature Extraction (strictly on degraded image)
     t0_feat = time.perf_counter()
@@ -182,8 +185,8 @@ def run_demo(
 
     print(f"\nSelector Decision : '{pred_method}' (Inference: {t_pred_ms:.2f} ms)")
     classes = selector.classes_
-    prob_dict = {cls: prob for cls, prob in zip(classes, pred_probs)}
-    for cls in sorted(prob_dict, key=prob_dict.get, reverse=True):
+    prob_dict = {cls: float(prob) for cls, prob in zip(classes, pred_probs)}
+    for cls in sorted(prob_dict.keys(), key=lambda c: prob_dict[c], reverse=True):
         print(f"  - {cls:<15}: {prob_dict[cls] * 100.0:5.2f}% confidence")
 
     # 4. Enhancement Execution
@@ -199,9 +202,10 @@ def run_demo(
     print(f"Saved Output      : {enhanced_out_path}")
 
     # 5. Full-Reference Scoring (if ground-truth clean image provided)
-    oracle_method = None
-    regret_db = None
-    scores_all = {}
+    oracle_method: Optional[str] = None
+    regret_db: Optional[float] = None
+    candidate_scores: Dict[str, Dict[str, float]] = {}
+    candidate_images: Dict[str, np.ndarray] = {}
 
     if clean is not None:
         print("\n--- Quality Scoring against Reference ---")
@@ -210,16 +214,17 @@ def run_demo(
             cand_img = m_fn(deg)
             p = compute_psnr(clean, cand_img)
             s = compute_ssim(clean, cand_img)
-            scores_all[m_name] = {"psnr": p, "ssim": s, "img": cand_img}
+            candidate_scores[m_name] = {"psnr": p, "ssim": s}
+            candidate_images[m_name] = cand_img
 
         oracle_res = score_pair(clean, deg)
         oracle_method = oracle_res["label"]
         oracle_psnr = oracle_res["oracle_psnr"]
-        selected_psnr = scores_all[pred_method]["psnr"]
+        selected_psnr = candidate_scores[pred_method]["psnr"]
         regret_db = max(0.0, oracle_psnr - selected_psnr)
 
         print(f"  • Oracle Optimal Method : '{oracle_method}' (PSNR: {oracle_psnr:.2f} dB)")
-        print(f"  • Selected Model Choice : '{pred_method}' (PSNR: {selected_psnr:.2f} dB, SSIM: {scores_all[pred_method]['ssim']:.3f})")
+        print(f"  • Selected Model Choice : '{pred_method}' (PSNR: {selected_psnr:.2f} dB, SSIM: {candidate_scores[pred_method]['ssim']:.3f})")
         print(f"  • Decision Regret       : {regret_db:.3f} dB")
         if pred_method == oracle_method:
             print("  >>> TOP-1 EXACT MATCH: Zero regret!")
@@ -249,10 +254,10 @@ def run_demo(
 
             # Candidate Methods
             for idx, m_name in enumerate(CANONICAL_METHODS):
-                m_fn = METHODS[m_name]
-                cand_data = scores_all[m_name]
+                scores = candidate_scores[m_name]
+                cand_img = candidate_images[m_name]
                 ax = axes[idx + 2]
-                ax.imshow(cv2.cvtColor(cand_data["img"], cv2.COLOR_BGR2RGB))
+                ax.imshow(cv2.cvtColor(cand_img, cv2.COLOR_BGR2RGB))
                 is_selected = (m_name == pred_method)
                 is_oracle = (m_name == oracle_method)
 
@@ -262,14 +267,15 @@ def run_demo(
                     title_tag = "\n★ SELECTED (ORACLE WINNER) ★"
                     box_color = "green"
                 elif is_selected:
-                    title_tag = f"\n★ SELECTED (Regret: {regret_db:.2f} dB) ★"
+                    reg_str = f"{regret_db:.2f} dB" if regret_db is not None else "0.00 dB"
+                    title_tag = f"\n★ SELECTED (Regret: {reg_str}) ★"
                     box_color = "blue"
                 elif is_oracle:
                     title_tag = "\n[ORACLE WINNER]"
                     box_color = "darkorange"
 
                 ax.set_title(
-                    f"{m_name}\nPSNR: {cand_data['psnr']:.2f} dB | SSIM: {cand_data['ssim']:.3f}{title_tag}",
+                    f"{m_name}\nPSNR: {scores['psnr']:.2f} dB | SSIM: {scores['ssim']:.3f}{title_tag}",
                     fontsize=10,
                     color=box_color,
                     fontweight="bold" if (is_selected or is_oracle) else "normal"
