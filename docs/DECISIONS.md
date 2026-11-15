@@ -119,5 +119,16 @@ Any non-duplicate files previously placed in `_archive/` have been restored to s
 | **orb / ransac** | `extensions/downstream/downstream_matching.py` | None | Fully active on CPU; +72.9% inlier gain verified in 68 ms. |
 | **flicker** | `extensions/video/video_demo_anti_flicker.mp4`, `extensions/video/generate_video_demo.py`, `extensions/video/video_pipeline.py` | None | Temporal hysteresis gating active (0 switches vs 8 raw switches across 60 frames). |
 | **app.py** | `apps/web/app.py` (canonical app) & `app.py` (root forwarder) | None | Verified via socket HTTP test on port 8599 (HTTP 200 OK). |
-| **JOURNAL_SUBMISSION** | `paper/submission/` (contains all 5 submission files: `IEEE_Paper_To_Submit_Anonymized.pdf`, `IEEE_Paper_CameraReady_With_Authors.pdf`, `Supplementary_Visual_Atlas.pdf`, `Project_Triathlon_Basic_vs_Extra_Comparison.pdf`, `IEEE_LaTeX_Source_Package.zip`) | `_archive/report/` (exact SHA-256 bitwise duplicates retained per Rule 4) | Fully live and structured in `paper/submission/`. |
+| **JOURNAL_SUBMISSION** | Consolidated into single canonical paper (`paper/main.tex` and `paper/main.pdf`) | Redundant split variants removed | Consolidated into single master document for phased development. |
+
+---
+
+## 8. Single-Paper Phased Development Consolidation
+
+* **Directive**: As instructed, all auxiliary/split paper documents (`docs/deliverables/IEEE_Paper_Anonymized.tex`, `docs/deliverables/IEEE_Paper_Image_Enhancement_Selection.tex`, `docs/deliverables/Project_Triathlon_Basic_vs_Extra_Comparison.tex`, `paper/submission/`, `_archive/report/`, and auxiliary zip bundles) have been removed.
+* **Canonical Architecture**: The project now maintains **EXACTLY ONE** master research paper:
+  - Source: [`paper/main.tex`](file:///Users/home/Desktop/Aiml_Sem5/paper/main.tex)
+  - Compiled PDF: [`paper/main.pdf`](file:///Users/home/Desktop/Aiml_Sem5/paper/main.pdf) (20 pages, 11.95 MB)
+* **Phased Expansion**: As subsequent project phases (Phase 2 Sem 7, Phase 3 Sem 8) are executed, all experimental additions, figures, and analyses are directly integrated into `paper/main.tex` and compiled to `paper/main.pdf`.
+
 

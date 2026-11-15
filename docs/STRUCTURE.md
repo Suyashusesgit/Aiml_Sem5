@@ -49,18 +49,12 @@
 │   └── selector.json                   # Model metadata, SHA-256, and evidence provenance
 ├── notebooks/                          # Exploratory analysis and visual verification notebooks
 ├── paper/                              # Publication LaTeX manuscript, assets, and figures
-│   ├── main.tex                        # Master IEEE Transactions LaTeX document
+│   ├── main.tex                        # Single Canonical Master IEEE Transactions LaTeX document
+│   ├── main.pdf                        # Single Compiled IEEE Research Paper (20 pages)
 │   ├── IEEEtran.cls                    # IEEE Transactions document class
-│   ├── generated/                      # Auto-generated LaTeX tables from empirical CSVs
-│   │   ├── tab_primary_results.tex     # Primary benchmark table (E0)
-│   │   └── tab_modelcmp.tex            # Empirical comparison table (E0–E5)
-│   └── submission/                     # Complete camera-ready & anonymized submission bundle
-│       ├── IEEE_Paper_To_Submit_Anonymized.pdf
-│       ├── Supplementary_Visual_Atlas.pdf
-│       ├── IEEE_Paper_CameraReady_With_Authors.pdf
-│       ├── Project_Triathlon_Basic_vs_Extra_Comparison.pdf
-│       ├── IEEE_LaTeX_Source_Package.zip
-│       └── README_SUBMISSION_GUIDE.md
+│   └── generated/                      # Auto-generated LaTeX tables from empirical CSVs
+│       ├── tab_primary_results.tex     # Primary benchmark table (E0)
+│       └── tab_modelcmp.tex            # Empirical comparison table (E0–E5)
 ├── pytest.ini                          # Pytest testing configuration
 ├── requirements-tested.txt             # Pinned runtime dependencies
 ├── requirements.txt                    # Base runtime dependencies
@@ -108,7 +102,7 @@
 - `extensions/`: Modular, non-core capabilities (YOLOv8 object detection, ORB geometric matching, video temporal smoothing, edge latency profiling) isolated with their own READMEs and heavy dependency file (`extensions/requirements-extensions.txt`).
 - `experiments/`: Master runner (`run_experiment.py`) executing pre-registered decision experiments E0–E5.
 - `models/`: Trained champion model (`selector.joblib`) and metadata manifest (`selector.json`).
-- `paper/`: IEEE Transactions LaTeX source (`main.tex`), class files (`IEEEtran.cls`), generated tables, and journal submission bundle (`paper/submission/`).
+- `paper/`: Canonical IEEE Transactions LaTeX source (`main.tex`), class files (`IEEEtran.cls`), generated tables, and single compiled publication PDF (`main.pdf`).
 - `results/`: Output directories for generated experiment metrics, decision logs, and publication plots.
 - `scripts/`: Repository health verification (`check_repo.py`), decision report generator (`make_decision_report.py`), and model deployment (`train_deploy_model.py`).
 - `src/`: Core importable Python library implementing methods, features, selectors, training, and evaluation. Completely free of heavy dependencies (zero `torch` or `ultralytics`).
