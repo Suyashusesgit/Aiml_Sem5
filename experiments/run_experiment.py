@@ -12,12 +12,13 @@ from typing import Dict, List, Tuple, Any, Optional
 import numpy as np
 import pandas as pd
 import yaml
+import cv2
 from scipy.sparse import csgraph
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.methods import CANONICAL_METHODS
-from src.features import FEATURE_NAMES, validate_feature_dataframe
+from src.methods import CANONICAL_METHODS, METHODS
+from src.features import FEATURE_NAMES, validate_feature_dataframe, extract_features
 from src.labels import compute_psnr, compute_ssim
 from src.dataset import compute_dhash, compute_scene_groups_dhash, load_and_preprocess_pair
 from src.selectors import make_selector, ClassifierSelector
