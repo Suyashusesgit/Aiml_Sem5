@@ -11,9 +11,12 @@
 ├── docs/                               # Governance, SOPs, audits, and experimental logs
 │   ├── deliverables/                   # Master SOPs, student completion reports, executive summaries
 │   ├── CLAIMS_LEDGER.md                # Numeric claims audit against empirical evidence
+│   ├── CLEANUP_REPORT.md               # Archived files manifest & SHA-256 accounting
 │   ├── DECISIONS.md                    # Technical decisions and protected assets mapping
 │   ├── DECISION_RULE.md                # Pre-committed locked decision protocol
-│   ├── FINAL_REPORT.md                 # Executive research and engineering report
+│   ├── FINAL_REPORT.md                 # Executive research and engineering report (Phase 0)
+│   ├── FUTURE_PHASES_ROADMAP.md        # Engineering roadmap for Phase 2 (Sem 7) & Phase 3 (Sem 8)
+│   ├── PHASE1_REPORT.md                # Technical research report for Phase 1 (Sem 6)
 │   ├── PROGRESS.md                     # Phase-by-phase execution progress log
 │   └── STRUCTURE.md                    # Repository architecture map
 ├── apps/                               # User-facing production applications
@@ -63,19 +66,27 @@
 ├── requirements.txt                    # Base runtime dependencies
 ├── results/                            # [GENERATED] Experiment outputs, CSVs, and plots
 │   ├── decision/                       # Outputs for E0–E5 and verdict.json
-│   ├── figures/                        # Publication figures
-│   └── logs/                           # Background execution logs
+│   ├── figures/                        # Publication figures (Figures 1–16)
+│   ├── logs/                           # Background execution logs
+│   └── phase1/                         # Phase 1 experimental outputs & benchmarks
 ├── scripts/                            # Maintenance, repo check, and reporting utilities
 │   ├── check_repo.py                   # Automated repository health checker
 │   ├── make_decision_report.py         # Empirical report and table generator
+│   ├── run_phase1.py                   # Master Phase 1 experimental runner
+│   ├── run_phase1_conformal.py         # Split-conformal calibration runner
+│   ├── run_phase1_cross_degradation.py # Zero-shot cross-dataset runner
+│   ├── run_phase1_feature_expansion.py # 10D physical features runner
+│   ├── run_phase1_leave_one_out.py     # Leave-One-Enhancer-Out runner
+│   ├── run_phase1_rq2_oracle_study.py  # RQ2 dual-metric runner
 │   └── train_deploy_model.py           # Model training and serialization script
 ├── src/                                # Canonical library package (methods, features, etc.)
 │   ├── __init__.py
 │   ├── cli.py                          # Unified CLI entry point
+│   ├── conformal.py                    # Split-conformal predictor & risk-controlled abstention
 │   ├── dataset.py                      # Dataset loader, dHash grouping, resizing
 │   ├── demo.py                         # Single-image inference engine
 │   ├── evaluate.py                     # Cluster bootstrap resampler & metrics
-│   ├── features.py                     # 8 handcrafted physical descriptors
+│   ├── features.py                     # Handcrafted physical degradation descriptors
 │   ├── labels.py                       # PSNR/SSIM scoring & oracle tie-breaker
 │   ├── methods.py                      # 6 canonical enhancement methods
 │   ├── paper_assets.py                 # Automated LaTeX asset generator
@@ -83,7 +94,7 @@
 │   ├── plots.py                        # Visualization generation
 │   ├── selectors.py                    # Classical ML selectors (LR, RF, PTO, Baselines)
 │   └── train.py                        # 5-fold StratifiedGroupKFold fold generator
-├── tests/                              # Automated unit test suite (22 tests)
+├── tests/                              # Automated unit test suite (28 tests)
 └── _archive/                           # [GIT-IGNORED] Archived exact duplicates (Rule 4)
 ```
 
