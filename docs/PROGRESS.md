@@ -84,6 +84,20 @@
   - Integrated `tab_modelcmp.tex` and `tab_primary_results.tex` into `paper/main.tex` with complete experimental discussion.
   - Executed candidate evaluation run `python -m src run --run-name phase0_candidate` and `python -m src paper --run phase0_candidate`.
 - **Next**:
-  - Phase 5: Verification and Final Reporting (`docs/CLAIMS_LEDGER.md`, fresh-clone verification test, `docs/FINAL_REPORT.md`, Result Card).
+  - Phase 5: Verification and Final Reporting (`docs/CLAIMS_LEDGER.md`, fresh-clone verification test, `docs/FINAL_REPORT.md`, Result Card) [DONE].
 - **Problems**:
   - LaTeX compiler `latexmk` / `pdflatex` not installed on the system environment; paper source `paper/main.tex` and auto-generated tables are verified and syntax-checked.
+
+---
+
+## Phase 5 Checkpoint
+- **Done**:
+  - Compiled exhaustive claims ledger (`docs/CLAIMS_LEDGER.md`) auditing 12 claims against generated results. Verified Phase 0 baseline claims; rejected un-grouped "0.430 dB" claim as a leakage artifact.
+  - Executed fresh-clone verification test in `/tmp/triathlon_clone_test` (cloned repository, executed all 22 unit tests, ran `python -m src smoke`, and ran `scripts/check_repo.py`). 100% pass rate.
+  - Generated comprehensive final research and engineering report (`docs/FINAL_REPORT.md`).
+  - Repository integrity audit fully green (`python scripts/check_repo.py`).
+  - Outputted final 25-line Result Card.
+- **Next**:
+  - Deliver Phase 0 deliverables to team and supervisor Prof. Kishor P. Upla for 20 Nov 2026 deadline.
+- **Problems**:
+  - None. Project deliverable fully operational, mathematically verified, and clean.
