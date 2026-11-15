@@ -51,4 +51,4 @@ paths:
   features_cache: "results/features.csv"
   metrics_output: "results/metrics_table.csv"
   figures_dir: "results/figures"
-  reports_dir: "report"
+  reports_dir: "paper"

@@ -21,7 +21,29 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
+
+
+def make_folds(
+    X: np.ndarray,
+    y: np.ndarray,
+    groups: np.ndarray,
+    n_splits: int = 5,
+    seed: int = 42
+) -> List[Tuple[np.ndarray, np.ndarray]]:
+    """
+    Creates StratifiedGroupKFold splits and strictly asserts zero group overlap between train and val.
+    Per Appendix A & Gate G2.
+    """
+    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    folds = []
+    for fold, (tr_idx, va_idx) in enumerate(sgkf.split(X, y, groups)):
+        tr_groups = set(groups[tr_idx])
+        va_groups = set(groups[va_idx])
+        overlap = tr_groups.intersection(va_groups)
+        assert len(overlap) == 0, f"LEAKAGE DETECTED in fold {fold}: {len(overlap)} overlapping groups: {overlap}"
+        folds.append((tr_idx, va_idx))
+    return folds
 import xgboost as xgb
 
 from src.methods import METHODS

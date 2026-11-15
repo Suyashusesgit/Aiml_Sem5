@@ -30,8 +30,18 @@ models/
 *.onnx
 *.pt
 
+# Archived artifacts (Rule 4)
+_archive/
+
 # Papers, Reports, and Presentations (Do NOT push to GitHub)
 report/
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
 JOURNAL_SUBMISSION/
 *.pdf
 *.docx

@@ -96,6 +96,34 @@ def compute_perceptual_hash(img: np.ndarray) -> str:
     return "".join("1" if b else "0" for b in bits)
 
 
+def compute_dhash(img: np.ndarray) -> np.ndarray:
+    """
+    Computes a 64-bit difference hash (dHash) on a 9x8 grayscale thumbnail of an image.
+    Per Appendix A: 9 columns x 8 rows in grayscale, bit = (img[:, 1:] > img[:, :-1]).
+    Returns boolean array of shape (64,).
+    """
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if img.ndim == 3 else img
+    resized = cv2.resize(gray, (9, 8), interpolation=cv2.INTER_AREA)
+    diff = resized[:, 1:] > resized[:, :-1]
+    return diff.flatten()
+
+
+def compute_scene_groups_dhash(
+    reference_hashes: np.ndarray,
+    hamming_threshold: int = 10
+) -> np.ndarray:
+    """
+    Groups images by connected components of the pairwise Hamming distance graph (Hamming <= threshold).
+    Per Appendix A: 64-bit dHash of reference images, Hamming <= 10, connected components.
+    """
+    from scipy.sparse import csgraph
+    diffs = reference_hashes[:, None, :] != reference_hashes[None, :, :]
+    dist_matrix = np.sum(diffs, axis=2)
+    adj = dist_matrix <= hamming_threshold
+    n_components, labels = csgraph.connected_components(adj, directed=False)
+    return labels
+
+
 def resolve_dataset_dir(candidate_path: Optional[str] = None) -> str:
     """
     Resolves the dataset directory with priority:

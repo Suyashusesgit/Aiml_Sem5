@@ -54,6 +54,56 @@ PHYSICAL_10_DESCRIPTORS = [
 ]
 
 
+# Forbidden column substrings per Appendix A
+FORBIDDEN_COLUMN_SUBSTRINGS = [
+    "psnr", "ssim", "label", "oracle", "uid", "name", "path", "regret"
+]
+
+
+def validate_feature_dataframe(df: pd.DataFrame, feature_cols: List[str]) -> None:
+    """
+    Enforces anti-leakage rule: refuses feature columns containing any forbidden substring.
+    """
+    for col in feature_cols:
+        col_lower = col.lower()
+        for forbidden in FORBIDDEN_COLUMN_SUBSTRINGS:
+            if forbidden in col_lower:
+                raise ValueError(
+                    f"CRITICAL LEAKAGE DETECTED: feature column '{col}' contains forbidden substring '{forbidden}'"
+                )
+
+
+def compute_immerkaer_noise(gray: np.ndarray, patch_size: int = 16, flat_fraction: float = 0.1) -> float:
+    """
+    Immerkaer (1996) fast noise estimator computed across the flattest 10% of 16x16 patches.
+    Per Appendix A: noise (Immerkaer mask on the flattest 10% of 16x16 patches).
+    """
+    h, w = gray.shape
+    H = (h // patch_size) * patch_size
+    W = (w // patch_size) * patch_size
+    if H < patch_size or W < patch_size:
+        kernel = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]], dtype=np.float32)
+        resp = cv2.filter2D(gray, -1, kernel)
+        return float(np.mean(np.abs(resp[1:-1, 1:-1])) * np.sqrt(np.pi / 2.0) / 6.0)
+
+    cropped = gray[:H, :W].astype(np.float32)
+    patches = cropped.reshape(H // patch_size, patch_size, W // patch_size, patch_size).swapaxes(1, 2).reshape(-1, patch_size, patch_size)
+    variances = np.var(patches, axis=(1, 2))
+    
+    n_flat = max(1, int(len(variances) * flat_fraction))
+    flat_indices = np.argsort(variances)[:n_flat]
+    flat_patches = patches[flat_indices]
+
+    kernel = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]], dtype=np.float32)
+    laplacians = []
+    for p in flat_patches:
+        resp = cv2.filter2D(p, -1, kernel)
+        laplacians.append(np.mean(np.abs(resp[1:-1, 1:-1])))
+
+    sigma_n = float(np.mean(laplacians) * np.sqrt(np.pi / 2.0) / 6.0)
+    return sigma_n
+
+
 def air_light_transmission(img: np.ndarray, patch_size: int = 15, percentile: float = 99.9) -> float:
     """
     Estimates atmospheric transmission t from Dark Channel Prior (He et al., 2009).
@@ -113,22 +163,8 @@ def extract_features(
     nonzero_p = hist_norm[hist_norm > 0]
     entropy = float(-np.sum(nonzero_p * np.log2(nonzero_p)))
 
-    # 4: Noise estimation in flat regions (Laplacian MAD)
-    # Gradient magnitude to isolate smooth/flat background
-    sob_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
-    sob_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
-    grad_mag = np.sqrt(sob_x ** 2 + sob_y ** 2)
-
-    # Flattest decile (bottom 10% gradient magnitude)
-    flat_threshold = np.percentile(grad_mag, 10.0)
-    flat_mask = grad_mag <= flat_threshold
-
-    lap = cv2.Laplacian(gray, cv2.CV_32F, ksize=3)
-    flat_lap = np.abs(lap[flat_mask])
-    if len(flat_lap) > 0:
-        noise = float(1.4826 * np.median(flat_lap))
-    else:
-        noise = float(1.4826 * np.median(np.abs(lap)))
+    # 4: Noise estimation (Immerkaer mask on flattest 10% of 16x16 patches per Appendix A)
+    noise = float(compute_immerkaer_noise(gray, patch_size=16, flat_fraction=0.10))
 
     # 5: Dark Channel Prior (He et al. 2011)
     # Minimum across B, G, R channels eroded with 15x15 rectangular kernel
@@ -139,6 +175,9 @@ def extract_features(
     dark_channel = float(dark_channel_map.mean())
 
     # 6: Edge statistics (Sobel gradient magnitude mean and 90th percentile)
+    sob_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    sob_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    grad_mag = np.sqrt(sob_x ** 2 + sob_y ** 2)
     edge_mean = float(grad_mag.mean())
     edge_p90 = float(np.percentile(grad_mag, 90.0))
 

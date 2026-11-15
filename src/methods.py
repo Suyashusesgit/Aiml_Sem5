@@ -12,9 +12,19 @@ All color methods operate on luminance or process channels uniformly to avoid
 artificial color cast artifacts, and explicitly clip to [0, 255] uint8.
 """
 
-from typing import Dict, Callable
+from typing import Dict, Callable, List
 import cv2
 import numpy as np
+
+# Canonical six-method portfolio defined in Appendix A
+CANONICAL_METHODS: List[str] = [
+    "identity",
+    "gamma",
+    "clahe",
+    "hist_eq",
+    "retinex",
+    "bilat_unsharp",
+]
 
 
 def identity(img: np.ndarray) -> np.ndarray:

@@ -11,7 +11,7 @@ Implements Chapter 18 and 22 deliverables:
 """
 
 import os
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,6 +22,79 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 import xgboost as xgb
+
+
+class GroupResampler:
+    """
+    Cluster bootstrap resampler over scene groups.
+    Precomputes cluster resample indices for deterministic and paired bootstrap testing per Appendix A.
+    """
+    def __init__(self, groups: np.ndarray, n_bootstraps: int = 2000, seed: int = 42):
+        self.groups = np.asarray(groups)
+        self.unique_groups = np.unique(self.groups)
+        self.n_bootstraps = n_bootstraps
+        self.seed = seed
+        self.rng = np.random.RandomState(seed)
+
+        # Map each group to its member row indices
+        self.group_to_indices: Dict[Any, np.ndarray] = {}
+        for g in self.unique_groups:
+            self.group_to_indices[g] = np.where(self.groups == g)[0]
+
+        # Precompute resamples
+        self.resample_indices: List[np.ndarray] = []
+        n_groups = len(self.unique_groups)
+        for _ in range(n_bootstraps):
+            sampled_g = self.rng.choice(self.unique_groups, size=n_groups, replace=True)
+            idx_list = [self.group_to_indices[g] for g in sampled_g]
+            self.resample_indices.append(np.concatenate(idx_list))
+
+
+def ci_of(
+    values: np.ndarray,
+    resampler: GroupResampler,
+    ci: float = 0.95,
+    stat_fn: Any = np.mean
+) -> Tuple[float, float, float]:
+    """
+    Computes cluster bootstrap confidence interval [mean, lo, hi].
+    """
+    values = np.asarray(values)
+    point_est = float(stat_fn(values))
+    boot_stats = np.empty(resampler.n_bootstraps, dtype=np.float64)
+    for b, idx in enumerate(resampler.resample_indices):
+        boot_stats[b] = stat_fn(values[idx])
+    
+    alpha = (1.0 - ci) / 2.0
+    lo = float(np.percentile(boot_stats, 100.0 * alpha))
+    hi = float(np.percentile(boot_stats, 100.0 * (1.0 - alpha)))
+    return point_est, lo, hi
+
+
+def paired_ci(
+    values_a: np.ndarray,
+    values_b: np.ndarray,
+    resampler: GroupResampler,
+    ci: float = 0.95
+) -> Tuple[float, float, float]:
+    """
+    Computes paired cluster bootstrap difference: d = mean(A) - mean(B)
+    using identical resample indices for both arms.
+    Returns (d_point, d_lo, d_hi).
+    """
+    values_a = np.asarray(values_a)
+    values_b = np.asarray(values_b)
+    diff = values_a - values_b
+    point_d = float(np.mean(diff))
+
+    boot_diffs = np.empty(resampler.n_bootstraps, dtype=np.float64)
+    for b, idx in enumerate(resampler.resample_indices):
+        boot_diffs[b] = np.mean(values_a[idx]) - np.mean(values_b[idx])
+
+    alpha = (1.0 - ci) / 2.0
+    d_lo = float(np.percentile(boot_diffs, 100.0 * alpha))
+    d_hi = float(np.percentile(boot_diffs, 100.0 * (1.0 - alpha)))
+    return point_d, d_lo, d_hi
 
 from src.methods import METHODS
 from src.features import FEATURE_NAMES, ENGINEERED_FEATURE_NAMES, extract_features
