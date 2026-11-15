@@ -857,7 +857,7 @@ def run_e5_controls(
 
     # Control (c): Append one-hot oracle label to X
     print("--- Control (c): Label Leakage Oracle Channel (Positive Control) ---")
-    one_hot = pd.get_dummies(y)[CANONICAL_METHODS].values
+    one_hot = pd.get_dummies(pd.Categorical(y, categories=CANONICAL_METHODS)).values.astype(float)
     X_leakage = np.hstack([X, one_hot])
 
     controls_summary = []
@@ -967,22 +967,65 @@ def run_pipeline_cv(run_name: str = "explore_default", no_assets: bool = False) 
     data = prepare(dataset="lol_v1", split="our485", hamming_threshold=10)
 
     # 1. E0: Default Arm Reproduction
-    res_e0 = run_e0_reproduce(data, out_dir=f"results/decision/{run_name}")
+    e0_csv = f"results/decision/{run_name}/summary_cv.csv"
+    if os.path.exists(e0_csv):
+        print(f"\n[E0] Found existing {e0_csv}, loading...")
+        res_e0 = {"summary": pd.read_csv(e0_csv)}
+    else:
+        res_e0 = run_e0_reproduce(data, out_dir=f"results/decision/{run_name}")
 
     # 2. E1: Nested Fair Tuning
-    res_e1 = run_e1_nested_tuning(data, out_dir="results/decision/e1_tuning", budget=30)
+    e1_csv = "results/decision/e1_tuning/e1_tuning_summary.csv"
+    if os.path.exists(e1_csv):
+        print(f"\n[E1] Found existing {e1_csv}, loading...")
+        df_e1 = pd.read_csv(e1_csv)
+        row_diff = df_e1[df_e1["arm"].str.contains("TUNED DIFFERENCE")].iloc[0]
+        d_val = float(row_diff["mean_regret_db"])
+        ci_lo = float(row_diff["ci_lo"])
+        ci_hi = float(row_diff["ci_hi"])
+        res_e1 = {"d": d_val, "d_ci": (ci_lo, ci_hi)}
+    else:
+        res_e1 = run_e1_nested_tuning(data, out_dir="results/decision/e1_tuning", budget=30)
 
     # 3. E2: Leakage & Threshold Sensitivity
-    res_e2 = run_e2_leakage(data, out_dir="results/decision/e2_leakage")
+    e2b_csv = "results/decision/e2_leakage/e2b_threshold_sweep.csv"
+    if os.path.exists(e2b_csv):
+        print(f"\n[E2] Found existing {e2b_csv}, loading...")
+        df_e2b = pd.read_csv(e2b_csv)
+        row_18 = df_e2b[df_e2b["threshold"] == 18].iloc[0]
+        thr_18_d_hi = float(row_18["d_ci_hi"])
+        res_e2 = {"thr_18_d_hi": thr_18_d_hi}
+    else:
+        res_e2 = run_e2_leakage(data, out_dir="results/decision/e2_leakage")
 
     # 4. E3: Learning Curves
-    res_e3 = run_e3_learning_curves(data, out_dir="results/decision/e3_learning_curve")
+    e3_csv = "results/decision/e3_learning_curve/learning_curves.csv"
+    if os.path.exists(e3_csv):
+        print(f"\n[E3] Found existing {e3_csv}, loading...")
+        res_e3 = {"curve": pd.read_csv(e3_csv)}
+    else:
+        res_e3 = run_e3_learning_curves(data, out_dir="results/decision/e3_learning_curve")
 
     # 5. E4: External Validity
-    res_e4 = run_e4_external_validity(data, out_dir="results/decision/e4_external")
+    e4_csv = "results/decision/e4_external/external_validity_e4.csv"
+    if os.path.exists(e4_csv):
+        print(f"\n[E4] Found existing {e4_csv}, loading...")
+        df_e4 = pd.read_csv(e4_csv)
+        d_real_test = float(df_e4[df_e4["evaluation"].str.contains("LOL-v2 Real Test")].iloc[0]["d_db (RF - LR)"])
+        d_reverse = float(df_e4[df_e4["evaluation"].str.contains("Reverse")].iloc[0]["d_db (RF - LR)"])
+        res_e4 = {"d_real_test": d_real_test, "d_reverse": d_reverse}
+    else:
+        res_e4 = run_e4_external_validity(data, out_dir="results/decision/e4_external")
 
     # 6. E5: Controls
-    res_e5 = run_e5_controls(data, out_dir="results/decision/e5_controls")
+    e5_csv = "results/decision/e5_controls/controls_summary.csv"
+    if os.path.exists(e5_csv):
+        print(f"\n[E5] Found existing {e5_csv}, loading...")
+        df_e5 = pd.read_csv(e5_csv)
+        all_pass = (df_e5["status"] == "PASS").all()
+        res_e5 = {"df_controls": df_e5, "all_pass": all_pass}
+    else:
+        res_e5 = run_e5_controls(data, out_dir="results/decision/e5_controls")
 
     # --------------------------------------------------------------------------
     # EVALUATE PRE-COMMITTED DECISION RULE
