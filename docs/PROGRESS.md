@@ -120,3 +120,21 @@
 - **Problems**:
   - None.
 
+---
+
+## Phase 1 Checkpoint: Edge Feasibility & Cross-Degradation (Semester 6)
+- **Done**:
+  - Module 1 (Conformal Prediction): Implemented `src/conformal.py` (`SplitConformalClassifier`, `evaluate_confidence_abstention`). Executed 5-fold cross-conformal prediction: 90% target coverage achieved with 91.13% empirical coverage (average set size 2.41). Executed confidence-gated abstention sweep: at $\tau = 0.60$, accepted top-1 accuracy reaches 70.59% (regret drops to 1.068 dB). Generated `results/phase1/conformal_calibration.csv`, `results/phase1/abstention_curve.csv`, and Figure 12 (`results/figures/fig12_conformal_abstention.png`).
+  - Module 2 (RQ2 Oracle Study): Evaluated PSNR vs. SSIM oracle agreement across all 485 LOL-v1 scenes. Found 63.30% exact agreement (307/485) and strong overall rank correlation ($\rho = 0.8823$, $\tau = 0.8139$). Generated contingency matrix, dual-metric evaluation, and Figure 14 (`results/figures/fig14_psnr_ssim_tradeoff.png`).
+  - Module 3 (Cross-Dataset Generalization): Benchmarked zero-shot transfer of deployed selector on LOL-v2 Real (Unfiltered 100 pairs, De-duplicated 9 pairs) and LOL-v2 Synthetic (100 pairs). On LOL-v2 Synthetic, deployed LR beats Best-Fixed (Retinex) by +2.015 dB ($16.634$ dB vs $14.619$ dB, closing 38.7% of regret gap). Generated Figure 15 (`results/figures/fig15_cross_degradation_generalization.png`).
+  - Module 4 (Leave-One-Enhancer-Out): Evaluated operator dropout across all 6 classical methods. Established Pareto core: `retinex` (Rank 1, +1.090 dB regret impact), `hist_eq` (Rank 2, +0.807 dB), `gamma` (Rank 3, +0.210 dB). Generated Figure 16 (`results/figures/fig16_leave_one_enhancer_out.png`).
+  - Module 5 (10D Feature Expansion): Extracted Dark Channel Transmission ($T(x)$) and Dynamic Range Ratio ($R_{\text{tone}}(x)$) for all 485 scenes (`results/features_lol_v1_10d.csv`). 10D features improve regret by $-0.0184$ dB (60.82% top-1 vs 60.14%), but paired difference is not statistically significant ($p = 0.5481$), proving 8D baseline is parsimonious and sufficient. Generated Figure 13 (`results/figures/fig13_feature_expansion.png`).
+  - Master Orchestrator: Built `scripts/run_phase1.py` executing all 5 modules end-to-end in 4.59s.
+  - Testing & Integrity: Added 6 unit tests in `tests/test_phase1.py` (total 28/28 tests passing, 100% green). All 5 repository integrity checks passed (`scripts/check_repo.py`).
+  - Documentation & Strategic Roadmap: Generated `docs/PHASE1_REPORT.md` (comprehensive technical report) and `docs/FUTURE_PHASES_ROADMAP.md` (detailed Semester 7 & 8 roadmap).
+- **Next**:
+  - Phase 2 (Semester 7): Multimodal Foundation & Compound Distortions.
+- **Problems**:
+  - None.
+
+

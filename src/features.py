@@ -21,6 +21,7 @@ to ground truth or candidate enhanced outputs.
 from typing import Dict, Any, List
 import cv2
 import numpy as np
+import pandas as pd
 
 
 FEATURE_NAMES = [
