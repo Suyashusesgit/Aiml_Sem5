@@ -272,7 +272,28 @@ To guard against variance artifacts on small corpora \cite{bouthillier2021accoun
 \subsection{Primary Benchmark Evaluation}
 Table~\ref{tab:primary_results} reports the primary selection accuracy and regret metrics across 15 cross-validation runs on the LOL dataset under 5-fold StratifiedGroupKFold on reference dHash scene groups across 3 random seeds.
 
-\input{generated/tab_primary_results.tex}
+\begin{table}[!t]
+\centering
+\caption{Primary Benchmark Results (5-Fold Grouped CV across 3 Random Seeds)}
+\label{tab:primary_results}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Selector / Strategy} & \textbf{Top-1 (\%)} & \textbf{Mean Regret (dB)} & \textbf{95\% CI (dB)} & \textbf{Max Regret (dB)} \\
+\midrule
+\textbf{Logistic Regression} & \textbf{59.66} & \textbf{1.532} & \textbf{[1.279, 1.829]} & \textbf{18.03} \\
+Random Forest & 56.43 & 1.707 & [1.430, 2.004] & 18.03 \\
+HistGradientBoosting & 55.53 & 2.000 & [1.689, 2.344] & 18.03 \\
+Ridge PTO & 57.87 & 1.473 & [1.216, 1.778] & 18.03 \\
+Hand-Written Rule & 42.06 & 3.281 & [2.843, 3.745] & 20.31 \\
+Best Fixed Method & 44.81 & 2.779 & [2.323, 3.246] & 22.33 \\
+Fixed Majority & 45.57 & 2.734 & [2.265, 3.217] & 22.33 \\
+Random Choice & 15.05 & 7.056 & [6.725, 7.400] & 21.22 \\
+Theoretical Oracle & 100.00 & 0.000 & [0.000, 0.000] & 0.04 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 The empirical findings clearly confirm our central hypothesis:
 \begin{enumerate}
@@ -285,7 +306,27 @@ The empirical findings clearly confirm our central hypothesis:
 \subsection{Model Selection: Logistic Regression versus Random Forest}
 To resolve the architecture choice between linear and non-linear tree-based paradigms under rigorous empirical evidence, we executed a pre-registered protocol comparing Multinomial Logistic Regression and Random Forest across nested tuning, leakage inflation, grouping granularity, and out-of-distribution transfer (Table~\ref{tab:model_comparison}).
 
-\input{generated/tab_modelcmp.tex}
+\begin{table}[t]
+\caption{Empirical Comparison: Multinomial Logistic Regression vs. Random Forest across Validation Dimensions}
+\label{tab:model_comparison}
+\centering
+\scriptsize
+\begin{tabular}{lcccc}
+\hline
+\textbf{Dimension} & \textbf{Logistic Regression} & \textbf{Random Forest} & \textbf{Difference ($d$)} & \textbf{Favored} \\
+\hline
+LOL-v1 Default Regret (dB) & \textbf{1.532} & 1.707 & +0.175 & LR \\
+LOL-v1 Default Top-1 Acc (\%) & \textbf{59.66\%} & 56.43\% & -3.23\% & LR \\
+LOL-v1 Tuned Regret (dB) & 1.603 & 1.498 & -0.105 & Tie (CI spans 0) \\
+Plain CV Inflation (dB) & \textbf{+0.129} & +0.479 & -- & LR ($3.7\times$ robust) \\
+LOL-v2 Real Test Regret (dB) & 2.839 & 2.839 & +0.000 & Tie \\
+Model Checkpoint Size & \textbf{2.4 KB} & 7249.7 KB & -- & LR ($>2992\times$ smaller) \\
+Inference Latency & \textbf{$<$1.0 ms} & $\sim$5.0 ms & -- & LR ($5\times$ faster) \\
+\hline
+\textbf{Pre-Committed Verdict} & \multicolumn{3}{c}{\textbf{TIE: Logistic Regression Deployed (Parsimony Rule)}} & \textbf{LR} \\
+\hline
+\end{tabular}
+\end{table}
 
 As detailed in Table~\ref{tab:model_comparison}, under default 5-fold cross-validation strictly grouped on reference 64-bit dHash (Hamming threshold $\le 10$, 228 disjoint physical scene clusters), Logistic Regression achieves lower regret ($1.532\text{ dB}$ vs. $1.707\text{ dB}$, $p < 0.05$) and higher accuracy ($59.66\%$ vs. $56.43\%$) than Random Forest. When subjected to nested fair hyperparameter tuning (30 random configurations per fold, inner 3-fold grouped CV on outer-training folds only), the paired difference $d = \text{regret}(\text{RF}) - \text{regret}(\text{LR}) = -0.105\text{ dB}$ exhibits a 95\% bootstrap confidence interval of $[-0.272, +0.064]\text{ dB}$. Because the upper bound includes positive values ($d_{hi} > -0.10\text{ dB}$), RF not demonstrably better in-distribution.
 
