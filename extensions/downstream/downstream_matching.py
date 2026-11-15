@@ -138,3 +138,37 @@ def evaluate_enhancement_matching_gain(
         "latency_ms": round(baseline_res["latency_ms"] + enhanced_res["latency_ms"], 2),
     }
 
+
+def main():
+    import os
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+    print("=" * 70)
+    print("ORB KEYPOINT & RANSAC GEOMETRIC MATCHING BENCHMARK (CPU)")
+    print("=" * 70)
+    low_path = "data/lol_dataset/eval15/low/1.png"
+    ref_path = "data/lol_dataset/eval15/high/1.png"
+    if not os.path.exists(low_path):
+        print(f"Sample image {low_path} not found.")
+        return
+
+    img_deg = cv2.imread(low_path)
+    img_ref = cv2.imread(ref_path)
+
+    from src.methods import METHODS
+    img_enh = METHODS["gamma"](img_deg)
+
+    res = evaluate_enhancement_matching_gain(img_deg, img_enh, img_ref)
+    print(f"Input image         : {low_path}")
+    print(f"Reference image     : {ref_path}")
+    print(f"Baseline Inliers    : {res['baseline_inliers']} (inlier ratio: {res['baseline_ratio']}%)")
+    print(f"Enhanced Inliers    : {res['enhanced_inliers']} (inlier ratio: {res['enhanced_ratio']}%)")
+    print(f"Inlier Gain         : +{res['inlier_gain']} (+{res['inlier_gain_pct']}%)")
+    print(f"Matching Latency    : {res['latency_ms']:.2f} ms on CPU")
+    print("=" * 70)
+    print("ORB matching evaluation completed successfully!\n")
+
+
+if __name__ == "__main__":
+    main()
+

@@ -26,7 +26,7 @@ os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
 # Ensure package root and site-packages in path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 for _site_p in [
     "/opt/homebrew/lib/python3.14/site-packages",
     os.path.expanduser("~/Library/Python/3.14/lib/python/site-packages"),
@@ -55,7 +55,7 @@ def _extract_yolo_boxes_and_conf(detector_fn: Any, img: np.ndarray, conf_thresh:
 def run_yolo_downstream_eval(
     eval15_low_dir: str = "data/lol_dataset/eval15/low",
     eval15_high_dir: str = "data/lol_dataset/eval15/high",
-    model_path: str = "models/rf_selector.joblib",
+    model_path: str = "models/selector.joblib",
     output_csv: str = "results/downstream_yolo_metrics.csv",
     figure_path: str = "results/figures/fig11_downstream_yolo_detection.png"
 ) -> pd.DataFrame:
@@ -69,7 +69,12 @@ def run_yolo_downstream_eval(
         raise ImportError("ultralytics package is required. Install via pip install ultralytics.")
 
     print("Loading pretrained YOLOv8n detector (COCO 80 classes)...")
-    detector: Any = YOLO("yolov8n.pt")
+    weights_path = "extensions/downstream/yolov8n.pt"
+    if not os.path.exists(weights_path):
+        weights_path = os.path.join(os.path.dirname(__file__), "yolov8n.pt")
+    if not os.path.exists(weights_path):
+        weights_path = "yolov8n.pt"
+    detector: Any = YOLO(weights_path)
 
     if not os.path.exists(eval15_low_dir):
         eval15_low_dir = "/Users/home/Desktop/LOLdataset/eval15/low"

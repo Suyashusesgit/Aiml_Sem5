@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 from typing import Any
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from src.video_pipeline import VideoStreamProcessor
 from src.features import extract_features, FEATURE_NAMES
 from src.methods import METHODS
@@ -85,7 +85,8 @@ def build_demo_video():
     base_imgs = load_base_images((360, 240))
     raw_frames = generate_video_sequence(base_imgs, total_frames=60)
     
-    model = joblib.load("models/rf_selector.joblib")
+    model_path = "models/selector.joblib" if os.path.exists("models/selector.joblib") else "models/rf_selector.joblib"
+    model = joblib.load(model_path)
     stabilized_pipeline = VideoStreamProcessor(
         model=model,
         switch_penalty=0.15,

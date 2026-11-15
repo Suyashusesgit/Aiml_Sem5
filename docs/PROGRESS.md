@@ -101,3 +101,22 @@
   - Deliver Phase 0 deliverables to team and supervisor Prof. Kishor P. Upla for 20 Nov 2026 deadline.
 - **Problems**:
   - None. Project deliverable fully operational, mathematically verified, and clean.
+
+---
+
+## Phase 6 Checkpoint: Extensions & Deliverables Verification ("All One by One")
+- **Done**:
+  - Step 1: Interactive Web App (`apps/web/app.py`) verified via automated socket HTTP test on port 8599 (`scripts/test_web_app.py`). Served 200 OK with 38 KB payload and zero crashes.
+  - Step 2a: ORB/RANSAC geometric matching (`extensions/downstream/downstream_matching.py`) verified on CPU. Geometric inliers increased from 199 (96.1% inlier ratio) to 344 (99.1% inlier ratio), a +72.9% relative gain in 68 ms.
+  - Step 2b: YOLOv8 CPU object detection (`extensions/downstream/downstream_yolo_detection.py`) executed across 15 test scenes. Generated `results/downstream_yolo_metrics.csv` and `results/figures/fig11_downstream_yolo_detection.png` (+15.4% detection recall gain).
+  - Step 2c: Video temporal anti-flicker generator (`extensions/video/generate_video_demo.py`) executed on 60 synthetic sequential frames. Raw selection switched 8 times; stabilized selection switched 0 times! Generated `results/video_demo_anti_flicker.mp4` (1.6 MB) and GIF.
+  - Step 2d: Edge hardware latency profiling (`extensions/latency/edge_hardware_profile.py`) executed over 500 runs on CPU. Proposed Logistic Regression selector achieves 10.46 ms total latency (95.6 FPS) with a 2.4 KB model footprint and 38.5 MB peak RAM (zero GPU). Generated `results/edge_hardware_profile.csv` and `results/figures/fig9_edge_profiling.png`.
+  - Latency-aware Pareto frontier (`extensions/latency/latency_aware_selection.py`) verified and updated (`results/latency_regret_frontier.csv`).
+  - Step 3: Phase 0 deliverable packaging for Prof. Kishor P. Upla verified across `docs/deliverables/`, `paper/submission/`, `models/`, and `results/`.
+  - All 22 test suite cases passed (`python3 -m unittest discover tests`).
+  - Repository integrity audit fully passed (`python3 scripts/check_repo.py`).
+- **Next**:
+  - Remote git synchronization (`git push origin main --tags`).
+- **Problems**:
+  - None.
+

@@ -29,6 +29,7 @@ os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
 # Ensure project root and site-packages are in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 for _site_p in [
     "/opt/homebrew/lib/python3.14/site-packages",
@@ -51,7 +52,7 @@ PORTFOLIO_METHODS = {
     "dcp_dehaze": dcp_dehaze,
 }
 
-MODEL_PATH = "models/rf_selector.joblib"
+MODEL_PATH = "models/selector.joblib"
 MODEL = None
 YOLO_MODEL = None
 PTO_MODEL = None

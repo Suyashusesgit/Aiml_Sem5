@@ -11,9 +11,9 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # Empirical benchmark latencies on ARM / CPU edge platforms (ms per 512x512 frame)
 METHOD_LATENCIES_MS = {
