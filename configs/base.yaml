@@ -52,3 +52,13 @@ paths:
   metrics_output: "results/metrics_table.csv"
   figures_dir: "results/figures"
   reports_dir: "paper"
+
+deploy:
+  selector: "logreg"
+  params:
+    C: 1.0
+    class_weight: null
+    max_iter: 2000
+    random_state: 42
+  verdict: "TIE"
+  evidence: "results/decision/verdict.json"

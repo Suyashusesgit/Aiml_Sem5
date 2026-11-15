@@ -1022,7 +1022,7 @@ def run_pipeline_cv(run_name: str = "explore_default", no_assets: bool = False) 
     if os.path.exists(e5_csv):
         print(f"\n[E5] Found existing {e5_csv}, loading...")
         df_e5 = pd.read_csv(e5_csv)
-        all_pass = (df_e5["status"] == "PASS").all()
+        all_pass = bool((df_e5["status"] == "PASS").all())
         res_e5 = {"df_controls": df_e5, "all_pass": all_pass}
     else:
         res_e5 = run_e5_controls(data, out_dir="results/decision/e5_controls")
@@ -1082,7 +1082,7 @@ def run_pipeline_cv(run_name: str = "explore_default", no_assets: bool = False) 
         "d_real_test": round(d_real_test, 4),
         "d_reverse": round(d_reverse, 4),
         "thr_18_d_hi": round(thr_18_d_hi, 4) if thr_18_d_hi else None,
-        "all_controls_pass": all_controls_pass,
+        "all_controls_pass": bool(all_controls_pass),
         "conditions": {
             "cond_1_d_hi_less_than_minus_delta": bool(cond_1),
             "cond_2_external_both_negative": bool(cond_2),

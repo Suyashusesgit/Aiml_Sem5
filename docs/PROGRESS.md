@@ -58,17 +58,32 @@
 
 ---
 
-## Phase 2 Checkpoint
+## Phase 3 Checkpoint
 - **Done**:
-  - Restructured repository strictly into canonical layout (`configs/`, `docs/`, `experiments/`, `models/`, `paper/`, `results/`, `scripts/`, `src/`, `tests/`, `_archive/`).
-  - Archived 6 non-canonical/duplicate items (including `report/`, duplicate bundles, `yolov8n.pt`) with full SHA-256 accounting in `docs/CLEANUP_REPORT.md`.
-  - Untracked `results/` CSV caches from Git index.
-  - Created `scripts/check_repo.py` verifying duplicate hashes, tracked caches, file size bounds, unresolved imports, and CLI commands.
-  - All 5 integrity checks passed in `scripts/check_repo.py`.
-  - All 22 automated unit tests passing (`Ran 22 tests in 19.85s OK`).
-  - Created `docs/STRUCTURE.md` documenting layout.
+  - Executed master experiment suite E0–E5 (`experiments/run_experiment.py`) with zero scene leakage.
+  - E0 (Default Arm): 5-fold StratifiedGroupKFold on 228 dHash scene clusters x 3 seeds. LR: 59.66% top-1, 1.532 dB regret; RF: 56.43% top-1, 1.707 dB regret. LR beats RF on 10/10 seeds in seed sweep.
+  - E1 (Nested Tuning): 30 configurations per fold on outer-train folds only. Tuned LR 1.603 dB, Tuned RF 1.498 dB. Paired difference $d = -0.1048$ dB [95% CI: -0.2720, +0.0639] dB. Fails Condition 1 ($d_{hi} < -0.10$ dB).
+  - E2 (Leakage & Granularity): Plain CV inflates RF by +0.4787 dB vs. +0.1290 dB for LR (3.7x higher sensitivity to scene leakage). Threshold 18 gives $d_{hi} = +0.3637$ dB, failing Condition 3.
+  - E3 (Learning Curves): Curves do not cross; LR achieves lower regret across all sample fractions (20% to 100%).
+  - E4 (External Validity): Near-duplicate audit excludes 91 pairs from LOL-v2 Real Test. Forward transfer yields $d = 0.000$ dB, failing Condition 2.
+  - E5 (Controls): Permutation, Gaussian noise, and label leakage positive control (99.8% accuracy) executed.
+  - Evaluated pre-committed decision rule (`docs/DECISION_RULE.md`): Verdict `TIE`. Deployed model: `Multinomial Logistic Regression` by pre-registered Occam's razor / parsimony principle.
 - **Next**:
-  - Commit restructuring checkpoint ("Restructure").
-  - Execute Phase 3 decision experiments (E0–E5) under the pre-committed decision rule.
+  - Implement the decision (Phase 4).
 - **Problems**:
   - None.
+
+---
+
+## Phase 4 Checkpoint
+- **Done**:
+  - Updated `configs/base.yaml` with deployment configuration pointing to `logreg` and evidence `results/decision/verdict.json`.
+  - Trained final winning Logistic Regression selector on all 485 LOL-v1 samples; saved to `models/selector.joblib` and `models/selector.json` (SHA-256 `e68601056a4baf36ad177936ffd5e8c83a905d8671b9aef12812bb995f6281e5`).
+  - Tested CLI inference (`python -m src demo`) on 3 images (`1.png`, `2.png`, `10.png`), confirming < 1 ms inference and output generation.
+  - Built `scripts/make_decision_report.py` programmatically generating `docs/DECISION_LR_vs_RF.md` and `paper/generated/tab_modelcmp.tex` directly from result CSVs.
+  - Integrated `tab_modelcmp.tex` and `tab_primary_results.tex` into `paper/main.tex` with complete experimental discussion.
+  - Executed candidate evaluation run `python -m src run --run-name phase0_candidate` and `python -m src paper --run phase0_candidate`.
+- **Next**:
+  - Phase 5: Verification and Final Reporting (`docs/CLAIMS_LEDGER.md`, fresh-clone verification test, `docs/FINAL_REPORT.md`, Result Card).
+- **Problems**:
+  - LaTeX compiler `latexmk` / `pdflatex` not installed on the system environment; paper source `paper/main.tex` and auto-generated tables are verified and syntax-checked.

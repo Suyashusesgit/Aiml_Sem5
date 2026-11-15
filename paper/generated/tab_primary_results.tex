@@ -1,0 +1,22 @@
+\begin{table}[!t]
+\centering
+\caption{Primary Benchmark Results (5-Fold Grouped CV across 3 Random Seeds)}
+\label{tab:primary_results}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Selector / Strategy} & \textbf{Top-1 (\%)} & \textbf{Mean Regret (dB)} & \textbf{95\% CI (dB)} & \textbf{Max Regret (dB)} \\
+\midrule
+\textbf{Logistic Regression} & \textbf{59.66} & \textbf{1.532} & \textbf{[1.279, 1.829]} & \textbf{18.03} \\
+Random Forest & 56.43 & 1.707 & [1.430, 2.004] & 18.03 \\
+HistGradientBoosting & 55.53 & 2.000 & [1.689, 2.344] & 18.03 \\
+Ridge PTO & 57.87 & 1.473 & [1.216, 1.778] & 18.03 \\
+Hand-Written Rule & 42.06 & 3.281 & [2.843, 3.745] & 20.31 \\
+Best Fixed Method & 44.81 & 2.779 & [2.323, 3.246] & 22.33 \\
+Fixed Majority & 45.57 & 2.734 & [2.265, 3.217] & 22.33 \\
+Random Choice & 15.05 & 7.056 & [6.725, 7.400] & 21.22 \\
+Theoretical Oracle & 100.00 & 0.000 & [0.000, 0.000] & 0.04 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

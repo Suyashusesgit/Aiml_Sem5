@@ -33,7 +33,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
-from src.methods import METHODS
+from src.methods import METHODS, CANONICAL_METHODS
 from src.features import extract_features, FEATURE_NAMES
 from src.labels import compute_psnr, compute_ssim, score_pair
 from src.dataset import resize_long_side, resolve_dataset_dir
@@ -56,51 +56,52 @@ class ModelScalerWrapper:
 
 
 def get_or_train_selector(
-    features_csv: str = "results/features.csv",
-    scores_csv: str = "results/scores.csv",
-    model_save_path: str = "results/models/logistic_regression.pkl",
+    features_csv: str = "results/features_lol_v1_our485.csv",
+    scores_csv: str = "results/scores_lol_v1_our485.csv",
+    model_save_path: str = "models/selector.joblib",
     random_seed: int = 42,
 ) -> Any:
     """
     Loads pre-trained selector model (or trains one if missing).
     Supports scikit-learn Pipelines as well as {'model': ..., 'scaler': ...} packages.
     """
+    if model_save_path is None:
+        model_save_path = "models/selector.joblib"
+
     if os.path.exists(model_save_path):
         try:
+            return joblib.load(model_save_path)
+        except Exception:
             with open(model_save_path, "rb") as f:
                 loaded = pickle.load(f)
             if isinstance(loaded, dict) and "model" in loaded and "scaler" in loaded:
                 return ModelScalerWrapper(loaded["model"], loaded["scaler"])
             return loaded
-        except Exception:
-            return joblib.load(model_save_path)
 
-    # Fallback to models/rf_selector.joblib if available
-    if os.path.exists("models/rf_selector.joblib"):
-        return joblib.load("models/rf_selector.joblib")
+    # Fallback to models/selector.joblib if available
+    if os.path.exists("models/selector.joblib"):
+        return joblib.load("models/selector.joblib")
 
     print(f"Model cache not found at {model_save_path}. Training Logistic Regression on cached features...")
     if not os.path.exists(features_csv) or not os.path.exists(scores_csv):
-        raise FileNotFoundError(
-            f"Required cache files ({features_csv}, {scores_csv}) missing. "
-            "Run 'python3 main.py' first to generate dataset cache."
-        )
-
-    df_features = pd.read_csv(features_csv)
-    df_scores = pd.read_csv(scores_csv)
-
-    X = df_features[FEATURE_NAMES].values
-    y = df_scores["label"].values
+        from src.pipeline import prepare
+        data = prepare(dataset="lol_v1", split="our485", hamming_threshold=10)
+        X = data["X"]
+        y = data["y"]
+    else:
+        df_features = pd.read_csv(features_csv)
+        df_scores = pd.read_csv(scores_csv)
+        X = df_features[FEATURE_NAMES].values
+        y = df_scores["label"].values
 
     pipe = make_pipeline(
         StandardScaler(),
-        LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", random_state=random_seed)
+        LogisticRegression(max_iter=2000, C=1.0, solver="lbfgs", random_state=random_seed)
     )
     pipe.fit(X, y)
 
     os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
-    with open(model_save_path, "wb") as f:
-        pickle.dump(pipe, f)
+    joblib.dump(pipe, model_save_path)
     print(f"Saved trained Logistic Regression model to {model_save_path}.")
     return pipe
 
@@ -109,7 +110,7 @@ def run_demo(
     input_path: str,
     reference_path: str = None,
     output_dir: str = "results/demo_output",
-    model_path: str = "models/rf_selector.joblib",
+    model_path: str = "models/selector.joblib",
     target_long_side: int = 512,
     save_grid: bool = True,
 ) -> None:
@@ -204,7 +205,8 @@ def run_demo(
 
     if clean is not None:
         print("\n--- Quality Scoring against Reference ---")
-        for m_name, m_fn in METHODS.items():
+        for m_name in CANONICAL_METHODS:
+            m_fn = METHODS[m_name]
             cand_img = m_fn(deg)
             p = compute_psnr(clean, cand_img)
             s = compute_ssim(clean, cand_img)
@@ -228,10 +230,10 @@ def run_demo(
     if save_grid:
         fig_path = os.path.join(output_dir, "enhancement_comparison_grid.png")
         if clean is not None:
-            n_methods = len(METHODS)
+            n_methods = len(CANONICAL_METHODS)
             n_total = 2 + n_methods
             n_cols = 4
-            n_rows = int(np.ceil(n_total / n_cols))
+            n_rows = 2
             fig, axes = plt.subplots(n_rows, n_cols, figsize=(18, 4.5 * n_rows))
             axes = axes.flatten()
 
@@ -246,7 +248,8 @@ def run_demo(
             axes[1].axis("off")
 
             # Candidate Methods
-            for idx, (m_name, m_fn) in enumerate(METHODS.items()):
+            for idx, m_name in enumerate(CANONICAL_METHODS):
+                m_fn = METHODS[m_name]
                 cand_data = scores_all[m_name]
                 ax = axes[idx + 2]
                 ax.imshow(cv2.cvtColor(cand_data["img"], cv2.COLOR_BGR2RGB))
@@ -294,7 +297,8 @@ def run_demo(
             axes[1].set_title(f"★ SELECTED: {pred_method} ★", fontsize=11, fontweight="bold", color="blue")
             axes[1].axis("off")
 
-            for idx, (m_name, m_fn) in enumerate(METHODS.items()):
+            for idx, m_name in enumerate(CANONICAL_METHODS):
+                m_fn = METHODS[m_name]
                 out = m_fn(deg)
                 ax = axes[idx + 2]
                 ax.imshow(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
@@ -347,8 +351,8 @@ def main():
     parser.add_argument(
         "--model_path",
         type=str,
-        default="results/models/logistic_regression.pkl",
-        help="Path to pre-trained selector model (defaults to champion Logistic Regression)."
+        default="models/selector.joblib",
+        help="Path to pre-trained selector model (defaults to winning Logistic Regression)."
     )
     args = parser.parse_args()
 
@@ -358,6 +362,10 @@ def main():
         output_dir=args.output_dir,
         model_path=args.model_path,
     )
+
+
+# Alias for CLI and module integration
+run_single_inference = run_demo
 
 
 if __name__ == "__main__":
