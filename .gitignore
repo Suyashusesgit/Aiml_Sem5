@@ -20,6 +20,16 @@ ENV/
 # Demo scratch output
 results/demo_output/
 
+# All results (CSVs, plots, benchmark outputs)
+results/
+
+# Model artifacts
+models/
+*.pkl
+*.joblib
+*.onnx
+*.pt
+
 # Papers, Reports, and Presentations (Do NOT push to GitHub)
 report/
 JOURNAL_SUBMISSION/
@@ -27,6 +37,9 @@ JOURNAL_SUBMISSION/
 *.docx
 *.pptx
 *.gif
+
+# Scratch / teammate code
+scratch_triathlon/
 
 # OS generated files
 .DS_Store

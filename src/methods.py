@@ -161,7 +161,66 @@ def invert_dehaze(
     return np.clip(J_out * 255.0, 0, 255).astype(np.uint8)
 
 
-# Dictionary mapping method names to callable enhancement functions
+def multi_scale_retinex(
+    img: np.ndarray,
+    sigmas: tuple = (15, 80, 250),
+    weights: tuple = (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0)
+) -> np.ndarray:
+    """
+    Multi-Scale Retinex (MSR) (Jobson et al., IEEE TIP 1997).
+    Computes weighted linear combination of Single-Scale Retinex outputs across multiple Gaussian scales
+    (fine, medium, coarse: 15, 80, 250) to simultaneously achieve dynamic range compression and tonal rendition.
+    Uses multi-resolution Gaussian downsampling for real-time edge CPU performance.
+    """
+    img_f = img.astype(np.float32) + 1.0
+    h, w = img.shape[:2]
+    ret = np.zeros_like(img_f, dtype=np.float32)
+    for sigma, w_val in zip(sigmas, weights):
+        if sigma > 60:
+            scale = 50.0 / float(sigma)
+            small = cv2.resize(img_f, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            blurred = cv2.GaussianBlur(small, (0, 0), sigmaX=50.0, sigmaY=50.0)
+            blur = cv2.resize(blurred, (w, h), interpolation=cv2.INTER_LINEAR)
+        else:
+            blur = cv2.GaussianBlur(img_f, (0, 0), sigmaX=float(sigma), sigmaY=float(sigma))
+        ret += w_val * (np.log10(img_f) - np.log10(blur + 1.0))
+    ret = cv2.normalize(ret, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    return np.clip(ret, 0, 255).astype(np.uint8)
+
+
+def guided_filter(
+    img: np.ndarray,
+    radius: int = 8,
+    eps: float = 0.01
+) -> np.ndarray:
+    """
+    Edge-Preserving Guided Filter (He et al., IEEE TPAMI 2013).
+    Filters high-frequency sensor noise while preserving sharp boundaries using grayscale guidance.
+    Implemented via cv2.boxFilter for sub-15ms execution on CPU.
+    """
+    img_f = img.astype(np.float32) / 255.0
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32) / 255.0
+    ksize = (2 * radius + 1, 2 * radius + 1)
+    mean_I = cv2.boxFilter(gray, cv2.CV_32F, ksize)
+    mean_II = cv2.boxFilter(gray * gray, cv2.CV_32F, ksize)
+    var_I = mean_II - mean_I * mean_I
+
+    out = np.zeros_like(img_f)
+    for c in range(3):
+        p = img_f[:, :, c]
+        mean_p = cv2.boxFilter(p, cv2.CV_32F, ksize)
+        mean_Ip = cv2.boxFilter(gray * p, cv2.CV_32F, ksize)
+        cov_Ip = mean_Ip - mean_I * mean_p
+        a = cov_Ip / (var_I + eps)
+        b = mean_p - a * mean_I
+        mean_a = cv2.boxFilter(a, cv2.CV_32F, ksize)
+        mean_b = cv2.boxFilter(b, cv2.CV_32F, ksize)
+        q = mean_a * gray + mean_b
+        out[:, :, c] = q
+    return np.clip(out * 255.0, 0, 255).astype(np.uint8)
+
+
+# Dictionary mapping method names to callable enhancement functions (Phase 0/1 baseline)
 METHODS: Dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "identity": identity,
     "gamma": gamma,
@@ -170,4 +229,16 @@ METHODS: Dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "retinex": retinex,
     "bilat_unsharp": bilat_unsharp,
     "invert_dehaze": invert_dehaze,
+}
+
+# The 8-method multi-hazard enhancement bank (Project Triathlon Portfolio)
+ENHANCERS_8: Dict[str, Callable[[np.ndarray], np.ndarray]] = {
+    "identity": identity,
+    "gamma": gamma,
+    "clahe": clahe,
+    "hist_eq": hist_eq,
+    "retinex": retinex,
+    "multi_scale_retinex": multi_scale_retinex,
+    "guided_filter": guided_filter,
+    "bilat_unsharp": bilat_unsharp,
 }

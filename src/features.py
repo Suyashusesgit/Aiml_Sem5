@@ -39,14 +39,56 @@ ENGINEERED_FEATURE_NAMES = [
     "entropy_noise_product",
 ]
 
+# The 10 canonical physical descriptors (He et al., Hasler-Suesstrunk, Shannon)
+PHYSICAL_10_DESCRIPTORS = [
+    "brightness",
+    "contrast",
+    "entropy",
+    "noise",
+    "dark_channel",
+    "air_light_transmission",
+    "dynamic_range_ratio",
+    "edge_mean",
+    "edge_p90",
+    "colourfulness",
+]
 
-def extract_features(img: np.ndarray, include_engineered: bool = True) -> Dict[str, float]:
+
+def air_light_transmission(img: np.ndarray, patch_size: int = 15, percentile: float = 99.9) -> float:
+    """
+    Estimates atmospheric transmission t from Dark Channel Prior (He et al., 2009).
+    t = 1.0 - 0.95 * (dark / A), clipped to [0, 1].
+    """
+    img_f = img.astype(np.float32) / 255.0
+    dark = np.min(img_f, axis=2)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (patch_size, patch_size))
+    dark = cv2.erode(dark, kernel)
+    A = float(np.percentile(dark, percentile))
+    t = 1.0 - 0.95 * (dark / (A + 1e-6))
+    return float(np.clip(t, 0.0, 1.0).mean())
+
+
+def dynamic_range_ratio(gray: np.ndarray, low_pct: float = 1.0, high_pct: float = 99.0) -> float:
+    """
+    Dynamic range ratio: p99 / (p1 + eps). Captures intensity stretching across dynamic range.
+    """
+    low_val = float(np.percentile(gray, low_pct))
+    high_val = float(np.percentile(gray, high_pct))
+    return float(high_val / (low_val + 1e-4))
+
+
+def extract_features(
+    img: np.ndarray,
+    include_engineered: bool = True,
+    include_all_physical: bool = False
+) -> Dict[str, float]:
     """
     Computes handcrafted physical degradation descriptors for a single degraded image.
 
     Args:
         img: Input image in BGR format (uint8, HxWx3).
         include_engineered: If True, also computes interaction features (sigma/mu, H*sigma_n).
+        include_all_physical: If True, also computes extended physical descriptors (air_light_transmission, dynamic_range_ratio).
 
     Returns:
         Dictionary mapping feature names to scalar float values.
@@ -133,5 +175,9 @@ def extract_features(img: np.ndarray, include_engineered: bool = True) -> Dict[s
     if include_engineered:
         feat_dict["contrast_brightness_ratio"] = float(contrast / (brightness + 1e-4))
         feat_dict["entropy_noise_product"] = float(entropy * noise)
+
+    if include_all_physical:
+        feat_dict["air_light_transmission"] = air_light_transmission(img)
+        feat_dict["dynamic_range_ratio"] = dynamic_range_ratio(gray)
 
     return feat_dict

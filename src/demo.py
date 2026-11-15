@@ -22,6 +22,7 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib_cache")
 
 import argparse
 from typing import Any
+import pickle
 import joblib
 import cv2
 import numpy as np
@@ -29,6 +30,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
 from src.methods import METHODS
@@ -37,19 +39,47 @@ from src.labels import compute_psnr, compute_ssim, score_pair
 from src.dataset import resize_long_side, resolve_dataset_dir
 
 
+class ModelScalerWrapper:
+    """Wraps model + scaler dictionary into standard estimator interface."""
+    def __init__(self, model, scaler, classes=None):
+        self.model = model
+        self.scaler = scaler
+        self.classes_ = classes if classes is not None else getattr(model, "classes_", None)
+
+    def predict(self, X):
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict(X_scaled)
+
+    def predict_proba(self, X):
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict_proba(X_scaled)
+
+
 def get_or_train_selector(
     features_csv: str = "results/features.csv",
     scores_csv: str = "results/scores.csv",
-    model_save_path: str = "models/rf_selector.joblib",
+    model_save_path: str = "results/models/logistic_regression.pkl",
     random_seed: int = 42,
 ) -> Any:
     """
-    Loads pre-trained Random Forest selector or trains and caches one if not found.
+    Loads pre-trained selector model (or trains one if missing).
+    Supports scikit-learn Pipelines as well as {'model': ..., 'scaler': ...} packages.
     """
     if os.path.exists(model_save_path):
-        return joblib.load(model_save_path)
+        try:
+            with open(model_save_path, "rb") as f:
+                loaded = pickle.load(f)
+            if isinstance(loaded, dict) and "model" in loaded and "scaler" in loaded:
+                return ModelScalerWrapper(loaded["model"], loaded["scaler"])
+            return loaded
+        except Exception:
+            return joblib.load(model_save_path)
 
-    print(f"Model cache not found at {model_save_path}. Training Random Forest on cached features...")
+    # Fallback to models/rf_selector.joblib if available
+    if os.path.exists("models/rf_selector.joblib"):
+        return joblib.load("models/rf_selector.joblib")
+
+    print(f"Model cache not found at {model_save_path}. Training Logistic Regression on cached features...")
     if not os.path.exists(features_csv) or not os.path.exists(scores_csv):
         raise FileNotFoundError(
             f"Required cache files ({features_csv}, {scores_csv}) missing. "
@@ -62,16 +92,17 @@ def get_or_train_selector(
     X = df_features[FEATURE_NAMES].values
     y = df_scores["label"].values
 
-    rf_pipe = make_pipeline(
+    pipe = make_pipeline(
         StandardScaler(),
-        RandomForestClassifier(n_estimators=300, random_state=random_seed, n_jobs=-1)
+        LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", random_state=random_seed)
     )
-    rf_pipe.fit(X, y)
+    pipe.fit(X, y)
 
     os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
-    joblib.dump(rf_pipe, model_save_path)
-    print(f"Saved trained Random Forest model to {model_save_path}.")
-    return rf_pipe
+    with open(model_save_path, "wb") as f:
+        pickle.dump(pipe, f)
+    print(f"Saved trained Logistic Regression model to {model_save_path}.")
+    return pipe
 
 
 def run_demo(
@@ -197,7 +228,11 @@ def run_demo(
     if save_grid:
         fig_path = os.path.join(output_dir, "enhancement_comparison_grid.png")
         if clean is not None:
-            fig, axes = plt.subplots(2, 4, figsize=(18, 9))
+            n_methods = len(METHODS)
+            n_total = 2 + n_methods
+            n_cols = 4
+            n_rows = int(np.ceil(n_total / n_cols))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(18, 4.5 * n_rows))
             axes = axes.flatten()
 
             # Input
@@ -210,7 +245,7 @@ def run_demo(
             axes[1].set_title("Ground Truth Reference", fontsize=11, fontweight="bold", color="darkgreen")
             axes[1].axis("off")
 
-            # Six Candidates
+            # Candidate Methods
             for idx, (m_name, m_fn) in enumerate(METHODS.items()):
                 cand_data = scores_all[m_name]
                 ax = axes[idx + 2]
@@ -237,6 +272,10 @@ def run_demo(
                     fontweight="bold" if (is_selected or is_oracle) else "normal"
                 )
                 ax.axis("off")
+
+            # Hide any remaining unused axes
+            for rem_idx in range(n_total, len(axes)):
+                axes[rem_idx].axis("off")
 
             plt.suptitle(
                 f"Project Triathlon Algorithm Selection Demo\nPredicted: {pred_method} | Oracle: {oracle_method} | Regret: {regret_db:.3f} dB",
@@ -278,15 +317,16 @@ def run_demo(
 
 
 def main():
-    default_input = "/Users/home/Desktop/LOLdataset/eval15/low/1.png"
+    default_input = "data/lol_dataset/eval15/low/1.png"
     if not os.path.exists(default_input):
-        default_input = "data/lol_dataset/eval15/low/1.png"
+        default_input = "/Users/home/Desktop/LOLdataset/eval15/low/1.png"
 
     parser = argparse.ArgumentParser(
         description="Project Triathlon: Fidelity-Driven Per-Image Enhancement Selector Demo"
     )
     parser.add_argument(
-        "--input",
+        "--image", "--input",
+        dest="input",
         type=str,
         default=default_input,
         help="Path to degraded low-light input image."
@@ -298,16 +338,17 @@ def main():
         help="Path to clean ground truth image (optional; auto-detected if matching pair exists)."
     )
     parser.add_argument(
-        "--output_dir",
+        "--output", "--output_dir",
+        dest="output_dir",
         type=str,
         default="results/demo_output",
-        help="Directory to save enhanced output and visual comparison grid."
+        help="Directory or file path to save enhanced output."
     )
     parser.add_argument(
         "--model_path",
         type=str,
-        default="models/rf_selector.joblib",
-        help="Path to pre-trained selector model."
+        default="results/models/logistic_regression.pkl",
+        help="Path to pre-trained selector model (defaults to champion Logistic Regression)."
     )
     args = parser.parse_args()
 
