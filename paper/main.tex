@@ -88,16 +88,16 @@ Our key contributions are as follows:
     \item \textbf{Leave-One-Enhancer-Out (LOEO) Resilience}: We quantify the marginal utility of each operator, demonstrating that Retinex, Histogram Equalization, and Gamma form the Pareto core of the bank ($99.0\%$ capacity).
     \item \textbf{Downstream Visual Utility \& YOLOv8 Detection}: Moving beyond standard pixel-level metrics, we establish an end-to-end downstream vision benchmark using pretrained YOLOv8n object detection. We discover that fixed Retinex degrades per-scene detection recall relative to unprocessed low-light ($48.53\%$ vs. $54.41\%$) due to noise and halo artifacts, whereas our selector achieves $67.15\%$ recall (+18.62\% over fixed Retinex) by making instance-aware choices.
     \item \textbf{Edge Hardware Profiling \& ONNX Acceleration}: We compile our selector into an optimized Open Neural Network Exchange (ONNX) runtime pipeline, achieving an ultra-low latency of $11.81\text{ ms}$ ($84.7\text{ FPS}$) and a memory footprint of only $54.4\text{ MB}$ on a single CPU core, eliminating the heavy GPU, VRAM, and power dependencies of deep restoration models.
-    \item \textbf{Multi-Degradation Cascading \& Feature Expansion}: We expand the physical feature space to 10 dimensions and demonstrate cross-hazard generalization across low-light, atmospheric haze, optical blur, and composite noise, slashing decision regret on blurry images by $4.70\text{ dB}$ and yielding a $+0.915\text{ dB}$ net fidelity gain across all optical hazards.
+    \item \textbf{10-Dimensional Physical Feature Expansion}: We benchmark an expanded 10-dimensional descriptor vector incorporating second-order gradient variance and atmospheric transmission, confirming via paired bootstrap analysis ($d = -0.0184\text{ dB}$, $p = 0.5481$) that the 8-dimensional baseline is strictly sufficient and parsimonious for low-light enhancement.
 \end{itemize}
 
-\subsection{Research Roadmap and Phased Problem-Solving Framework}
-To systematically address these interconnected challenges, our investigation is structured across cohesive, problem-driven phases:
+\subsection{Scope of this Work and Multi-Phase Research Framework}
+To systematically address the challenges of blind image enhancement, our long-term research agenda is structured across cohesive, problem-driven phases. \textbf{This manuscript presents the complete empirical methodology, evaluation, and theoretical analysis for Phase~0 and Phase~1}:
 \begin{enumerate}
-    \item \textbf{Phase 0 (Foundational Algorithm Selection and Regret Collapse)}: Formulates the Rice algorithm selection model, establishes an 8-D physical feature space, and proves regret collapse under a leak-free 5-fold \texttt{GroupKFold} protocol across 228 dHash scene clusters, settling the model choice via pre-registered Occam's razor (Sections~III, IV, V, and VI-A--VI-F).
-    \item \textbf{Phase 1 (Edge Feasibility, Conformal Risk-Control, and Generalization)}: Deploys split-conformal prediction sets ($1-\alpha$), confidence-gated abstention ($\tau$), RQ2 dual-metric oracle analysis, cross-dataset zero-shot transfer (LOL-v2 Real and Synthetic), leave-one-enhancer-out (LOEO) bank sensitivity, and 10D physical feature expansion (Sections~VI-M--VI-O, VII-D, and VIII-C).
-    \item \textbf{Phase 2 (Multi-Hazard Optical Cascades and Streaming Video)}: Resolves the \textit{compound degradation trap} where low-light operators destroy blurry or hazy inputs, and eliminates \textit{temporal enhancement flickering} in streaming video via stateful Exponential Moving Average (EMA) smoothing and hysteresis dwell windows (Section~VII).
-    \item \textbf{Phase 3 (Continuous Predict-Then-Optimize and Latency Frontiers)}: Resolves classification loss misalignment via continuous 6-head Ridge PSNR regressors, integrates deterministic ORB/RANSAC geometric inlier tracking ($<8\text{ ms}$), and establishes microsecond Latency-Regret Pareto trade-offs (Sections~X and XI).
+    \item \textbf{Phase 0 (Foundational Algorithm Selection and Regret Collapse) [Completed in this Work]}: Formulates the Rice algorithm selection model, establishes an 8-D physical feature space, and proves regret collapse under a leak-free 5-fold \texttt{GroupKFold} protocol across 228 dHash scene clusters, settling the model choice via pre-registered Occam's razor (Sections~III, IV, V, and VI-A--VI-F).
+    \item \textbf{Phase 1 (Edge Feasibility, Conformal Risk-Control, and Generalization) [Completed in this Work]}: Deploys split-conformal prediction sets ($1-\alpha$), confidence-gated abstention ($\tau$), RQ2 dual-metric oracle analysis, cross-dataset zero-shot transfer (LOL-v2 Real and Synthetic), leave-one-enhancer-out (LOEO) bank sensitivity, and 10D physical feature expansion (Sections~VI-M--VI-O, VII, and VIII-C).
+    \item \textbf{Phase 2 (Multi-Hazard Optical Cascades and Streaming Video) [Planned for Semester 7]}: Resolves the \textit{compound degradation trap} where low-light operators destroy blurry or hazy inputs, and eliminates \textit{temporal enhancement flickering} in streaming video via stateful Exponential Moving Average (EMA) smoothing and hysteresis dwell windows (Section~XI).
+    \item \textbf{Phase 3 (Continuous Predict-Then-Optimize and Silicon Co-Design) [Planned for Semester 8 Capstone]}: Resolves classification loss misalignment via continuous 6-head Ridge PSNR regressors, integrates deterministic ORB/RANSAC geometric inlier tracking, and deploys bare-metal C++20 / ARM NEON kernels on edge robotics hardware (Section~XI).
 \end{enumerate}
 
 \section{Related Work}
@@ -631,82 +631,7 @@ As shown in Table~\ref{tab:loeo_sensitivity} and Fig.~\ref{fig:loeo_sensitivity}
     \item \textbf{Redundancy of Secondary Filters}: Excluding $\texttt{identity}$, $\texttt{bilat\_unsharp}$, or $\texttt{clahe}$ incurs negligible regret changes ($<0.08\text{ dB}$), proving that a compact 3-operator sub-bank can preserve near-full restoration performance on resource-constrained embedded targets.
 \end{enumerate}
 
-\section{Multi-Degradation Generalization \& Hierarchical Cascading}
-
-\subsection{Cross-Hazard Optical Formulation}
-In practical optical sensing, low illumination is rarely the sole hazard; real-world environments present composite degradations including optical defocus blur (lens defocus or shallow depth-of-field) and atmospheric haze (Mie/Rayleigh scattering). When an image enhancement system calibrated solely for low-light is exposed to defocus blur or fog, standard operators fail catastrophically: Retinex and contrast stretching exacerbate blur by sharpening edge halo rings and washing out atmospheric airlight.
-
-To achieve robust cross-hazard restoration, we formulate a generalized multi-degradation framework:
-\begin{enumerate}
-    \item \textbf{Feature Space Expansion ($D=10$)}: We augment the 8-dimensional low-light descriptor vector with two physical hazard metrics:
-    \begin{itemize}
-        \item \textit{Laplacian High-Frequency Blur Attenuation Metric}:
-        \begin{equation}
-        B(x) = \frac{\text{Var}(\nabla^2 I)}{\mu_I + \epsilon},
-        \end{equation}
-        which quantifies the attenuation of high-frequency second-order spatial gradients normalized by mean luminance.
-        \item \textit{Dark Channel Atmospheric Transmission}:
-        \begin{equation}
-        T(x) = \min_{c \in \{r, g, b\}} \left( \min_{y \in \Omega(x)} \frac{I^c(y)}{A^c} \right),
-        \end{equation}
-        which estimates atmospheric veil density under Koschmieder's physical scattering model \cite{koschmieder1924theorie, he2011single}.
-    \end{itemize}
-    \item \textbf{Portfolio Bank Expansion ($K=8$)}: We augment the candidate enhancement bank with:
-    \begin{itemize}
-        \item \textit{High-Boost Sharpening ($a_7$)}: Applied to CIELAB luminance via an unsharp mask kernel with high-frequency boost coefficient $k=1.8$;
-        \item \textit{Dark Channel Prior Dehazing ($a_8$)}: Physical inversion of the atmospheric scattering equation with guided transmission refinement \cite{he2011single}.
-    \end{itemize}
-\end{enumerate}
-
-\subsection{Two-Stage Hierarchical Decision Tree Cascade}
-Rather than training a single flat multi-class classifier over heterogeneous degradations, we implement a two-stage hierarchical cascade:
-\begin{itemize}
-    \item \textbf{Stage 1 (Optical Regime Diagnosis)}: Evaluates global exposure $\mu_I$, blur metric $B(x)$, and haze transmission $T(x)$ to classify the degraded input into one of four optical regimes:
-    \begin{equation}
-    \begin{aligned}
-    \mathcal{R}(x) \in \{&\text{Low-Light}, \text{Defocus Blur}, \\
-    &\text{Atmospheric Haze}, \text{Composite Noise}\}.
-    \end{aligned}
-    \end{equation}
-    \item \textbf{Stage 2 (In-Regime Operator Selection)}: Routes the input to the specialized sub-selector or operator optimal for that diagnosed degradation family.
-\end{itemize}
-
-\begin{table*}[!t]
-\centering
-\caption{Multi-Degradation Performance Across Diverse Optical Regimes}
-\label{tab:multi_degradation}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{lccccccc}
-\toprule
-\textbf{Degradation Regime} & \textbf{Sample Count ($N$)} & \textbf{Oracle PSNR (dB)} & \textbf{Fixed Retinex PSNR (dB)} & \textbf{Fixed Retinex Regret (dB)} & \textbf{Cascade PSNR (dB)} & \textbf{Cascade Regret (dB)} & \textbf{Net Regret Saving (dB)} \\
-\midrule
-Defocus Blur (Optical Softness) & 15 & 25.28 & 10.18 & 15.10 & 14.87 & 10.41 & \textbf{+4.70} \\
-Atmospheric Haze (Koschmieder) & 15 & 19.04 & 15.47 & 3.57 & 16.64 & 2.40 & \textbf{+1.17} \\
-Low-Light Underexposure & 15 & 17.08 & 15.51 & 1.57 & 13.59 & 3.49 & -1.92 \\
-Composite (Dark + Blur + Noise) & 15 & 15.39 & 13.28 & 2.12 & 12.99 & 2.40 & -0.28 \\
-\midrule
-\textbf{Overall (All Optical Hazards)} & \textbf{60} & \textbf{19.20} & \textbf{13.61} & \textbf{5.59} & \textbf{14.53} & \textbf{4.67} & \textbf{+0.915} \\
-\bottomrule
-\end{tabular}
-}
-\end{table*}
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=0.98\textwidth]{fig10_multi_degradation_cascade.png}
-\caption{Multi-degradation cross-transferability and hierarchical cascading benchmark: (left) Decision regret across four optical regimes (Defocus Blur, Atmospheric Haze, Low-Light, and Composite Noise); (middle) Mean PSNR fidelity comparing Oracle, Hierarchical Cascade, and Fixed Retinex; (right) Qualitative restoration comparison across optical regimes.}
-\label{fig:multi_degradation_cascade}
-\end{figure*}
-
-\subsection{Cross-Hazard Empirical Findings}
-As demonstrated in Table~\ref{tab:multi_degradation} and Fig.~\ref{fig:multi_degradation_cascade}:
-\begin{enumerate}
-    \item \textbf{Preventing Catastrophic Collapse on Blur}: When exposed to defocus blur, the static low-light Retinex method collapses catastrophically to $10.18\text{ dB}$ PSNR, incurring an unacceptable $15.10\text{ dB}$ regret against the oracle ($25.28\text{ dB}$). Our hierarchical cascade identifies the blur regime via $B(x)$ and deploys high-boost sharpening, lifting PSNR to $14.87\text{ dB}$ and slashing regret by $\mathbf{4.70\text{ dB}}$.
-    \item \textbf{Atmospheric Dehazing Gain}: On atmospheric haze scenes, static Retinex achieves $15.47\text{ dB}$ PSNR ($3.57\text{ dB}$ regret), while our cascade diagnoses the haze transmission veil and selects Dark Channel Dehazing, boosting fidelity to $16.64\text{ dB}$ PSNR ($2.40\text{ dB}$ regret), delivering a $\mathbf{+1.17\text{ dB}}$ fidelity saving.
-    \item \textbf{Global Cross-Hazard Superiority}: Across the entire 60-scene multi-hazard corpus, the hierarchical cascade achieves a net regret reduction of $\mathbf{+0.915\text{ dB}}$ over the static baseline, proving that physical degradation statistics generalize robustly across heterogeneous optical hazards.
-\end{enumerate}
-
-\subsection{Cross-Dataset Validation on LOL-v2 Synthetic and Real}
+\section{Cross-Dataset Generalization on LOL-v2 (Real and Synthetic)}
 To evaluate out-of-distribution domain generalization and in-distribution adaptation across distinct imaging sensors and degradation regimes, we evaluate across both official partitions of the LOL-v2 benchmark~\cite{yang2021sparse} (1,589 total pairs): (1) \textit{LOL-v2 Synthetic} (900 train, 100 test pairs testing non-linear Poisson photon starvation); and (2) \textit{LOL-v2 Real} (689 train, 100 test pairs testing cross-camera high-ISO sensor noise and exposure variance).
 
 First, we evaluate \textit{zero-shot transfer} of our primary Multinomial Logistic Regression selector (trained strictly on LOL-v1 $\texttt{our485}$) without any target-domain fine-tuning (Table~\ref{tab:cross_dataset_zero_shot} and Fig.~\ref{fig:cross_dataset_generalization}).
@@ -913,71 +838,8 @@ Inspection of Table~\ref{tab:worst_errors} reveals key operational insights:
     \item \textbf{Corpus Diversity}: While LOL v1 represents the canonical benchmark for low-light enhancement, evaluating cross-dataset generalization across composite real-world hazards (atmospheric haze, sensor noise, optical blur) represents an essential next step.
 \end{enumerate}
 
-\section{Advanced Paradigms: Predict-Then-Optimize, Geometric Inliers, \& Latency Frontiers}
-
-\subsection{Predict-Then-Optimize (PTO) Continuous Regression}
-Rather than predicting a single discrete class index via multi-class classification, the Predict-Then-Optimize (PTO) paradigm trains $K$ independent continuous regression functions $f_k: \mathbb{R}^D \to \mathbb{R}$, each estimating the expected decibel fidelity $\widehat{\text{PSNR}}_k(x)$ of operator $a_k$:
-\begin{equation}
-a_{\text{PTO}}^*(x) = \arg\max_{k \in \mathcal{A}} \hat{f}_k(\mathbf{x}).
-\end{equation}
-As shown in Table~\ref{tab:pto_comparison}, regularized continuous Ridge regression over physical feature interactions significantly tightens the regret distribution, achieving a mean regret of $\mathbf{1.368\text{ dB}}$ and $58.35\%$ Top-1 accuracy across all 278 physical scenes. By directly predicting the metric surface rather than cross-entropy loss, PTO avoids classification probability distortions in ambiguous multi-exposure transition zones.
-
-\begin{table}[!t]
-\centering
-\caption{Classification vs. Predict-Then-Optimize (PTO) Formulation}
-\label{tab:pto_comparison}
-\resizebox{\columnwidth}{!}{
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Decision Paradigm} & \textbf{Algorithm / Architecture} & \textbf{Top-1 (\%)} & \textbf{Mean Regret (dB)} & \textbf{Model Size} \\
-\midrule
-Fixed Baseline & Best-Fixed (Retinex) & 45.57 & 2.734 & 0 KB \\
-Discrete Classification & Multinomial Logistic Regression & 58.14 & 1.574 & 2.1 KB \\
-Discrete Classification & Random Forest (300 Trees) & 52.40 & 2.110 & 4.2 MB \\
-Discrete Classification & HistGradientBoosting & 48.02 & 2.472 & 1.8 MB \\
-\textbf{Predict-Then-Optimize} & \textbf{6-Head Ridge Regressors} & \textbf{58.35} & \textbf{1.368} & \textbf{3.4 KB} \\
-Predict-Then-Optimize & Ensemble (Ridge + ExtraTrees) & 59.38 & 1.450 & 1.2 MB \\
-Theoretical Ceiling & Full-Reference Oracle & 100.0 & 0.000 & --- \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\subsection{Downstream Visual Odometry \& ORB Inlier Repeatability}
-Beyond generic object detection, we quantify downstream utility in robotics and SLAM through feature correspondence repeatability under projective homography. Using ORB keypoints matched via cross-checked Hamming descriptors, we apply RANSAC to isolate geometric inlier vectors between degraded frames and recovered scenes.
-As reported in our benchmarks, low-light enhancement increases verified geometric inliers from $96$ to $199$ ($+107.4\%$ relative yield), elevating the inlier ratio from $46.4\%$ to $\mathbf{96.1\%}$. This provides empirical confirmation that physical algorithm selection restores high-frequency structural manifolds indispensable for visual odometry.
-
-\subsection{RQ2: Disparity Between PSNR-Optimality and Semantic Vigilance}
-A fundamental question in computer vision research is whether pixel-wise fidelity maximization ($\arg\max \text{PSNR}$) coincides with semantic decision optimality. To test this, we evaluate localized Tenengrad facial gradient energy corresponding to driver eye aspect ratio (EAR) vigilance monitoring.
-Remarkably, our empirical benchmark reveals that the PSNR-winning operator aligns with the semantic decision winner in only $\mathbf{13.3\%}$ of test scenes. While PSNR rewards conservative illumination preservation (Gamma or Retinex) to minimize mean squared error, semantic vigilance algorithms strongly favor aggressive local contrast expansion ($\texttt{invert\_dehaze}$ and $\texttt{hist\_eq}$). This divergence confirms that downstream tasks require task-adapted utility functions rather than blind reliance on $L_2$-norm metrics.
-
-\subsection{Latency-Regret Pareto Frontier for Real-Time Edge Deployment}
-To enable hardware deployment planning on resource-constrained embedded platforms, we characterize the Pareto frontier by constraining the admissible candidate set $\mathcal{A}_{\tau} = \{a \in \mathcal{A} \mid \text{Latency}(a) \le \tau_{\text{budget}}\}$.
-Table~\ref{tab:latency_pareto} outlines the trade-off: with a microsecond compute budget of $1.0\text{ ms}$, the selector routes exclusively across Identity, Gamma, and Histogram Equalization, achieving $\mathbf{1.583\text{ dB}}$ regret at an astounding throughput of $\mathbf{1,350\text{ FPS}}$ on single-core CPU. Relaxing the budget to $5.0\text{ ms}$ unlocks CLAHE and Retinex, capturing full fidelity.
-
-\begin{table}[!t]
-\centering
-\caption{Latency-Regret Pareto Frontier on Single-Core CPU}
-\label{tab:latency_pareto}
-\resizebox{\columnwidth}{!}{
-\begin{tabular}{ccccc}
-\toprule
-\textbf{Latency Budget ($\tau$)} & \textbf{Admissible Methods} & \textbf{Mean Regret (dB)} & \textbf{Execution Time} & \textbf{Throughput (FPS)} \\
-\midrule
-$0.1\text{ ms}$ & Identity Only & 10.543 & $0.04\text{ ms}$ & 25,000.0 \\
-$0.5\text{ ms}$ & Identity, Gamma & 6.191 & $0.38\text{ ms}$ & 2,656.1 \\
-$\mathbf{1.0\text{ ms}}$ & \textbf{Identity, Gamma, HistEq} & \textbf{1.583} & $\mathbf{0.74\text{ ms}}$ & \textbf{1,349.8} \\
-$2.0\text{ ms}$ & + CLAHE & 1.566 & $0.75\text{ ms}$ & 1,329.3 \\
-$5.0\text{ ms}$ & + Retinex & 0.000 & $2.45\text{ ms}$ & 408.7 \\
-$10.0\text{ ms}$ & + Invert-Dehaze & 0.000 & $2.45\text{ ms}$ & 408.7 \\
-$15.0\text{ ms}$ & All 7 Operators & 0.000 & $2.45\text{ ms}$ & 408.7 \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\section{Discussion \& Phased Realization}
-The empirical and theoretical findings established in this study represent a structured, multi-phase research and engineering progression. Rather than treating algorithm selection as an isolated classification exercise, our work systematically formulates and validates successive operational phases, each addressing and resolving a critical real-world failure mode. Table~\ref{tab:phased_roadmap} formalizes this multi-phase evolution, mapping each targeted operational bottleneck to our core algorithmic innovations and verified empirical dividends.
+\section{Discussion \& Phased Research Framework}
+The empirical and theoretical findings established in this work represent a disciplined progression through a multi-phase research agenda. Rather than treating algorithm selection as an isolated benchmark exercise, our investigation formulates and validates successive operational phases, each systematically addressing a failure mode of deployed computer vision systems. Table~\ref{tab:phased_roadmap} outlines this multi-phase framework, contrasting the completed milestones of this paper (Phases~0 and~1) with our planned future directions (Phases~2 and~3).
 
 \begin{table*}[!t]
 \centering
@@ -986,41 +848,48 @@ The empirical and theoretical findings established in this study represent a str
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lp{4.4cm}p{5.5cm}p{5.5cm}}
 \toprule
-\textbf{Phase \& Horizon} & \textbf{Target Problem / Failure Mode} & \textbf{Core Methodological Innovation} & \textbf{Verified Empirical Dividend} \\
+\textbf{Phase \& Horizon} & \textbf{Target Problem / Failure Mode} & \textbf{Core Methodological Innovation} & \textbf{Verified Engineering Dividend} \\
 \midrule
 \textbf{Phase 0: Foundational Selection} & 
 \textit{No-free-lunch failure \& architecture debate}: A single fixed enhancer fails across diverse scenes; standard blind NR-IQA heuristics exhibit 0\% selection accuracy; linear versus tree-based controversy under scene leakage. & 
 Formulation under Rice's Algorithm Selection Framework (1976); extraction of an 8-D physical degradation vector $\phi(x)$ ($<2\text{ ms}$ on CPU); strict 5-fold \texttt{GroupKFold} partitioning across 228 dHash scene clusters; pre-registered Occam's razor decision protocol. & 
-Achieves $59.66\%$ top-1 selection accuracy ($+14.85\%$ over best fixed); slashes mean regret from $2.779\text{ dB}$ to $1.532\text{ dB}$ ($p < 10^{-10}$); proves RF not demonstrably better in-distribution ($d = -0.105\text{ dB}$, $p>0.05$); deploys Logistic Regression ($2.4\text{ KB}$ footprint, $<0.05\text{ ms}$ inference). \\
+\textbf{[Completed in this Work]}: Achieves $59.66\%$ top-1 selection accuracy ($+14.85\%$ over best fixed); slashes mean regret from $2.779\text{ dB}$ to $1.532\text{ dB}$ ($p < 10^{-10}$); proves RF not demonstrably better in-distribution ($d = -0.105\text{ dB}$, $p>0.05$); deploys Logistic Regression ($2.4\text{ KB}$ footprint, $<0.05\text{ ms}$ inference). \\
 \addlinespace
 \textbf{Phase 1: Edge \& Conformal Risk} & 
 \textit{Predictive uncertainty \& cross-domain fragility}: Categorical predictions lack finite-sample error guarantees; models over-fit in uncertain exposure regimes; cross-sensor noise shifts degrade static baselines. & 
 Split-Conformal Prediction calibration yielding prediction sets $\mathcal{C}(x)$ with distribution-free $1-\alpha$ coverage; confidence-gated risk-controlled abstention ($\tau \in [0, 0.70]$); zero-shot transfer across LOL-v2 Real/Synthetic; LOEO sensitivity analysis. & 
-Delivers $91.13\%$ coverage at $90\%$ target with $|\mathcal{C}(x)| = 2.41$; abstention drives accuracy to $70.59\%$ and regret to $1.068\text{ dB}$ at $\tau = 0.60$; captures $+2.015\text{ dB}$ advantage over Best-Fixed on LOL-v2 Synthetic ($38.7\%$ gap closed); proves 8D feature sufficiency ($d = -0.018\text{ dB}$). \\
+\textbf{[Completed in this Work]}: Delivers $91.13\%$ coverage at $90\%$ target with $|\mathcal{C}(x)| = 2.41$; abstention drives accuracy to $70.59\%$ and regret to $1.068\text{ dB}$ at $\tau = 0.60$; captures $+2.015\text{ dB}$ advantage over Best-Fixed on LOL-v2 Synthetic ($38.7\%$ gap closed); proves 8D feature sufficiency ($d = -0.018\text{ dB}$). \\
 \addlinespace
-\textbf{Phase 2: Compound Hazards (Planned)} & 
-\textit{Cross-hazard fragility \& video flicker}: Real-world inputs suffer compound optical hazards (defocus blur, optical haze) where low-light enhancers amplify blur; live video feeds exhibit high-frequency enhancement flickering under camera motion. & 
-Expanded feature space to 10D ($B(x)$ blur acuity and $T(x)$ transmission); two-stage hierarchical optical cascade; continuous multi-head Predict-Then-Optimize (PTO) regression; stateful video pipeline with Exponential Moving Average (EMA) and 5-frame hysteresis. & 
-Slashes decision regret on optical defocus blur by $4.70\text{ dB}$ and yields $+0.915\text{ dB}$ net fidelity saving across compound hazards; PTO reduces regret to $1.368\text{ dB}$; completely eliminates video operator chatter and high-frequency flicker in streaming video. \\
+\textbf{Phase 2: Compound Hazards} \newline \textit{(Planned — Semester 7)} & 
+\textit{Cross-hazard optical fragility \& video flicker}: Real-world cameras face compound optical hazards (defocus blur, atmospheric haze) where low-light operators destroy blurry inputs; streaming video suffers temporal flickering. & 
+Hierarchical two-stage optical cascade diagnosing degradation regimes; temporal Exponential Moving Average (EMA) feature filtering and hysteresis dwell windows to eliminate operator oscillation. & 
+\textit{Planned Target}: Prevent catastrophic blur amplification; eliminate inter-frame enhancement flicker while maintaining $>60\text{ FPS}$ sustained throughput on mobile and robotics platforms. \\
 \addlinespace
-\textbf{Phase 3: Silicon Co-Design (Capstone)} & 
-\textit{Embedded hardware limits \& semantic gap}: Microsecond edge latency budgets on robotics platforms; pixel-level MSE misaligns with downstream perception (Retinex noise amplification drops YOLO recall). & 
-C++20 bare-metal library with ARM NEON / AVX2 SIMD intrinsics and INT8 quantization; deployment on Raspberry Pi 5 and NVIDIA Jetson Orin Nano; closed-loop perception integration with YOLOv8n object detection and ORB-SLAM3 visual odometry. & 
-Targets $>300\text{ FPS}$ on ARM Cortex-A76 ($<3.3\text{ ms}$ latency); delivers $+18.62\%$ YOLOv8 detection recall over fixed Retinex ($67.15\%$ vs. $48.53\%$); achieves $>50\%$ reduction in nocturnal visual odometry tracking loss. \\
+\textbf{Phase 3: Silicon Co-Design} \newline \textit{(Planned — Semester 8 Capstone)} & 
+\textit{Loss misalignment \& embedded silicon limits}: Cross-entropy surrogate loss misaligns with metric regret; microsecond hardware budgets on autonomous drones and robotics edge platforms. & 
+Continuous Predict-Then-Optimize (PTO) 6-head Ridge regressors directly minimizing PSNR regret; bare-metal C++20 kernels with ARM NEON / AVX2 SIMD intrinsics and INT8 quantization on Jetson Orin Nano / Raspberry Pi 5. & 
+\textit{Planned Target}: Sub-$1.0\text{ ms}$ end-to-end edge inference ($>300\text{ FPS}$); closed-loop integration with YOLOv8 perception and ORB-SLAM3 visual odometry. \\
 \bottomrule
 \end{tabular}
 }
 \end{table*}
 
-\subsection{Phase 0: Foundational Selection and Zero-Leakage Regret Collapse}
+\subsection{Phase 0 Realization: Foundational Selection and Zero-Leakage Regret Collapse}
 Phase~0 established the core empirical and theoretical viability of algorithm selection for low-level image enhancement. Prior work in the literature has predominantly relied on two flawed paradigms: (1) deploying a single hardcoded filter (such as global Histogram Equalization or Retinex) that inevitably degrades out-of-distribution frames, or (2) post-processing inputs with blind No-Reference IQA scorers (e.g., BRISQUE, NIQE), which recent studies \cite{lyu2026blindpsnr} demonstrated achieve near-0\% accuracy in selecting fidelity-optimal enhancers.
 
 By recasting the problem through John Rice's framework \cite{rice1976algorithm}, Phase~0 demonstrated that an 8-dimensional vector of computationally trivial physical statistics ($\mu, \sigma, H, \sigma_n, D, |\nabla I|, P_{90}, C$), computed strictly from the degraded input in under $2\text{ ms}$, contains sufficient discriminative energy to predict the oracle winner with $59.66\%$ accuracy. Furthermore, by formalizing the 5-fold \texttt{GroupKFold} protocol across 228 distinct physical scene clusters (dHash Hamming distance $\le 10$), Phase~0 eliminated the severe cross-exposure data leakage prevalent in prior naive train/test splits. A pre-registered decision protocol resolved the architecture competition between Logistic Regression and Random Forest: because Random Forest failed to demonstrate statistically significant superiority in-distribution ($d = -0.105\text{ dB}$ [$95\%$ CI: $-0.272, +0.064\text{ dB}$]) and suffered $3.7\times$ higher sensitivity to scene leakage, Multinomial Logistic Regression was permanently deployed via Occam's razor as a transparent, $2.4\text{ KB}$ edge-ready champion.
 
-\subsection{Phase 1: Conformal Risk Control, Dual Metrics, and Cross-Degradation}
+\subsection{Phase 1 Realization: Conformal Risk Control, Dual Metrics, and Cross-Dataset Transfer}
 Phase~1 addressed the critical gaps of predictive uncertainty, multi-metric alignment, and cross-dataset robustness. Deploying Split-Conformal Prediction calibrated on held-out calibration folds, Phase~1 established distribution-free prediction sets $\mathcal{C}(x)$ guaranteeing $P(y^*(x) \in \mathcal{C}(x)) \ge 1 - \alpha$, delivering $91.13\%$ empirical coverage at a $90\%$ nominal guarantee. Integrating confidence-gated abstention provided an operational risk frontier where accepting queries with confidence $\ge 0.60$ elevates top-1 accuracy to $70.59\%$ and suppresses regret to $1.068\text{ dB}$.
 
 Concurrently, our RQ2 dual-metric study established that PSNR and SSIM oracles agree in $63.30\%$ of scenes with strong overall rank correlation ($\rho = 0.8823$). Zero-shot cross-dataset transfer on LOL-v2 demonstrated that the deployed selector beats Best-Fixed Retinex by $+2.015\text{ dB}$ on synthetic low-light data (closing $38.7\%$ of the regret gap) while defaulting safely on real-world camera sensor shifts. Finally, Leave-One-Enhancer-Out (LOEO) analysis proved that Retinex, Histogram Equalization, and Gamma form the Pareto core of the bank ($99.0\%$ capacity), while an expanded 10-D physical descriptor set confirmed the statistical parsimony and sufficiency of the 8-D baseline.
+
+\subsection{Future Research Roadmap: Phase 2 (Compound Cascades) and Phase 3 (Continuous Silicon Co-Design)}
+Having solidified the theoretical foundations, zero-leakage validation, and conformal risk bounds in Phases~0 and~1, the remaining phases of our long-term research roadmap address compound real-world operational challenges:
+\begin{enumerate}
+    \item \textbf{Phase 2 (Multi-Hazard Optical Cascades and Video Anti-Flicker) [Planned for Semester 7]}: Real-world imaging conditions often present compound hazards—such as nocturnal driving footage experiencing both underexposure and optical defocus blur or atmospheric haze. Applying low-light filters like Retinex to blurry or hazy inputs sharpens noise halos and amplifies scattering veils. Phase~2 will formulate a two-stage hierarchical optical cascade that diagnoses degradation regimes before routing to specialized operators, coupled with stateful Exponential Moving Average (EMA) and Markovian hysteresis gating to eliminate high-frequency video flickering in streaming feeds.
+    \item \textbf{Phase 3 (Continuous Predict-Then-Optimize and Embedded Silicon Co-Design) [Planned for Semester 8 Capstone]}: Current classification loss functions treat all misclassifications equally, failing to reflect asymmetric decibel regret. Phase~3 will develop continuous multi-head Predict-Then-Optimize (PTO) regression models that directly estimate the metric gain surface. Concurrently, bare-metal C++20 libraries utilizing ARM NEON and AVX2 vector intrinsics will be deployed on Raspberry Pi 5 and NVIDIA Jetson Orin Nano platforms, closing the loop with real-time visual SLAM (ORB-SLAM3) and embedded robotics perception.
+\end{enumerate}
 
 \section{Conclusion}
 In this paper, we addressed the foundational challenge of selecting optimal image enhancement operators without reference ground truth. By recasting enhancement as an algorithm selection problem governed by degradation physics and decision regret, we demonstrated that lightweight physical feature spaces computed in milliseconds reliably predict the winning enhancer without deep neural networks or reference supervision. Across canonical low-light benchmarks, our deployed Multinomial Logistic Regression selector reaches $59.66\%$ selection accuracy, slashes mean regret to $1.532\text{ dB}$ ($p < 10^{-10}$), boosts downstream YOLOv8 detection recall by $+18.62\%$ over static Retinex, and runs at $84.7\text{ FPS}$ on single-core CPU embedded hardware. Furthermore, our split-conformal formulation guarantees $91.13\%$ coverage at $90\%$ nominal confidence, while zero-shot cross-dataset evaluation delivers a $+2.015\text{ dB}$ advantage on out-of-distribution synthetic photon starvation. This work confirms that principled machine learning over physical degradation statistics provides an efficient, transparent, and mathematically grounded foundation for real-time edge vision systems.
