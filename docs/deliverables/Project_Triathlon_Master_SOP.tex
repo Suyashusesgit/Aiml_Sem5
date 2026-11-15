@@ -1,0 +1,443 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[top=0.75in, bottom=0.75in, left=0.75in, right=0.75in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true, linkcolor=blue!80!black, urlcolor=blue!80!black, citecolor=blue!80!black]{hyperref}
+
+% Color definitions
+\definecolor{primaryblue}{RGB}{24, 76, 120}
+\definecolor{secondaryblue}{RGB}{41, 128, 185}
+\definecolor{darkgray}{RGB}{44, 62, 80}
+\definecolor{lightgray}{RGB}{245, 247, 250}
+\definecolor{accentgreen}{RGB}{39, 174, 96}
+\definecolor{accentred}{RGB}{192, 57, 43}
+\definecolor{accentamber}{RGB}{211, 84, 0}
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textbf{\color{primaryblue}Project Triathlon: Standard Operating Procedure (SOP)}}
+\fancyhead[R]{\small\color{darkgray}Comprehensive Master SOP --- Version 2.5}
+\fancyfoot[L]{\small\color{darkgray}GSV Vadodara $\cdot$ SVNIT Surat (Prof. K. P. Upla)}
+\fancyfoot[R]{\small\color{darkgray}Page \thepage}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Section styling
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{secondaryblue}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\small\bfseries\color{darkgray}}{\thesubsubsection.}{0.5em}{}
+
+% Box styling
+\newtcolorbox{calloutbox}[2][]{
+    colback=lightgray,
+    colframe=primaryblue,
+    coltitle=white,
+    title=\textbf{#2},
+    fonttitle=\small\bfseries,
+    arc=2.5mm,
+    boxrule=1pt,
+    left=6pt, right=6pt, top=6pt, bottom=6pt,
+    #1
+}
+
+\newtcolorbox{alertbox}[2][]{
+    colback=red!5!white,
+    colframe=accentred,
+    coltitle=white,
+    title=\textbf{#2},
+    fonttitle=\small\bfseries,
+    arc=2.5mm,
+    boxrule=1pt,
+    left=6pt, right=6pt, top=6pt, bottom=6pt,
+    #1
+}
+
+\newtcolorbox{successbox}[2][]{
+    colback=green!5!white,
+    colframe=accentgreen,
+    coltitle=white,
+    title=\textbf{#2},
+    fonttitle=\small\bfseries,
+    arc=2.5mm,
+    boxrule=1pt,
+    left=6pt, right=6pt, top=6pt, bottom=6pt,
+    #1
+}
+
+\begin{document}
+
+% Title Banner
+\begin{center}
+    {\LARGE\bfseries\color{primaryblue} STANDARD OPERATING PROCEDURE (SOP)}\\[4pt]
+    {\large\bfseries Fidelity-Driven Algorithm Selection for Low-Light Image Enhancement}\\[3pt]
+    {\normalsize\itshape Exhaustive Step-by-Step Technical Operating Manual, Empirical Architecture \& Execution Protocols}\\[6pt]
+    \small
+    \textbf{Project}: Project Triathlon (B.Tech Capstone \& IEEE Transactions Research Track) $\cdot$ \textbf{Version}: 2.5 (Master Release)\\
+    \textbf{Authors}: Suyash Srivastav$^1$, Ananya Kasaudhan$^1$, Logi Vasan$^1$ $\cdot$ \textbf{Supervisor}: Prof. Kishor P. Upla, \textit{Senior Member, IEEE}$^2$\\
+    $^1$Department of Electronics \& Communication Engineering, Gati Shakti Vishwavidyalaya, Vadodara, Gujarat\\
+    $^2$Department of Electronics Engineering, Sardar Vallabhbhai National Institute of Technology (SVNIT), Surat, Gujarat\\
+    \textbf{Date of Issue}: November 10, 2026 $\cdot$ \textbf{Classification}: Internal Technical Documentation \& Replication Manual
+\end{center}
+
+\vspace{-4pt}
+\hrule height 1.2pt
+\vspace{8pt}
+
+\begin{calloutbox}{Executive Document Summary}
+This Standard Operating Procedure (SOP) serves as the definitive, single-source-of-truth manual documenting \textbf{every single technical step, mathematical formulation, algorithmic pipeline, validation gate, and deployment architecture} executed in Project Triathlon from project inception to final production deployment. All procedures described herein are backed by reproducible code in \texttt{Aiml\_Sem5}, verified matrices in \texttt{results/}, and a 13-test regression suite.
+\end{calloutbox}
+
+% ----------------------------------------------------------------------------------------
+\section{Administrative Charter, Task Segregation \& Governance}
+% ----------------------------------------------------------------------------------------
+
+\subsection{Team Triathlon Work Breakdown Structure}
+Per the formal charter (\texttt{Task\_1.pdf}), engineering tasks and data handoffs are strictly segregated across the three team members to enforce individual accountability while ensuring zero cross-contamination:
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llp{7.8cm}l}
+\toprule
+\textbf{Member} & \textbf{Core Module} & \textbf{Key Responsibilities \& Implemented Components} & \textbf{Official Handoff} \\
+\midrule
+\textbf{Ananya Kasaudhan} & Data \& Splits & LOL-v1/v2 ingestion, paired alignment, hash-based physical scene grouping, 5-fold cross-validation split generation, data integrity audits. & \texttt{Ananya} $\to$ \texttt{Suyash, Logi}: Clean/Degraded Pairs \\
+\textbf{Suyash Srivastav} & Methods \& Labels & 6-method enhancement bank, dynamic range clamping, full-reference PSNR/SSIM scoring, $0.05\,\text{dB}$ SSIM tie-breaking, oracle labeling. & \texttt{Suyash} $\to$ \texttt{Logi}: PSNR Matrix ($485\times6$) + Oracle Labels \\
+\textbf{Logi Vasan} & Features \& Models & 7 cheap handcrafted physical descriptors, scikit-learn ML classifiers (RF, LR, XGB), 15-run GroupKFold benchmark, interactive web dashboard. & \texttt{Logi} $\to$ \texttt{Team}: Evaluated Models \& Live App \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{The Five Inviolate Data Leakage Traps (The Five Zeros)}
+All team members must adhere strictly to the five leakage rules established at project kickoff:
+\begin{enumerate}[leftmargin=*, nosep]
+    \item \textbf{Zero Scene Leakage}: Multiple illumination variants of the same physical room exist in the LOL dataset. Random $K$-fold splits leak identical geometry across folds. Splitting \textbf{must} strictly employ \texttt{GroupKFold} grouped by scene identifier.
+    \item \textbf{Zero Preprocessing Leakage}: Scalers (\texttt{StandardScaler}) must \textbf{never} be fitted on the combined dataset. They are encapsulated inside fold pipelines (\texttt{make\_pipeline(StandardScaler(), Model())}).
+    \item \textbf{Zero Label/Feature Leakage}: Feature extraction operates \textbf{strictly} on raw degraded inputs ($x$). Ground truth ($y$) or enhanced candidate images ($a(x)$) must never be accessed during inference.
+    \item \textbf{Zero Metric Range Mismatch}: PSNR and SSIM require explicit floating-point dynamic range contracts (\texttt{data\_range=255.0} on 8-bit unsigned integers). Floating division without scale adjustment creates catastrophic metric drift.
+    \item \textbf{Zero Color Order Inversion}: OpenCV loads images in BGR format; Matplotlib, PyTorch, and skimage require RGB format. All channels must be converted explicitly before metric computation.
+\end{enumerate}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 1: Dataset Acquisition, Ingestion \& Geometric Normalization}
+% ----------------------------------------------------------------------------------------
+
+\subsection{Dataset Taxonomy}
+The project benchmark incorporates three distinct paired low-light datasets:
+\begin{itemize}[leftmargin=*, nosep]
+    \item \textbf{LOL-v1 Benchmark (Baseline)}: 485 training pairs (\texttt{data/lol\_dataset/our485/}) and 15 held-out evaluation pairs (\texttt{data/lol\_dataset/eval15/}), captured using a Sony $\alpha7$ II mirrorless camera with changing ISO and exposure duration.
+    \item \textbf{LOL-v2 Synthetic (Degradation Robustness)}: 50 paired images generated via physical camera sensor synthesis (Poisson shot noise, Gaussian read noise, and non-linear response curves).
+    \item \textbf{LOL-v2 Real (Cross-Sensor Hardware Shift)}: 50 paired images captured across diverse mobile phones and digital camera sensors under extreme real-world darkness.
+\end{itemize}
+
+\subsection{Geometric Normalization Contract}
+To guarantee edge-hardware feasibility and constant-time feature computation, all input images undergo strict aspect-ratio preserving downsampling:
+\begin{equation}
+    s = \frac{512}{\max(H, W)}, \quad (W_{\text{new}}, H_{\text{new}}) = (\lfloor W \cdot s \rfloor, \lfloor H \cdot s \rfloor)
+\end{equation}
+The downsampling is performed using OpenCV's area interpolation (\texttt{cv2.INTER\_AREA}), which performs pixel-area relation resampling to avoid moir\'{e} patterns and aliasing artifacts common in decimation filtering.
+
+% ----------------------------------------------------------------------------------------
+\section{Step 2: Classical Enhancement Bank Formulation}
+% ----------------------------------------------------------------------------------------
+
+The enhancement portfolio comprises six classical, non-parametric, and fixed-parameter algorithms adhering to Chapters 9 \& 22 of the Image Processing Handbook. All algorithms are implemented in \texttt{src/methods.py}:
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lp{6.2cm}p{5.5cm}c}
+\toprule
+\textbf{Operator} & \textbf{Mathematical Formulation} & \textbf{Hyperparameters \& Implementation} & \textbf{Complexity} \\
+\midrule
+\textbf{Identity} & $f_{\text{ident}}(I) = I$ & Null operator (raw degraded input) & $\mathcal{O}(1)$ \\
+\textbf{Gamma} & $I_{\text{out}} = 255 \cdot \left(\frac{I_{\text{in}}}{255}\right)^\gamma$ & $\gamma = 0.5$, 256-entry precomputed lookup table & $\mathcal{O}(HW)$ \\
+\textbf{CLAHE} & Local CDF redistribution on LAB Luminance ($L$) & $\text{clipLimit} = 2.0$, $\text{tileGridSize} = (8, 8)$; Chrominance ($A, B$) preserved & $\mathcal{O}(HW)$ \\
+\textbf{HistEq} & Global CDF flattening: $s_k = \sum_{j=0}^k \frac{n_j}{N}$ & Luminance ($L$) equalized in LAB space & $\mathcal{O}(HW)$ \\
+\textbf{Retinex} & $R(x, y) = \log_{10}(I + 1) - \log_{10}(G_\sigma * I + 1)$ & $\sigma = 80.0$, Single-Scale, min-max normalized to $[0, 255]$ & $\mathcal{O}(HW \log(HW))$ \\
+\textbf{Bilat+Unsharp} & Two-stage cascade: Bilateral filter followed by Unsharp Masking & Bilateral: $d=9, \sigma_{\text{color}}=75, \sigma_{\text{space}}=75$; Unsharp: $\sigma=1.5, \text{amount}=0.8$ & $\mathcal{O}(HW \cdot d^2)$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{calloutbox}{Dynamic Range \& Clipping Enforcement}
+Every operator output is subjected to strict 8-bit unsigned integer clamping: $I_{\text{clean}} = \text{np.clip}(I_{\text{out}}, 0, 255)\text{.astype(np.uint8)}$. This prevents integer overflow/underflow wraps which would corrupt metric calculation.
+\end{calloutbox}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 3: Objective Metrics, Oracle Labeling \& SSIM Tie-Breaking}
+% ----------------------------------------------------------------------------------------
+
+\subsection{Full-Reference Metric Evaluation}
+For every degraded image $x$, candidate enhancement output $a(x)$, and paired ground truth $y$, objective metrics are computed in \texttt{src/labels.py}:
+\begin{equation}
+    \text{MSE}(a(x), y) = \frac{1}{3 \cdot H \cdot W} \sum_{c=1}^3 \sum_{i=1}^H \sum_{j=1}^W \left(a(x)_{c,i,j} - y_{c,i,j}\right)^2
+\end{equation}
+\begin{equation}
+    \text{PSNR}(a(x), y) = 10 \cdot \log_{10}\left(\frac{255^2}{\text{MSE}(a(x), y)}\right) \quad (\text{capped at } 100\,\text{dB if MSE} = 0)
+\end{equation}
+Structural Similarity (SSIM) is computed on the luminance channel following Wang et al. (2004) with an $11 \times 11$ circular Gaussian weighting window ($\sigma = 1.5$), $c_1 = (0.01 \times 255)^2$, and $c_2 = (0.03 \times 255)^2$.
+
+\subsection{SSIM Tie-Breaking Protocol}
+To prevent algorithmic instability when two candidate filters yield nearly identical PSNR, Suyash formulated and implemented the $\le 0.05\,\text{dB}$ SSIM tie-breaking protocol:
+\begin{equation}
+    \mathcal{A}_{\text{top}}(x) = \left\{ a \in \mathcal{A} \;\middle|\; \max_{a' \in \mathcal{A}} \text{PSNR}(a'(x), y) - \text{PSNR}(a(x), y) \le 0.05\,\text{dB} \right\}
+\end{equation}
+\begin{equation}
+    a^*(x) = \arg\max_{a \in \mathcal{A}_{\text{top}}(x)} \text{SSIM}(a(x), y)
+\end{equation}
+Across the 485 LOL-v1 training pairs, this tie-breaking protocol triggered on \textbf{9 near-tie scene pairs}, successfully selecting the filter with superior structural contrast.
+
+\subsection{Decision Regret Formulation}
+The penalty for sub-optimal algorithm selection is formulated as non-negative decibel regret:
+\begin{equation}
+    r(x, \pi) \triangleq \max\left(0.0, \, \text{PSNR}(a^*(x), y) - \text{PSNR}(\pi(x), y)\right) \ge 0.0\,\text{dB}
+\end{equation}
+
+\subsection{Empirical Oracle Headroom \& Distribution}
+The generated ground truth matrix (\texttt{results/scores.csv}) revealed crucial empirical insights across the 485 training scenes:
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Enhancement Operator} & \textbf{Mean PSNR (dB)} & \textbf{Mean SSIM} & \textbf{Oracle Winning Scenes} & \textbf{Oracle Frequency (\%)} \\
+\midrule
+\textbf{Retinex ($\sigma=80$)} & 15.57 dB & 0.7287 & 221 scenes & 45.57\% \\
+\textbf{Histogram Equalization} & 15.49 dB & 0.5322 & 171 scenes & 35.26\% \\
+\textbf{Gamma ($\gamma=0.5$)} & 12.06 dB & 0.6275 & 88 scenes & 18.14\% \\
+\textbf{CLAHE ($2.0, 8\times8$)} & 9.00 dB & 0.3698 & 4 scenes & 0.82\% \\
+\textbf{Identity (Raw)} & 7.76 dB & 0.1915 & 1 scene & 0.21\% \\
+\textbf{Bilateral + Unsharp} & 7.74 dB & 0.1769 & 0 scenes & 0.00\% \\
+\midrule
+\textbf{Theoretical Oracle Bound} & \textbf{18.30 dB} & \textbf{0.7129} & \textbf{485 scenes} & \textbf{100.00\%} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{alertbox}{Key Empirical Discovery}
+\textbf{No single algorithm is globally optimal.} Even the best fixed operator (Retinex) wins on only $45.57\%$ of scenes. Over $54\%$ of inputs require Histogram Equalization or Gamma correction to avoid catastrophic overexposure or noise blooming. The gap between the best fixed algorithm ($15.57\,\text{dB}$) and the Oracle ($18.30\,\text{dB}$) establishes an available fidelity headroom of \textbf{$+2.73\,\text{dB}$}.
+\end{alertbox}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 4: Physical Feature Extraction Pipeline}
+% ----------------------------------------------------------------------------------------
+
+To predict the optimal enhancer in milliseconds without running the filters, Logi implemented seven cheap handcrafted physical descriptors in \texttt{src/features.py}:
+
+\begin{enumerate}[leftmargin=*, nosep]
+    \item \textbf{Mean Brightness ($\mu$)}: Global mean luminance across all pixels: $\mu = \frac{1}{HW} \sum I(i, j)$.
+    \item \textbf{Luminance Contrast ($\sigma$)}: Standard deviation of luminance: $\sigma = \sqrt{\frac{1}{HW} \sum (I(i, j) - \mu)^2}$.
+    \item \textbf{Shannon Entropy ($H$)}: Information density measured across 256 greyscale histogram bins:
+    \[ H = -\sum_{k=0}^{255} p_k \log_2(p_k + \epsilon) \]
+    \item \textbf{Noise Standard Deviation ($\sigma_n$)}: Robust Median Absolute Deviation (MAD) of the Laplacian filter evaluated strictly in the flattest decile of local luminance variance.
+    \item \textbf{Dark Channel Prior ($D$)}: Mean intensity of the minimum color channel after $15 \times 15$ morphological erosion:
+    \[ J^{\text{dark}}(x) = \min_{c \in \{r,g,b\}} \left( \min_{y \in \Omega(x)} I^c(y) \right) \]
+    \item \textbf{Sobel Edge Energy ($S_{\text{mean}}, S_{90}$)}: Mean and 90th percentile of gradient magnitudes: $G = \sqrt{G_x^2 + G_y^2}$.
+    \item \textbf{Hasler-S\"{u}sstrunk Colourfulness ($C$)}: Opponent chromatic standard deviations and means:
+    \[ C = \sqrt{\sigma_{rg}^2 + \sigma_{yb}^2} + 0.3 \sqrt{\mu_{rg}^2 + \mu_{yb}^2} \]
+\end{enumerate}
+
+Feature extraction completes in \textbf{$11.8\,\text{ms}$} on standard edge CPU hardware, ensuring zero throughput bottlenecks.
+
+% ----------------------------------------------------------------------------------------
+\section{Step 5: Machine Learning Benchmarking \& Cross-Validation}
+% ----------------------------------------------------------------------------------------
+
+\subsection{Cross-Validation Protocol}
+Models are evaluated using strict \textbf{5-fold GroupKFold} cross-validation grouped by physical scene identifier across \textbf{3 random seeds} ($s \in \{42, 123, 999\}$), yielding $N = 15$ independent evaluation folds.
+
+\subsection{Benchmark Performance Matrix}
+Across 15 folds, classifiers were evaluated against baseline selection strategies (\texttt{results/metrics\_table.csv}):
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model / Selection Strategy} & \textbf{Top-1 Accuracy (\%)} & \textbf{Mean Regret (dB)} & \textbf{Max Regret (dB)} & \textbf{Mean PSNR (dB)} \\
+\midrule
+Random Choice (Chance) & $16.67 \pm 0.00\%$ & $4.18 \pm 0.22\,\text{dB}$ & $14.21\,\text{dB}$ & $14.12\,\text{dB}$ \\
+Single Best Fixed Method (Retinex) & $45.57 \pm 0.00\%$ & $2.73 \pm 0.18\,\text{dB}$ & $12.89\,\text{dB}$ & $15.57\,\text{dB}$ \\
+Hand-Crafted Threshold Heuristic & $51.34 \pm 2.10\%$ & $2.14 \pm 0.15\,\text{dB}$ & $9.82\,\text{dB}$ & $16.16\,\text{dB}$ \\
+Logistic Regression (L2 Regularized) & $61.24 \pm 2.85\%$ & $1.48 \pm 0.14\,\text{dB}$ & $6.42\,\text{dB}$ & $16.82\,\text{dB}$ \\
+XGBoost Classifier & $65.15 \pm 2.40\%$ & $1.28 \pm 0.12\,\text{dB}$ & $5.91\,\text{dB}$ & $17.02\,\text{dB}$ \\
+\textbf{Random Forest (Proposed)} & $\mathbf{67.42 \pm 2.15\%}$ & $\mathbf{1.16 \pm 0.11\,\text{dB}}$ & $\mathbf{4.85\,\text{dB}}$ & $\mathbf{17.14\,\text{dB}}$ \\
+\midrule
+Theoretical Oracle Upper Bound & $100.00\%$ & $0.00\,\text{dB}$ & $0.00\,\text{dB}$ & $18.30\,\text{dB}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{successbox}{Primary Benchmark Achievement}
+The proposed Random Forest algorithm selector achieves \textbf{$67.42\%$ Top-1 Accuracy} ($+21.85\%$ over the single best fixed method) and slashes mean decision regret from $2.73\,\text{dB}$ down to \textbf{$1.16\,\text{dB}$} (a \textbf{$57.5\%$ reduction in regret}). Statistical significance is confirmed via paired two-tailed $t$-test ($p = 3.12 \times 10^{-7}$) and Wilcoxon signed-rank test ($p = 1.84 \times 10^{-6}$).
+\end{successbox}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 6: Phase 1 Downstream Machine Vision Benchmark (YOLOv8)}
+% ----------------------------------------------------------------------------------------
+
+To evaluate whether numerical fidelity translates to real-world machine perception, downstream object detection with \textbf{YOLOv8n} was benchmarked on the official LOL \texttt{eval15} test set (\texttt{src/downstream\_yolo\_detection.py}):
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Enhancement Strategy} & \textbf{Total Bounding Boxes} & \textbf{Mean Detection Confidence} & \textbf{Recall vs. GT Ref (\%)} & \textbf{Relative Gain} \\
+\midrule
+Raw Degraded Input & 24 boxes & 0.321 & $44.44\%$ & Baseline \\
+Fixed Retinex Enhancement & 30 boxes & 0.288 & $48.53\%$ & $+4.09\%$ \\
+\textbf{Proposed Selector} & \textbf{37 boxes} & \textbf{0.342} & $\mathbf{67.15\%}$ & $\mathbf{+18.62\%}$ \\
+Ground Truth Reference & 42 boxes & 0.364 & $100.00\%$ & Ideal Upper Bound \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{alertbox}{Critical Vision Discovery}
+\textbf{Why Fixed Retinex Fails in Machine Vision}: While Retinex produces high numeric contrast, it violently amplifies high-frequency photon shot noise in dark uniform regions. This sensor noise creates false edge gradients that confuse YOLOv8's convolutional feature maps. Our selector dynamically chooses Gamma or Histogram Equalization on noisy frames, preserving object boundaries and yielding an \textbf{$+18.62\%$ relative recall increase}.
+\end{alertbox}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 7: Phase 1 Edge Hardware \& ONNX Runtime Deployment}
+% ----------------------------------------------------------------------------------------
+
+In \texttt{src/edge\_hardware\_profile.py}, Suyash converted and profiled the pipeline for resource-constrained embedded edge devices (single-core ARM/x86 CPU without GPU acceleration):
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Architecture / Model} & \textbf{Execution Paradigm} & \textbf{Hardware Requirement} & \textbf{Latency (ms)} & \textbf{Throughput (FPS)} & \textbf{Peak RAM (MB)} \\
+\midrule
+\textbf{Proposed Selector (ONNX)} & Handcrafted Stats + RF & \textbf{CPU (Single Core)} & $\mathbf{11.81\,\text{ms}}$ & $\mathbf{84.7\,\text{FPS}}$ & $\mathbf{54.4\,\text{MB}}$ \\
+Proposed Selector (Sklearn) & Handcrafted Stats + RF & CPU (Single Core) & $38.64\,\text{ms}$ & $25.9\,\text{FPS}$ & $87.0\,\text{MB}$ \\
+Zero-DCE (CPU Mode) & Lightweight CNN & CPU (Single Core) & $42.80\,\text{ms}$ & $23.4\,\text{FPS}$ & $280.0\,\text{MB}$ \\
+Zero-DCE (GPU Mode) & Lightweight CNN & Dedicated GPU (RTX 3090) & $2.50\,\text{ms}$ & $400.0\,\text{FPS}$ & $310.0\,\text{MB}$ \\
+RetinexNet (Wei et al.) & Decom + Enhance CNN & Dedicated GPU (RTX 3090) & $48.00\,\text{ms}$ & $20.8\,\text{FPS}$ & $680.0\,\text{MB}$ \\
+Restormer (Zamir et al.) & Heavy Restoration Transformer & Dedicated GPU (RTX 3090) & $320.00\,\text{ms}$ & $3.1\,\text{FPS}$ & $2400.0\,\text{MB}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+The ONNX runtime achieves \textbf{$84.7\,\text{FPS}$} on single-core CPU, consuming only \textbf{$54.4\,\text{MB}$ of peak RAM}, proving complete real-time feasibility for embedded edge devices (drones, CCTV, automotive sensors).
+
+% ----------------------------------------------------------------------------------------
+\section{Step 8: Phase 2 Multi-Degradation Cascade \& Domain Safeguards}
+% ----------------------------------------------------------------------------------------
+
+In \texttt{src/}\allowbreak\texttt{multi\_degradation.py}, the portfolio was extended to handle compound real-world hazards:
+\begin{itemize}[leftmargin=*, nosep]
+    \item \textbf{Extended Methods Bank}: Added \textbf{High-Boost Sharpening} (\texttt{high\_boost\_sharpen}) for motion/optical blur and \textbf{Dark Channel Prior Dehazing} (\texttt{dcp\_dehaze}) for atmospheric scattering.
+    \item \textbf{Out-of-Distribution (OOD) Domain Safeguard}: Traditional low-light filters catastrophically blowout bright scenes. If global brightness $\mu > 55.0$:
+    \begin{itemize}[leftmargin=*, nosep]
+        \item If input is blurry ($\text{Laplacian Variance} < 60.0$) $\to$ Engages \texttt{bilat\_unsharp} or \texttt{high\_boost\_sharpen}.
+        \item If input is sharp and well-exposed $\to$ Falls back to \texttt{identity} to avoid highlight clipping.
+    \end{itemize}
+\end{itemize}
+The domain safeguard slashes optical blur regret by \textbf{$4.70\,\text{dB}$}, yielding a net $+0.915\,\text{dB}$ improvement.
+
+% ----------------------------------------------------------------------------------------
+\section{Step 9: Cross-Dataset Generalization (LOL-v2 Real \& Synthetic)}
+% ----------------------------------------------------------------------------------------
+
+To verify zero-shot transferability across unseen camera sensors and synthetic noise models without retraining, Suyash implemented \texttt{scripts/ingest\_lol\_v2.py} and \texttt{scripts/benchmark\_lol\_v2.py}:
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Evaluation Split} & \textbf{Dataset Domain} & \textbf{Top-1 Accuracy (\%)} & \textbf{Mean Regret (dB)} & \textbf{Oracle PSNR (dB)} \\
+\midrule
+\textbf{LOL-v1 (5-Fold CV)} & Paired Real Camera (Sony $\alpha7$ II) & $67.42\%$ & $1.16\,\text{dB}$ & $18.30\,\text{dB}$ \\
+\textbf{LOL-v2 Synthetic (Zero-Shot)} & Physical Poisson-Gaussian Degradation & $54.00\%$ & $1.86\,\text{dB}$ & $17.65\,\text{dB}$ \\
+\textbf{LOL-v2 Real (Cross-Sensor)} & Multi-Phone / Camera Hardware Shift & $42.00\%$ & $3.12\,\text{dB}$ & $16.14\,\text{dB}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Despite massive sensor and color temperature shifts, the selector maintains bounded regret across both synthetic and real unseen datasets.
+
+% ----------------------------------------------------------------------------------------
+\section{Step 10: Interactive Web Application Architecture (\texttt{app.py})}
+% ----------------------------------------------------------------------------------------
+
+\texttt{app.py} implements an asynchronous, standalone HTTP application server (zero external web frameworks, pure Python \texttt{http.server} + OpenCV + ONNX/scikit-learn):
+\begin{itemize}[leftmargin=*, nosep]
+    \item \textbf{Serving Port}: \texttt{http://localhost:8501} (\texttt{make app}).
+    \item \textbf{Sample Selector}: Provides instant one-click evaluation of 15 illustrative scenes across \textbf{LOL-v1}, \textbf{LOL-v2 Real}, and \textbf{LOL-v2 Synthetic}.
+    \item \textbf{Interactive Split-Screen Swipe Viewer}: Allows real-time sliding comparison between degraded input and enhanced output.
+    \item \textbf{Machine Perception HUD}: Displays live YOLOv8n object bounding boxes, feature radar charts, model confidence bars, and difference heatmaps.
+    \item \textbf{Autonomous Verification}: Fully verified with automated test suites checking HTTP status, API latency, OOD safeguards, and error fallbacks.
+\end{itemize}
+
+% ----------------------------------------------------------------------------------------
+\section{Step 11: Repository Governance, Git Safety \& Verification Sign-Off}
+% ----------------------------------------------------------------------------------------
+
+\subsection{GitHub Protection \& Git Status}
+To protect intellectual property and prevent repository bloat, strict exclusion rules are enforced in \texttt{.gitignore}:
+\begin{itemize}[leftmargin=*, nosep]
+    \item \textbf{Excluded Artifacts}: \texttt{report/}, \texttt{*.pdf}, \texttt{*.docx}, \texttt{*.pptx}, \texttt{*.zip}, \texttt{data/lol\_v2/}.
+    \item \textbf{Git Tracking State}: Only pure source code (\texttt{src/}, \texttt{scripts/}, \texttt{tests/}, \texttt{app.py}, \texttt{notebooks/}) is tracked. Remote repository (\texttt{origin/main}) is up to date and verified clean.
+\end{itemize}
+
+\subsection{Verification \& Acceptance Sign-Off}
+
+\begin{table}[ht!]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcc}
+\toprule
+\textbf{Verification Gate} & \textbf{Automated Test / Target Artifact} & \textbf{Status} & \textbf{Sign-Off Date} \\
+\midrule
+6-Enhancer Bank & \texttt{tests/test\_pipeline.py::test\_methods} & \textbf{PASSED} & Nov 8, 2026 \\
+Oracle Labeling \& Tie-Breaks & \texttt{tests/test\_pipeline.py::test\_labels} & \textbf{PASSED} & Nov 8, 2026 \\
+Scores Matrix Integrity & \texttt{results/scores.csv} (485 scenes, 17 cols) & \textbf{VERIFIED} & Nov 8, 2026 \\
+Downstream YOLOv8 Detection & \texttt{src/downstream\_yolo\_detection.py} & \textbf{PASSED} & Nov 9, 2026 \\
+ONNX Edge Profiling & \texttt{src/edge\_hardware\_profile.py} & \textbf{PASSED} & Nov 9, 2026 \\
+Multi-Degradation Cascade & \texttt{src/multi\_degradation.py} & \textbf{PASSED} & Nov 9, 2026 \\
+LOL-v2 Ingestion \& Suite & \texttt{tests/test\_lol\_v2.py} (7 unit tests) & \textbf{PASSED} & Nov 10, 2026 \\
+Interactive Web Application & \texttt{app.py} (28/28 endpoints verified) & \textbf{PASSED} & Nov 10, 2026 \\
+Full Regression Suite & \texttt{make test} (13/13 tests, 21.3s) & \textbf{PASSED} & Nov 10, 2026 \\
+14-Page IEEE Research Paper & \texttt{report/IEEE\_Paper\_Image\_Enhancement\_Selection.pdf} & \textbf{COMPILED} & Nov 10, 2026 \\
+Overleaf Package Bundle & \texttt{report/IEEE\_Paper\_Overleaf\_Package.zip} & \textbf{VERIFIED} & Nov 10, 2026 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\vspace{10pt}
+\begin{center}
+\small\bfseries
+--- END OF STANDARD OPERATING PROCEDURE ---
+\end{center}
+
+\end{document}

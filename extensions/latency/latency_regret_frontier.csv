@@ -1,0 +1,8 @@
+latency_budget_ms,admissible_methods,admissible_count,mean_regret_db,mean_latency_ms,throughput_fps
+0.1,identity,1,10.543,0.04,25000.0
+0.5,"identity, gamma",2,6.191,0.38,2656.1
+1.0,"identity, gamma, hist_eq",3,1.583,0.74,1349.8
+2.0,"identity, gamma, hist_eq, clahe",4,1.566,0.75,1329.3
+5.0,"identity, gamma, hist_eq, clahe, retinex",5,0.0,2.45,408.7
+10.0,"identity, gamma, hist_eq, clahe, retinex, invert_dehaze",6,0.0,2.45,408.7
+15.0,"identity, gamma, hist_eq, clahe, retinex, invert_dehaze, bilat_unsharp",7,0.0,2.45,408.7

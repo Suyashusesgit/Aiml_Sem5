@@ -47,6 +47,7 @@ JOURNAL_SUBMISSION/
 *.docx
 *.pptx
 *.gif
+*.mp4
 
 # Scratch / teammate code
 scratch_triathlon/

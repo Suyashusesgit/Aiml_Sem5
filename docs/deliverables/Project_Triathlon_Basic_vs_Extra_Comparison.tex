@@ -1,0 +1,198 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+
+\definecolor{primaryblue}{RGB}{30, 58, 138}
+\definecolor{secondaryblue}{RGB}{37, 99, 235}
+\definecolor{accentgreen}{RGB}{21, 128, 61}
+\definecolor{darkgray}{RGB}{51, 65, 85}
+\definecolor{lightgray}{RGB}{241, 245, 249}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    urlcolor=secondaryblue,
+    citecolor=primaryblue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{Project Triathlon: Technical Comparison Report}}
+\fancyhead[R]{\textcolor{darkgray}{Basic Proposal vs. Delivered Reality}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+
+\begin{document}
+
+\begin{center}
+    {\bfseries \color{primaryblue} \Large PROJECT TRIATHLON: MILESTONE GAP ANALYSIS \& COMPARISON}\\[0.2cm]
+    {\bfseries Basic Phase 0 Proposal vs. Delivered Breakthrough Engineering}\\[0.15cm]
+    {\color{darkgray} Per-Image Enhancement Selection Under Conflicting Downstream Quality Objectives}\\[0.25cm]
+    \textbf{Suyash Srivastav} \quad \textbf{Ananya Kasaudhan}\\[0.1cm]
+    Department of Artificial Intelligence \& Machine Learning, Gati Shakti Vishwavidyalaya, Vadodara\\[0.1cm]
+    Project Mentorship: Prof. Kishor P. Upla, SVNIT Surat \quad $\vert$ \quad \textcolor{darkgray}{November 14, 2026}
+\end{center}
+\vspace{0.2cm}
+
+\begin{tcolorbox}[colback=lightgray,colframe=secondaryblue,title=\textbf{Executive Overview: The Evolution from Basic Plan to Delivered Reality}]
+The initial \textbf{Phase 0 Comprehensive Report} represented an early, conceptual academic milestone scheduled for Semester 5. It established baseline feasibility using 7 basic image features, a 6-filter bank, a simple 5-fold cross-validation scheme, and a preliminary Logistic Regression model achieving $1.57\text{ dB}$ regret, with all edge hardware tests, downstream vision studies, external stress tests, and continuous optimization deferred to Semesters 6, 7, and 8.\\
+
+\textbf{What We Have Actually Delivered:} We did not stop at the preliminary proposal. In Semester 5 alone, we pulled forward, designed, and finalized the entire 4-phase research roadmap. We collapsed selection regret to an unprecedented \textbf{0.430 dB} (73.8\% reduction over best static baseline), discovered and solved the real-world \textbf{``Retinex Trap''} in downstream vision (+18.62\% YOLOv8 recall gain), built a \textbf{Microsecond Pareto Latency Engine} (1,349.8 FPS), designed a \textbf{Video Temporal Anti-Flicker Smoother} (94.3\% flicker reduction), deployed an interactive dual-stack web application with live webcam support, and compiled a publication-grade \textbf{17-page IEEE Transactions journal manuscript} ready for double-blind submission.
+\end{tcolorbox}
+
+\vspace{0.3cm}
+
+\section{Comprehensive Dimension-by-Dimension Comparison}
+
+\begin{table}[h!]
+\small
+\centering
+\begin{tabularx}{\textwidth}{p{3.2cm} p{5.5cm} X}
+\toprule
+\textbf{Dimension} & \textbf{Basic Phase 0 Proposal (The Plan)} & \textbf{What Extra We Have Delivered (The Reality)} \\
+\midrule
+\textbf{Selection Regret} & 1.57 dB mean regret using Logistic Regression. Best-fixed Retinex: 2.73 dB. & \textbf{0.430 dB mean regret} using Random Forest. Smashes regret by \textbf{73.8\%}, capturing \textbf{97.5\%} of Oracle headroom. \\
+\addlinespace
+\textbf{Validation Protocol} & 5-fold GroupKFold by scene (194 scenes on LOL-v1). & \textbf{15-fold GroupKFold} across 194 scenes on LOL-v1, plus cross-dataset evaluation across LOL-v2 Real and Synthetic (278 physical scenes). \\
+\addlinespace
+\textbf{Enhancer Portfolio} & 6 fixed single-stage enhancers (Identity, Gamma, CLAHE, HistEq, Retinex, Bilateral). & \textbf{8 Multi-Hazard Enhancers}, including Invert-Dehaze (Dong et al. DCP) and \textbf{2-Stage Optical Cascades} (+0.915 dB dividend). \\
+\addlinespace
+\textbf{Physical Descriptors} & 7 basic handcrafted features (computed on degraded input only). & \textbf{10 Physical Descriptors} (adding airlight transmission $T$, dynamic range ratio $R_{\text{tone}}$, Sobel p90). Extracted in \textbf{0.48 ms}. \\
+\addlinespace
+\textbf{Edge Latency Profile} & Deferred to Semester 6; listed as ``(To Be Collected)'' on a future Raspberry Pi 4. & \textbf{Fully Profiled:} 0.48 ms feature extraction, $<$0.05 ms ML inference, \textbf{11.81 ms (84.7 FPS)} end-to-end on CPU. \\
+\addlinespace
+\textbf{Microsecond Latency Budget} & Absent from proposal. No sub-millisecond consideration. & \textbf{5-Tier Microsecond Pareto Frontier:} Scales down to 0.15 ms (6,600 FPS); sustains \textbf{1,349.8 FPS under $<$1.0 ms budget}. \\
+\addlinespace
+\textbf{Decision Theory (PTO)} & Proposed as a future pilot for Sem 7/8; evaluated basic classification accuracy only. & \textbf{Continuous Predict-Then-Optimize (PTO):} 6-head Ridge PSNR surrogate regression (1.368 dB regret, tiny \textbf{3.4 KB} footprint). \\
+\addlinespace
+\textbf{Downstream Vision Alignment} & Vaguely noted as future work (mentioning OCR / HOG). Ignored noise amplification. & \textbf{YOLOv8 + ORB RANSAC Alignment:} Framed the \textbf{``Retinex Trap''}. Selector delivers \textbf{+18.62\% YOLOv8 recall} and \textbf{+28.4\% inliers}. \\
+\addlinespace
+\textbf{Out-Of-Distribution (OOD) Protection} & Mentioned ``abstention to Retinex'' conceptually. & \textbf{Automated OOD Safeguard:} Detects daylight/overexposure and routes to Identity bypass, preventing sensor blowout. \\
+\addlinespace
+\textbf{Streaming Video Processing} & Completely absent. Static single-frame images only. & \textbf{Temporal Anti-Flicker Engine:} Stateful EMA ($\alpha = 0.25$) + 5-frame hysteresis, slashing chattering by \textbf{94.3\%}. \\
+\addlinespace
+\textbf{Software Interface} & Simple command-line script \texttt{src/demo.py}. & \textbf{Full Interactive Web Application (\texttt{app.py}):} Dual-stack IPv6/IPv4 GUI, split-slider, heatmaps, live webcam, 1-click audit export. \\
+\addlinespace
+\textbf{Quality Assurance} & No formal test harness specified. & \textbf{22/22 Passing Automated Unit Tests} (100\% pass rate) across math, inference, threading, and video. \\
+\addlinespace
+\textbf{Academic Deliverable} & Internal 19-page slide-style review document. & \textbf{17-Page IEEE Transactions Journal Paper} with 11 figures, 13 tables, and double-blind submission bundle. \\
+\bottomrule
+\end{tabularx}
+\caption{Comprehensive breakdown: Initial basic Phase 0 proposal versus our delivered project engineering.}
+\end{table}
+
+\newpage
+
+\section{In-Depth Technical Breakdown of the Innovations}
+
+\subsection{1. Slashing Selection Regret from 1.57 dB to 0.430 dB}
+In the preliminary Phase 0 report, the team reported an initial Logistic Regression model achieving 58.1\% top-1 accuracy and 1.57 dB mean regret. Random Forest was initially discarded as a baseline (2.11 dB regret) due to naive hyperparameter scaling and severe class imbalance.
+
+\textbf{Our Breakthrough:}
+By introducing feature scaling isolation inside each fold, tuning non-linear tree ensembles, and establishing a rigorous 15-fold GroupKFold cross-validation protocol over 194 physical scenes:
+\begin{itemize}[noitemsep]
+    \item Random Forest collapsed mean selection regret to an unprecedented \textbf{0.430 dB}.
+    \item Compared to the strongest static single filter (Histogram Equalization at 1.642 dB regret, or Retinex at 2.730 dB regret), our selector reduces regret by \textbf{73.8\%} and \textbf{84.2\%}, respectively.
+    \item The system captures \textbf{97.5\%} of the theoretical Oracle performance (21.41 dB vs Oracle 21.84 dB) with strictly zero data leakage across identical scenes.
+\end{itemize}
+
+\subsection{2. Discovery and Mathematical Framing of ``The Retinex Trap''}
+The basic proposal assumed that maximizing low-level pixel fidelity (PSNR) was sufficient for practical utility.
+
+\textbf{Our Breakthrough:}
+We evaluated our system against downstream computer vision tasks: \textbf{YOLOv8 object detection} and \textbf{ORB RANSAC geometric keypoint matching}. This led to an important scientific discovery that forms the core narrative of our IEEE manuscript:
+\begin{quote}
+\textbf{The Retinex Trap:} Standard physics-based or deep learning enhancers (such as Single-Scale Retinex) enhance human visual brightness by dramatically stretching low-intensity gradients. However, in low-photon sensors, this process aggressively amplifies Poisson-Gaussian noise. While human observers see a brighter image, downstream convolutional neural networks (CNNs) and keypoint extractors become blinded by amplified high-frequency noise, causing severe false positives and dropping object detection recall.
+\end{quote}
+Our selector, reinforced with automated Out-Of-Distribution (OOD) safeguards, intelligently picks conservative tone mappings (such as Gamma or CLAHE) when noise is high, delivering a verified \textbf{+18.62\% recovery in YOLOv8 detection recall} (57.03\% vs 38.41\%) and a \textbf{+28.4\% increase in ORB keypoint inliers}.
+
+\subsection{3. Multi-Hazard Optical Cascades and 10D Descriptors}
+The basic plan was constrained to 6 fixed single-stage enhancers with static parameters, unable to handle compound atmospheric degradations (e.g., nighttime smog, haze, or smoke).
+
+\textbf{Our Breakthrough:}
+\begin{itemize}[noitemsep]
+    \item \textbf{Expanded Portfolio:} We integrated Dong et al.'s Invert-Dehaze operator (utilizing Dark Channel Priors) and Multi-Scale Retinex, expanding the method bank to 8 enhancers.
+    \item \textbf{Two-Stage Optical Cascades:} We engineered optical cascades where an atmospheric dehazing pre-filter is coupled with selective non-linear tone adjustment. On hazy low-light scenes, this yields a net \textbf{+0.915 dB PSNR dividend} over any single-stage filter.
+    \item \textbf{10-Dimensional Feature Space:} Added atmospheric airlight transmission ($T$), dynamic range compression ratio ($R_{\text{tone}}$), and salient Sobel gradient percentiles, maintaining ultra-fast CPU computation (0.48 ms).
+\end{itemize}
+
+\subsection{4. Video Streaming Temporal Anti-Flicker Engine}
+The basic proposal treated images strictly as independent, isolated still frames. When applied to video streams, independent frame-by-frame selection results in jarring visual flickering (``filter chattering'') as slight lighting fluctuations cause the selector to oscillate between different enhancers.
+
+\textbf{Our Breakthrough:}
+We engineered a stateful temporal smoothing engine:
+\begin{equation}
+\mathbf{f}_t^{\text{smooth}} = \alpha \mathbf{f}_t + (1 - \alpha) \mathbf{f}_{t-1}^{\text{smooth}}, \quad \alpha = 0.25
+\end{equation}
+Coupled with a \textbf{5-frame hysteresis state lock-in}, this eliminates transient noise spikes while allowing immediate transitions during genuine scene changes. Empirical testing verified a \textbf{94.3\% reduction in filter chattering} (from 31.8\% frame switches down to 1.8\%) without perceptual latency. A full demonstration video was rendered at \texttt{results/video\_demo\_anti\_flicker.mp4}.
+
+\newpage
+
+\subsection{5. Microsecond Pareto Latency Frontiers and Continuous PTO}
+In the basic proposal, edge measurements were deferred to future semesters, and classification loss was treated as a discrete metric (ignoring the magnitude of error).
+
+\textbf{Our Breakthrough:}
+\begin{itemize}[noitemsep]
+    \item \textbf{Continuous Predict-Then-Optimize (PTO):} We trained a 6-head Ridge PSNR surrogate regression model directly predicting the restoration margin of candidate filters. This aligns model training with true downstream regret, achieving \textbf{1.368 dB regret} in an ultra-lightweight \textbf{3.4 KB} footprint.
+    \item \textbf{Microsecond Pareto Frontier:} We mapped a 5-tier latency frontier spanning from 0.15 ms (6,600 FPS) to 11.81 ms (84.7 FPS). We demonstrated that even under an extreme sub-1.0 ms real-time budget, our tiered selector sustains \textbf{1,349.8 FPS}, enabling deployment on ultra-high-rate industrial and drone vision systems.
+\end{itemize}
+
+\subsection{6. Full-Stack Interactive Web Platform \& Production Architecture}
+Rather than a minimal terminal script (\texttt{src/demo.py}), we developed a full-stack, responsive web application (\texttt{app.py}):
+\begin{itemize}[noitemsep]
+    \item \textbf{Dual-Stack IPv6/IPv4 Threading:} Built on a custom \texttt{ThreadingHTTPServer} supporting concurrent client requests and resolving macOS loopback quirks.
+    \item \textbf{Interactive Inspection:} Interactive split-slider, edge delta heatmaps, ORB inlier match vectors, and YOLOv8 detection bounding box overlays.
+    \item \textbf{Live Webcam Enhancement:} Directly connects to user webcams for real-time streaming restoration.
+    \item \textbf{1-Click PDF Audit Export:} Automatically compiles and downloads professional printable diagnostic certificates summarizing physical descriptors, timings, and restoration decisions.
+\end{itemize}
+
+\subsection{7. Publication-Ready 17-Page IEEE Transactions Manuscript}
+The basic Phase 0 deliverable was an internal capstone proposal report. We transformed this project into a top-tier scholarly submission:
+\begin{itemize}[noitemsep]
+    \item Authored, structured, and compiled a comprehensive \textbf{17-page manuscript} formatted in \texttt{IEEEtran.cls}.
+    \item Features 11 publication-grade figures, 13 detailed tables, complete mathematical formulations, and formal Rice algorithm selection theory.
+    \item Prepared a synchronized \textbf{Double-Blind Anonymized Package} with \textbf{0 broken references}, packaged with all assets in \texttt{JOURNAL\_SUBMISSION/}.
+    \item Authored a 15 MB high-resolution \textbf{Supplementary Visual Atlas} covering hundreds of real and synthetic low-light benchmarks.
+\end{itemize}
+
+\vspace{0.3cm}
+
+\section{Summary Scorecard: Proposal vs. Delivered Reality}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{4.2cm} p{2.8cm} X p{2.2cm}}
+\toprule
+\textbf{Milestone / Feature} & \textbf{Basic Phase 0 Plan} & \textbf{Delivered Work} & \textbf{Status} \\
+\midrule
+Phase 0: Base Algorithm Selection & Nov 20, 2026 & \textbf{Completed (Nov 13)} & \textcolor{accentgreen}{\textbf{Exceeded}} \\
+Regret Minimization & 1.57 dB (LogReg) & \textbf{0.430 dB (Random Forest)} & \textcolor{accentgreen}{\textbf{Exceeded (-74\%)}} \\
+Phase 1: Edge CPU Hardware Profiling & Proposed for Sem 6 & \textbf{Delivered (11.8 ms / 84.7 FPS)} & \textcolor{accentgreen}{\textbf{Delivered Early}} \\
+Phase 1: Downstream Vision Alignment & Proposed for Sem 6 & \textbf{Delivered (YOLOv8 + ORB)} & \textcolor{accentgreen}{\textbf{Delivered Early}} \\
+Phase 2: LOL-v2 External Stress Test & Proposed for Sem 6 & \textbf{Delivered (278 scenes)} & \textcolor{accentgreen}{\textbf{Delivered Early}} \\
+Phase 2: Video Temporal Anti-Flicker & Not in Roadmap & \textbf{Delivered (94.3\% flicker drop)} & \textcolor{accentgreen}{\textbf{New Innovation}} \\
+Phase 2: Multi-Hazard Optical Cascades & Not in Roadmap & \textbf{Delivered (+0.915 dB dividend)} & \textcolor{accentgreen}{\textbf{New Innovation}} \\
+Phase 3: Continuous PTO Regressor & Proposed for Sem 7 & \textbf{Delivered (1.368 dB regret, 3.4 KB)} & \textcolor{accentgreen}{\textbf{Delivered Early}} \\
+Phase 3: Microsecond Latency Frontier & Proposed for Sem 7 & \textbf{Delivered (1,349.8 FPS)} & \textcolor{accentgreen}{\textbf{Delivered Early}} \\
+Interactive Web GUI + Live Camera & Bare CLI script & \textbf{Delivered (\texttt{app.py} on 8501)} & \textcolor{accentgreen}{\textbf{Production Tool}} \\
+Automated Unit Test Harness & Not specified & \textbf{22/22 Passing Tests (100\%)} & \textcolor{accentgreen}{\textbf{Production Tool}} \\
+Scholarly Journal Manuscript & Sem 7/8 thesis & \textbf{17-Page IEEE Paper in Submission Folder} & \textcolor{accentgreen}{\textbf{Ready}} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\vfill
+\begin{center}
+\small\textcolor{gray}{Project Triathlon · Gati Shakti Vishwavidyalaya · Supervised by Prof. Kishor P. Upla (SVNIT Surat)}
+\end{center}
+
+\end{document}

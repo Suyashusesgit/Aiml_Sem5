@@ -23,14 +23,27 @@ A thorough search of the workspace and commit history was conducted for `triathl
 
 ---
 
-## 2. Extensions Segregation
-Modules not part of the frozen Phase 0 core selector protocol are cleanly segregated into `extensions/`:
-- `extensions/app.py`: Interactive browser web application.
-- `extensions/video_pipeline.py`: Video temporal anti-flicker smoothing.
-- `extensions/downstream_detection.py` & `downstream_yolo_detection.py`: YOLOv8 object detection benchmark.
-- `extensions/downstream_matching.py`: ORB/AKAZE keypoint feature matching.
-- `extensions/edge_hardware_profile.py` & `latency_aware_selection.py`: ONNX export and CPU latency profiling.
-- `extensions/multi_degradation.py`: Multi-hazard regime cascading.
+## 2. Extensions Segregation & Protected Assets Restoration
+
+In accordance with user requirements, all components related to YOLOv8, ORB/RANSAC geometric matching, the video temporal smoother, the web application, latency benchmarks, and the submission deliverables are **STRICTLY PROTECTED**.
+
+Any non-duplicate files previously placed in `_archive/` have been restored to structured extension and submission locations:
+
+### Directory Mapping for Protected Assets
+
+| Protected Asset Category | Permanent Location | Files Included | Purpose & Execution Mode |
+| :--- | :--- | :--- | :--- |
+| **Downstream Machine Vision** | `extensions/downstream/` | `yolov8n.pt`, `downstream_yolo_detection.py`, `downstream_matching.py`, `downstream_detection.py`, `downstream_semantic_eval.py`, `README.md` | YOLOv8 object detection on CPU (`device="cpu"`) and ORB/RANSAC geometric inlier recovery. |
+| **Video Temporal Smoother** | `extensions/video/` | `video_pipeline.py`, `generate_video_demo.py`, `video_demo_anti_flicker.mp4`, `README.md` | Real-time temporal feature smoothing (EMA) and Markovian hysteresis gating to prevent inter-frame visual strobing (>100 FPS on CPU). |
+| **Latency Benchmarking** | `extensions/latency/` | `edge_hardware_profile.py`, `latency_aware_selection.py`, `edge_hardware_profile.csv`, `latency_regret_frontier.csv`, `README.md` | CPU latency profiling across 500 runs and Pareto frontier optimization under computational constraints. |
+| **Interactive Web App** | `apps/web/` | `app.py`, `README.md` | Zero-dependency standalone Python `http.server` interactive web application for live drag-and-drop enhancement and visual comparison. |
+| **Submission Deliverables** | `paper/submission/` | `IEEE_Paper_To_Submit_Anonymized.pdf`, `Supplementary_Visual_Atlas.pdf`, `IEEE_Paper_CameraReady_With_Authors.pdf`, `Project_Triathlon_Basic_vs_Extra_Comparison.pdf`, `IEEE_LaTeX_Source_Package.zip`, `README_SUBMISSION_GUIDE.md` | Complete camera-ready and anonymized submission PDFs, supplementary visual atlas, and Overleaf source bundle for IEEE Transactions. |
+| **Executive Deliverables** | `docs/deliverables/` | `Project_Triathlon_Master_SOP.pdf`, `Project_Triathlon_Executive_Presentation.pptx`, `Project_Triathlon_Comprehensive_Deliverables_Report.pdf`, `Project_Triathlon_Step_by_Step_Walkthrough.docx`, `Executive_Summary_Prof_Upla.docx`, `Suyash/`, `Ananya/` | Project presentations, walkthrough documents, student completion reports, and master SOPs. |
+
+### Dependency Isolation Contract
+- **Heavy Dependencies (`ultralytics`, `torch`, `torchvision`, `streamlit`)**: Segregated strictly to `extensions/requirements-extensions.txt`.
+- **Core Library Independence**: `src/` has **ZERO** imports of `torch` or `ultralytics`. Core training, evaluation, cross-validation, and paper asset generation run purely on lightweight CPU libraries (`numpy`, `scipy`, `pandas`, `scikit-learn`, `opencv-python`).
+- **Rule on Duplicates**: Only exact SHA-256 duplicate copies remain archived in `_archive/report/` (`IEEEtran.cls`, duplicate copies of submission PDFs). A primary copy of every file is live in `paper/`, `paper/submission/`, or `docs/deliverables/`.
 
 ---
 
