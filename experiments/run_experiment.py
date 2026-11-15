@@ -230,7 +230,8 @@ def run_e0_reproduce(
 
 def generate_tuning_grids(budget: int = 30, rng_seed: int = 123) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Generates 30 random hyperparameter configurations for LR and RF."""
-    rng = np.random.RandomState(rng_seed)
+    import random
+    rng = random.Random(rng_seed)
 
     # Config 0 is default
     lr_configs = [{"C": 1.0, "class_weight": None, "max_iter": 2000}]
