@@ -132,3 +132,22 @@ Any non-duplicate files previously placed in `_archive/` have been restored to s
 * **Phased Expansion**: As subsequent project phases (Phase 2 Sem 7, Phase 3 Sem 8) are executed, all experimental additions, figures, and analyses are directly integrated into `paper/main.tex` and compiled to `paper/main.pdf`.
 
 
+
+---
+
+## 5. UI Audit & Live Demo Remediation (17 Nov 2026)
+- **Branch**:  (tagged ).
+- **Defects Fixed**: DEF-01 through DEF-10 resolved and verified by automated unit test suite .
+- **Default Sample Policy**: Deterministic selection of held-out eval15 Scene 547 based on median brightness (15.67 / 255).
+- **Presentation Boost Contract**: Visual gamma 0.4 display boost is isolated to display rendering; ML feature extraction and inference operate strictly on raw uncompressed pixels.
+- **Scientific Facts Invariant**: apps/web/facts.py dynamically supplies all metrics from results/<run> and models/selector.json. Zero hardcoded literal numbers in app markup.
+
+
+---
+
+## 5. UI Audit & Live Demo Remediation (17 Nov 2026)
+- **Branch**: `ui-audit` (tagged `pre-ui`).
+- **Defects Fixed**: DEF-01 through DEF-10 resolved and verified by automated unit test suite `tests/test_ui_audit.py`.
+- **Default Sample Policy**: Deterministic selection of held-out eval15 Scene 547 based on median brightness (15.67 / 255).
+- **Presentation Boost Contract**: Visual gamma 0.4 display boost is isolated to display rendering; ML feature extraction and inference operate strictly on raw uncompressed pixels.
+- **Scientific Facts Invariant**: apps/web/facts.py dynamically supplies all metrics from results/<run> and models/selector.json. Zero hardcoded literal numbers in app markup.

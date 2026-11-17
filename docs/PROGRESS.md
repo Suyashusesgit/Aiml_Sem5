@@ -138,3 +138,32 @@
   - None.
 
 
+
+## UI Audit & Live Demo Remediation (17 Nov 2026)
+- Tagged  and created working branch .
+- Successfully fixed DEF-01 (black first-load image via deterministic Scene 547 median + 1px frame + display preview boost).
+- Successfully fixed DEF-02 (broken image suppression & transparent SVG fallbacks).
+- Successfully fixed DEF-03 (modal dimming isolation & singleton toast manager).
+- Successfully fixed DEF-04 (WCAG AA compliant solid bar fills, outside labels, and zoom toggle).
+- Successfully fixed DEF-05 (dynamic facts loader apps/web/facts.py, removed unsupported p-values, added TIE evidence).
+- Successfully fixed DEF-06 (bank parity: 6 canonical Phase 0 methods vs Phase 2 multi-hazard extensions).
+- Successfully fixed DEF-07 (safeguard default OFF, clean provenance badges, seeded random sample).
+- Successfully fixed DEF-08 (mobile responsiveness down to 390x844).
+- Added comprehensive unit test suite  (5/5 pass, 33/33 repo tests pass).
+- Generated , , and captured all before/after evidence screenshots.
+Problems: Chrome headless required user-data-dir sandbox permission to write to /tmp on macOS; resolved cleanly without modifying core repository dependencies.
+
+
+## UI Audit & Live Demo Remediation (17 Nov 2026)
+- Tagged `pre-ui` and created working branch `ui-audit`.
+- Successfully fixed DEF-01 (black first-load image via deterministic Scene 547 median + 1px frame + display preview boost).
+- Successfully fixed DEF-02 (broken image suppression & transparent SVG fallbacks).
+- Successfully fixed DEF-03 (modal dimming isolation & singleton toast manager).
+- Successfully fixed DEF-04 (WCAG AA compliant solid bar fills, outside labels, and zoom toggle).
+- Successfully fixed DEF-05 (dynamic facts loader apps/web/facts.py, removed unsupported p-values, added TIE evidence).
+- Successfully fixed DEF-06 (bank parity: 6 canonical Phase 0 methods vs Phase 2 multi-hazard extensions).
+- Successfully fixed DEF-07 (safeguard default OFF, clean provenance badges, seeded random sample).
+- Successfully fixed DEF-08 (mobile responsiveness down to 390x844).
+- Added comprehensive unit test suite `tests/test_ui_audit.py` (5/5 pass, 33/33 repo tests pass).
+- Generated `docs/ui_audit/UI_AUDIT.md`, `docs/DEMO_CHECKLIST.md`, and captured all before/after evidence screenshots.
+Problems: Chrome headless required user-data-dir permission to write to /tmp on macOS; resolved cleanly without modifying core repository dependencies.
