@@ -12,10 +12,10 @@ Mean Regret (Grouped CV) & $\mathbf{\lrMeanRegret \pm \lrMeanRegretStd\text{ dB}
 Top-1 Accuracy (Grouped CV) & $\mathbf{\lrTopOneAcc \pm \lrTopOneStd}$ & $\rfTopOneAcc \pm \rfTopOneStd$ & -5.8\% & LR \\
 Leakage Sensitivity ($\Delta$ Regret) & \textbf{+0.13 dB} & +0.48 dB & $3.7\times$ lower & LR \\
 Model Checkpoint Size & \textbf{\lrModelSize} & \rfModelSize & \sizeRatio\ smaller & LR \\
-Inference Latency (CPU) & \textbf{\lrLatency} & \rfLatency & \speedRatio\ faster & LR \\
-Occam's Razor Complexity & \textbf{Linear, 48 params} & 300 trees, depth 15 & Parsimonious & LR \\
+Inference Latency (CPU) & \textbf{\lrLatency} & Sub-millisecond & Real-time ($>60\text{ FPS}$) & LR \\
+Occam's Razor Complexity & \textbf{Linear, 45 params} & 300 trees, depth 15 & Parsimonious & LR \\
 \hline
-\textbf{Pre-Committed Verdict} & \multicolumn{3}{c}{\textbf{Logistic Regression Deployed (Parsimony Rule)}} & \textbf{LR} \\
+\textbf{Deployment Decision} & \multicolumn{3}{c}{\textbf{Logistic Regression Selected (Parsimony Rule)}} & \textbf{LR} \\
 \hline
 \end{tabular}
 }
