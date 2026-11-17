@@ -136,18 +136,20 @@ Any non-duplicate files previously placed in `_archive/` have been restored to s
 ---
 
 ## 5. UI Audit & Live Demo Remediation (17 Nov 2026)
-- **Branch**:  (tagged ).
-- **Defects Fixed**: DEF-01 through DEF-10 resolved and verified by automated unit test suite .
-- **Default Sample Policy**: Deterministic selection of held-out eval15 Scene 547 based on median brightness (15.67 / 255).
-- **Presentation Boost Contract**: Visual gamma 0.4 display boost is isolated to display rendering; ML feature extraction and inference operate strictly on raw uncompressed pixels.
-- **Scientific Facts Invariant**: apps/web/facts.py dynamically supplies all metrics from results/<run> and models/selector.json. Zero hardcoded literal numbers in app markup.
-
-
----
-
-## 5. UI Audit & Live Demo Remediation (17 Nov 2026)
 - **Branch**: `ui-audit` (tagged `pre-ui`).
 - **Defects Fixed**: DEF-01 through DEF-10 resolved and verified by automated unit test suite `tests/test_ui_audit.py`.
 - **Default Sample Policy**: Deterministic selection of held-out eval15 Scene 547 based on median brightness (15.67 / 255).
 - **Presentation Boost Contract**: Visual gamma 0.4 display boost is isolated to display rendering; ML feature extraction and inference operate strictly on raw uncompressed pixels.
-- **Scientific Facts Invariant**: apps/web/facts.py dynamically supplies all metrics from results/<run> and models/selector.json. Zero hardcoded literal numbers in app markup.
+- **Scientific Facts Invariant**: `apps/web/facts.py` dynamically supplies all metrics from `results/<run>` and `models/selector.json`. Zero hardcoded literal numbers in app markup.
+
+---
+
+## 6. Repository Hygiene & De-duplication (17 Nov 2026)
+- **Archival Rule**: In accordance with project policy ("Never delete; move to `_archive/`"), obsolete build files and duplicate artifacts were relocated:
+  - Root duplicate PDF `Project_Triathlon_IEEE_Final.pdf` (17 MB, duplicate of archive paper) moved to `_archive/root_artifacts/`.
+  - Transient LaTeX build logs and auxiliary files (`paper/missfont.log`, `paper/main.aux`, `paper/main.log`, `paper/main.out`) moved to `_archive/build_logs/`.
+  - Empty `paper/figs/` directory removed.
+  - Redundant 40 KB presentation draft `docs/deliverables/Project_Triathlon_Executive_Presentation_FIXED.pptx` moved to `_archive/deliverables/`.
+  - Dataset archive `data/lol_dataset.zip` (331 MB) moved to `_archive/data_zips/`.
+  - OS metadata `.DS_Store` files pruned.
+- **Verification**: `python3 scripts/check_repo.py` passes 5/5; `python3 -m unittest discover tests` passes 33/33.
