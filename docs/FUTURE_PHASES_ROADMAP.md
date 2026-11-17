@@ -116,7 +116,7 @@
 - **Problem**: Enhancement quality must ultimately serve downstream edge perception tasks (object detection, visual odometry, obstacle avoidance) rather than human visual aesthetics.
 - **Objectives**:
   1. Integrate the Triathlon selector into real-time perception pipelines:
-     - Object Detection: YOLOv8n / RT-DETR-Tiny on night traffic datasets (BDD100K Night, ExDark).
+     - Object Detection: ORB/Classical Vision / RT-DETR-Tiny on night traffic datasets (BDD100K Night, ExDark).
      - Visual SLAM: ORB-SLAM3 in low-light indoor corridors.
   2. Benchmark Task Utility: mAP@50, tracking loss rate, and feature matching inlier count across raw, fixed, and selected streams.
 - **Success Criteria**: Triathlon selector delivers $\ge +10\%$ mAP improvement over raw low-light video and $> 50\%$ reduction in SLAM tracking loss incidents.

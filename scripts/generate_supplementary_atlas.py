@@ -4,7 +4,7 @@ Showcases all 15 official held-out test scenes from the LOL-v1 benchmark (eval15
     - Degraded vs Reference vs Selected Output
     - Edge Sharpening Heatmaps
     - ORB RANSAC Geometric Matching Vectors
-    - YOLOv8 Bounding Box Detections
+    - Classical Structural Canny Edge Boundaries
     - Complete 8D Physical Metric Breakdown & PTO utilities
 """
 
@@ -37,21 +37,6 @@ ALL_METHODS = {
     "high_boost_sharpen": high_boost_sharpen,
     "dcp_dehaze": dcp_dehaze,
 }
-
-def get_yolo_detections(img_bgr, conf_thresh=0.20):
-    try:
-        from ultralytics import YOLO
-        model: Any = YOLO("yolov8n.pt")
-        predict_fn: Any = getattr(model, "predict", model)
-        res_list: Any = list(predict_fn(img_bgr, conf=conf_thresh, verbose=False))
-        res: Any = res_list[0]
-        boxes: Any = getattr(res, "boxes", None)
-        n_boxes = len(boxes) if boxes is not None else 0
-        plot_fn: Any = getattr(res, "plot", None)
-        annotated = plot_fn() if callable(plot_fn) else img_bgr.copy()
-        return annotated, n_boxes
-    except Exception:
-        return img_bgr.copy(), 0
 
 def build_atlas():
     os.makedirs("report", exist_ok=True)
@@ -111,9 +96,10 @@ def build_atlas():
             matching_res = evaluate_enhancement_matching_gain(deg, enhanced, clean)
             match_canvas = matching_res["canvas_bgr"]
 
-            # 4. YOLO Object Detections
-            yolo_deg, n_deg = get_yolo_detections(deg)
-            yolo_enh, n_enh = get_yolo_detections(enhanced)
+            # 4. Classical Canny Edge Boundary Preservation
+            edges_enh = cv2.Canny(cv2.cvtColor(enhanced, cv2.COLOR_BGR2GRAY), 50, 150)
+            edge_canvas = cv2.cvtColor(cv2.cvtColor(enhanced, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+            edge_canvas[edges_enh > 0] = [0, 255, 0]
 
             # Build Figure Canvas (1 Page per Scene)
             fig = plt.figure(figsize=(11, 8.5), dpi=150) # Landscape US Letter
@@ -141,7 +127,7 @@ def build_atlas():
                 ax3.set_title("Ground-Truth Clean Reference", fontsize=9, weight="bold", pad=4)
             ax3.axis("off")
 
-            # Row 2: Heatmap | ORB RANSAC Inliers | YOLO Proposals
+            # Row 2: Heatmap | ORB RANSAC Inliers | Canny Edges
             ax4 = fig.add_axes((0.05, 0.12, 0.28, 0.36))
             ax4.imshow(heatmap[:, :, ::-1])
             ax4.set_title("High-Pass Edge Delta Heatmap (Turbo)", fontsize=9, weight="bold", pad=4)
@@ -153,8 +139,8 @@ def build_atlas():
             ax5.axis("off")
 
             ax6 = fig.add_axes((0.67, 0.12, 0.28, 0.36))
-            ax6.imshow(yolo_enh[:, :, ::-1])
-            ax6.set_title(f"YOLOv8 Objects: {n_enh} (Raw Input had: {n_deg})", fontsize=9, weight="bold", pad=4)
+            ax6.imshow(edge_canvas[:, :, ::-1])
+            ax6.set_title("Canny Structural Edges (Green = Boundaries)", fontsize=9, weight="bold", pad=4)
             ax6.axis("off")
 
             # Footer

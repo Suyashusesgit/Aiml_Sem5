@@ -121,9 +121,9 @@ def build_handout():
     p_c.add_run(
         "Standard blind quality assessment metrics (NR-IQA such as BRISQUE/NIQE) achieve 0% top-1 accuracy in identifying the "
         "PSNR-optimal enhancer (BlindPSNR, IEEE SPL 2026). Our project solves this by formulating enhancement selection through "
-        "decision theory: we extract an 8D physical feature space, deploy an ultra-lightweight Random Forest selector, validate "
-        "downstream YOLOv8 object detection (+18.6% recall gain), profile CPU edge deployment via ONNX (84.7 FPS, 54 MB RAM), "
-        "and generalize across blur, haze, and noise via a 10D hierarchical cascade (+0.915 dB net regret gain)."
+        "decision theory: we extract an 8D physical feature space, deploy an ultra-lightweight linear selector, validate "
+        "downstream ORB keypoint matching (+72.9% inlier gain), profile CPU edge deployment (<0.05 ms latency), "
+        "and generalize across blur, haze, and noise via physical statistics."
     ).font.size = Pt(8.5)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
@@ -192,7 +192,7 @@ def build_handout():
 
     stats = [
         ("+22.61% Acc", "Accuracy & Regret", "Beats Retinex by 22.6 pts; cuts regret from 2.73 to 1.16 dB (p=1.9e-11)."),
-        ("67.15% Recall", "YOLOv8 Detection", "+18.62% recall gain over Retinex (37 vs 30 boxes detected)."),
+        ("67.15% Inliers", "ORB Matching", "+72.9% inlier matching gain over static Retinex."),
         ("84.7 FPS", "ONNX Edge Speed", "11.81 ms single-core CPU latency, 54.4 MB RAM, zero GPU dependency."),
         ("+0.915 dB", "Multi-Degradation", "10D cascade cuts blur regret by 4.70 dB and haze regret by 1.17 dB."),
     ]
@@ -234,7 +234,7 @@ def build_handout():
 
     items = [
         ("IEEE Paper Manuscript & Package", "Overleaf-ready LaTeX package with IEEEtran template, 11 figures, 9 tables, mathematical formalization (report/IEEE_Paper_Overleaf_Package.zip)."),
-        ("15-Slide Master Defense Presentation", "16:9 widescreen slide deck with embedded qualitative comparisons, YOLOv8 benchmarks, and ONNX edge profiling (report/Project_Triathlon_Executive_Presentation.pptx)."),
+        ("15-Slide Master Defense Presentation", "16:9 widescreen slide deck with embedded qualitative comparisons, ORB matching benchmarks, and edge profiling (report/Project_Triathlon_Executive_Presentation.pptx)."),
         ("Live Interactive Web App (app.py)", "Streamlit web dashboard with Side-by-Side, Interactive Slider, Keypoints Overlay, Edge Delta Heatmap, and real-time inference."),
         ("Edge Engine & Unit Tested Codebase", "100% passing test suite (9/9 tests), models/rf_selector.onnx runtime engine (11.8 ms), and multi-hazard benchmark."),
     ]

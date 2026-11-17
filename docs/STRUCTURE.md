@@ -24,10 +24,8 @@
 │       ├── app.py                      # Lightweight http.server application
 │       └── README.md                   # Web application instructions (CPU)
 ├── extensions/                         # Optional domain extensions (isolated from core)
-│   ├── requirements-extensions.txt     # Heavy dependencies (ultralytics, torch, streamlit)
-│   ├── downstream/                     # Downstream machine vision (YOLOv8 & ORB/RANSAC)
-│   │   ├── yolov8n.pt                  # Pretrained YOLOv8 Nano weights (CPU)
-│   │   ├── downstream_yolo_detection.py# YOLOv8 object detection benchmark
+│   ├── requirements-extensions.txt     # Optional dependencies (streamlit)
+│   ├── downstream/                     # Downstream machine vision (ORB/RANSAC)
 │   │   ├── downstream_matching.py      # ORB feature matching with RANSAC
 │   │   ├── downstream_detection.py     # Keypoint recovery benchmark
 │   │   └── README.md                   # Downstream instructions (CPU)
@@ -99,12 +97,12 @@
 - `configs/`: YAML configurations defining dataset paths, model parameters, and thresholds.
 - `data/`: Read-only storage for LOL-v1 (`our485`, `eval15`) and LOL-v2 (`Real_captured`, `Synthetic`) image datasets.
 - `docs/`: Comprehensive project documentation, protocols, inventories, and decision records.
-- `extensions/`: Modular, non-core capabilities (YOLOv8 object detection, ORB geometric matching, video temporal smoothing, edge latency profiling) isolated with their own READMEs and heavy dependency file (`extensions/requirements-extensions.txt`).
+- `extensions/`: Modular, non-core capabilities (ORB geometric matching, video temporal smoothing, edge latency profiling) isolated with their own READMEs and dependency file (`extensions/requirements-extensions.txt`).
 - `experiments/`: Master runner (`run_experiment.py`) executing pre-registered decision experiments E0–E5.
 - `models/`: Trained champion model (`selector.joblib`) and metadata manifest (`selector.json`).
 - `paper/`: Canonical IEEE Transactions LaTeX source (`main.tex`), class files (`IEEEtran.cls`), generated tables, and single compiled publication PDF (`main.pdf`).
 - `results/`: Output directories for generated experiment metrics, decision logs, and publication plots.
 - `scripts/`: Repository health verification (`check_repo.py`), decision report generator (`make_decision_report.py`), and model deployment (`train_deploy_model.py`).
-- `src/`: Core importable Python library implementing methods, features, selectors, training, and evaluation. Completely free of heavy dependencies (zero `torch` or `ultralytics`).
+- `src/`: Core importable Python library implementing methods, features, selectors, training, and evaluation. Completely free of deep learning frameworks.
 - `tests/`: Automated unit test suite verifying pipeline components, bounds, and absence of leakage.
 - `_archive/`: Preserved exact duplicates and superseded exploratory prototype scripts with cryptographic SHA-256 accounting.

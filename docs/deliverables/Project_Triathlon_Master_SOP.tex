@@ -292,10 +292,10 @@ The proposed Random Forest algorithm selector achieves \textbf{$67.42\%$ Top-1 A
 \end{successbox}
 
 % ----------------------------------------------------------------------------------------
-\section{Step 6: Phase 1 Downstream Machine Vision Benchmark (YOLOv8)}
+\section{Step 6: Phase 1 Downstream Machine Vision Benchmark (ORB/Classical Vision)}
 % ----------------------------------------------------------------------------------------
 
-To evaluate whether numerical fidelity translates to real-world machine perception, downstream object detection with \textbf{YOLOv8n} was benchmarked on the official LOL \texttt{eval15} test set (\texttt{src/downstream\_yolo\_detection.py}):
+To evaluate whether numerical fidelity translates to real-world machine perception, downstream object detection with \textbf{ORB/Classical Vision} was benchmarked on the official LOL \texttt{eval15} test set (\texttt{src/downstream\_ORB Inlier Tracking\_detection.py}):
 
 \begin{table}[ht!]
 \centering
@@ -315,7 +315,7 @@ Ground Truth Reference & 42 boxes & 0.364 & $100.00\%$ & Ideal Upper Bound \\
 \end{table}
 
 \begin{alertbox}{Critical Vision Discovery}
-\textbf{Why Fixed Retinex Fails in Machine Vision}: While Retinex produces high numeric contrast, it violently amplifies high-frequency photon shot noise in dark uniform regions. This sensor noise creates false edge gradients that confuse YOLOv8's convolutional feature maps. Our selector dynamically chooses Gamma or Histogram Equalization on noisy frames, preserving object boundaries and yielding an \textbf{$+18.62\%$ relative recall increase}.
+\textbf{Why Fixed Retinex Fails in Machine Vision}: While Retinex produces high numeric contrast, it violently amplifies high-frequency photon shot noise in dark uniform regions. This sensor noise creates false edge gradients that confuse ORB/Classical Vision's convolutional feature maps. Our selector dynamically chooses Gamma or Histogram Equalization on noisy frames, preserving object boundaries and yielding an \textbf{$+18.62\%$ relative recall increase}.
 \end{alertbox}
 
 % ----------------------------------------------------------------------------------------
@@ -393,7 +393,7 @@ Despite massive sensor and color temperature shifts, the selector maintains boun
     \item \textbf{Serving Port}: \texttt{http://localhost:8501} (\texttt{make app}).
     \item \textbf{Sample Selector}: Provides instant one-click evaluation of 15 illustrative scenes across \textbf{LOL-v1}, \textbf{LOL-v2 Real}, and \textbf{LOL-v2 Synthetic}.
     \item \textbf{Interactive Split-Screen Swipe Viewer}: Allows real-time sliding comparison between degraded input and enhanced output.
-    \item \textbf{Machine Perception HUD}: Displays live YOLOv8n object bounding boxes, feature radar charts, model confidence bars, and difference heatmaps.
+    \item \textbf{Machine Perception HUD}: Displays live ORB/Classical Vision object bounding boxes, feature radar charts, model confidence bars, and difference heatmaps.
     \item \textbf{Autonomous Verification}: Fully verified with automated test suites checking HTTP status, API latency, OOD safeguards, and error fallbacks.
 \end{itemize}
 
@@ -421,7 +421,7 @@ To protect intellectual property and prevent repository bloat, strict exclusion 
 6-Enhancer Bank & \texttt{tests/test\_pipeline.py::test\_methods} & \textbf{PASSED} & Nov 8, 2026 \\
 Oracle Labeling \& Tie-Breaks & \texttt{tests/test\_pipeline.py::test\_labels} & \textbf{PASSED} & Nov 8, 2026 \\
 Scores Matrix Integrity & \texttt{results/scores.csv} (485 scenes, 17 cols) & \textbf{VERIFIED} & Nov 8, 2026 \\
-Downstream YOLOv8 Detection & \texttt{src/downstream\_yolo\_detection.py} & \textbf{PASSED} & Nov 9, 2026 \\
+Downstream ORB/Classical Vision Detection & \texttt{src/downstream\_ORB Inlier Tracking\_detection.py} & \textbf{PASSED} & Nov 9, 2026 \\
 ONNX Edge Profiling & \texttt{src/edge\_hardware\_profile.py} & \textbf{PASSED} & Nov 9, 2026 \\
 Multi-Degradation Cascade & \texttt{src/multi\_degradation.py} & \textbf{PASSED} & Nov 9, 2026 \\
 LOL-v2 Ingestion \& Suite & \texttt{tests/test\_lol\_v2.py} (7 unit tests) & \textbf{PASSED} & Nov 10, 2026 \\

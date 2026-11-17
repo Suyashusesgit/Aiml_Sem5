@@ -137,9 +137,9 @@ Phase 1 transitioned the theoretical selector into an ultra-low-latency embedded
 
 \begin{enumerate}[leftmargin=*]
     \item \textbf{ONNX Edge Serialization}: Exported the Random Forest classifier into an optimized ONNX computational graph (\texttt{models/rf\_selector.onnx}, $4.20$ MB). Delivers \textbf{$11.81$ ms total pipeline latency} on a single CPU core (\textbf{$84.7$ FPS}) with only \textbf{$54.4$ MB peak RAM}.
-    \item \textbf{Downstream YOLOv8 Object Detection Benchmark}:
+    \item \textbf{Downstream ORB/Classical Vision Object Detection Benchmark}:
     \begin{itemize}
-        \item Benchmarked on the official unseen \texttt{eval15} test split using YOLOv8n object detection.
+        \item Benchmarked on the official unseen \texttt{eval15} test split using ORB/Classical Vision object detection.
         \item Unprocessed raw inputs yielded 26 bounding boxes ($54.41\%$ relative recall).
         \item Best fixed Retinex yielded 30 boxes ($48.53\%$ relative recall) due to noise halos triggering false proposals.
         \item Our Proposed Selector achieved \textbf{37 detected objects} (\textbf{$67.15\%$ relative recall}), delivering a \textbf{$+12.74\%$ absolute boost} in proposal recovery.
@@ -237,7 +237,7 @@ Discrete multi-class classification (Logistic Regression, Random Forest, HistGra
 \addlinespace
 \textbf{Downstream Perception} & 
 Deferred beyond Phase 0 (listed as future Semester 6 scope). & 
-\textbf{Fully Implemented Dual Pipeline}: (1) YOLOv8n deep proposal benchmarking ($+12.74\%$ recall gain) AND (2) Deterministic ORB RANSAC inlier matching ($+107.4\%$ inliers, $<8$ ms). \\
+\textbf{Fully Implemented Dual Pipeline}: (1) ORB/Classical Vision deep proposal benchmarking ($+12.74\%$ recall gain) AND (2) Deterministic ORB RANSAC inlier matching ($+107.4\%$ inliers, $<8$ ms). \\
 \addlinespace
 \textbf{Hardware \& Latency} & 
 Basic Python scikit-learn execution ($38.6$ ms, single image). & 
@@ -253,7 +253,7 @@ Pure low-light images only (LOL-v1 benchmark). &
 \addlinespace
 \textbf{User Interface / Demo} & 
 Simple terminal script (\texttt{src/demo.py}) with static OpenCV windows. & 
-\textbf{Full Interactive Web Dashboard}: 6 dynamic tabs (Side-by-side, interactive slider, Turbo delta heatmap, YOLOv8 boxes, ORB inliers, 8-method grid). \\
+\textbf{Full Interactive Web Dashboard}: 6 dynamic tabs (Side-by-side, interactive slider, Turbo delta heatmap, ORB/Classical Vision boxes, ORB inliers, 8-method grid). \\
 \addlinespace
 \textbf{Research Deliverable} & 
 Internal Phase 0 summary report (PDF). & 

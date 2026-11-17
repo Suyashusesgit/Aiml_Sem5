@@ -1,46 +1,33 @@
-# Downstream Computer Vision Utilities (YOLOv8 & ORB/RANSAC)
+# Downstream Computer Vision Utilities (ORB / RANSAC Geometric Matching)
 
-This extension evaluates whether fidelity-driven algorithm selection directly translates into superior downstream machine vision performance (object detection and geometric feature matching) under low-light conditions.
+This extension evaluates whether fidelity-driven algorithm selection directly translates into superior downstream machine vision performance (geometric feature matching and keypoint repeatability) under low-light conditions.
 
 **Target Hardware**: CPU only (`device="cpu"`, no GPU required).  
-**Dependencies**: Listed in `extensions/requirements-extensions.txt` (`ultralytics`, `torch`).
+**Dependencies**: OpenCV and NumPy standard dependencies.
 
 ---
 
 ## Components
 
-1. **`yolov8n.pt`**: Pretrained YOLOv8 Nano weights for lightweight CPU object detection.
-2. **`downstream_yolo_detection.py`**:
-   - Runs object detection on raw low-light images vs. selector-enhanced images.
-   - Computes mAP, class recall gains, and detection confidence shifts.
-3. **`downstream_matching.py`**:
+1. **`downstream_matching.py`**:
    - Computes ORB keypoints (1,000 per image) and descriptors.
    - Performs RANSAC geometric verification to count true inlier matches against clean reference pairs.
-4. **`downstream_detection.py`**:
+2. **`downstream_detection.py`**:
    - Automated benchmark across evaluation splits logging keypoint repeatability rates.
-5. **`downstream_semantic_eval.py`**:
-   - Evaluates object detection consistency across varying lighting conditions.
+3. **`downstream_semantic_eval.py`**:
+   - Evaluates keypoint and edge consistency across varying lighting conditions.
 
 ---
 
 ## How to Run (CPU)
 
 ```bash
-# 1. Install extension dependencies (isolated from core)
-pip install -r extensions/requirements-extensions.txt
+# 1. Run ORB/RANSAC geometric matching benchmark (CPU)
+python3 src/downstream_matching.py
 
-# 2. Run ORB/RANSAC geometric matching benchmark (CPU)
-python3 extensions/downstream/downstream_matching.py
-
-# 3. Run YOLOv8 object detection benchmark (CPU)
-python3 extensions/downstream/downstream_yolo_detection.py \
-    --weights extensions/downstream/yolov8n.pt \
-    --data data/lol_dataset/eval15/low \
-    --device cpu
-
-# 4. Run downstream keypoint recovery evaluation (CPU)
-python3 extensions/downstream/downstream_detection.py --split eval15
+# 2. Run downstream keypoint recovery evaluation (CPU)
+python3 src/downstream_detection.py --split eval15
 ```
 
 ---
-*Maintained under Project Triathlon Extensions Architecture.*
+*Maintained under Project Triathlon Extensions Architecture (Pure Classical Machine Vision).*

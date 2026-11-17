@@ -1,4 +1,4 @@
-.PHONY: help install benchmark demo app downstream downstream_semantic downstream_yolo edge_profile multi_degradation robustness ingest_lol_v2 benchmark_v2 presentation docx package pdf report_pdf watch_paper test clean
+.PHONY: help install benchmark demo app downstream downstream_semantic edge_profile multi_degradation robustness ingest_lol_v2 benchmark_v2 presentation docx package pdf report_pdf watch_paper test clean
 
 help:
 	@echo "Project Triathlon: Image Enhancement & Per-Image Selection"
@@ -9,7 +9,6 @@ help:
 	@echo "  make app                - Launch interactive web application dashboard (app.py)"
 	@echo "  make downstream         - Run Phase 1 downstream ORB keypoint benchmark"
 	@echo "  make downstream_semantic - Run SIFT RANSAC & Canny boundary benchmark"
-	@echo "  make downstream_yolo    - Run Phase 1 YOLOv8 object detection benchmark"
 	@echo "  make edge_profile       - Run Phase 1 ONNX CPU edge hardware profiling"
 	@echo "  make multi_degradation  - Run Phase 2 multi-hazard cross-transfer cascade"
 	@echo "  make robustness         - Run sensor noise sensitivity sweep (src/robustness_sweep.py)"
@@ -38,9 +37,6 @@ downstream:
 
 downstream_semantic:
 	python3 src/downstream_semantic_eval.py
-
-downstream_yolo:
-	python3 src/downstream_yolo_detection.py
 
 edge_profile:
 	python3 src/edge_hardware_profile.py

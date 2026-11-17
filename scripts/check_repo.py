@@ -28,6 +28,7 @@ def check_duplicate_hashes() -> bool:
     hash_map = {}
     ignored_prefixes = (
         os.path.join(REPO_ROOT, ".git"),
+        os.path.join(REPO_ROOT, ".venv"),
         os.path.join(REPO_ROOT, "_archive"),
         os.path.join(REPO_ROOT, "data"),
         os.path.join(REPO_ROOT, "results"),

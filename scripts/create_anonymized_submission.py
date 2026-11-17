@@ -79,7 +79,6 @@ def create_anonymized_paper():
         "fig8_robustness_noise_sweep.png",
         "fig9_edge_profiling.png",
         "fig10_multi_degradation_cascade.png",
-        "fig11_downstream_yolo_detection.png",
         "IEEEtran.cls",
     ]
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:

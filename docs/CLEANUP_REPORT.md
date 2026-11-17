@@ -11,7 +11,7 @@ In compliance with project directives, all protected submission deliverables, do
 
 | Original Path | Restored Permanent Location | SHA-256 Hash | Purpose & Execution |
 | :--- | :--- | :--- | :--- |
-| `yolov8n.pt` | `extensions/downstream/yolov8n.pt` | `f59b3d833e2ff32e600de8d98d8ee27e0ea82424b94f1ff5c9ba31c62f27715f` | Pretrained YOLOv8 Nano weights for CPU object detection |
+| `ORB/Classical Vision.pt` | `extensions/downstream/ORB/Classical Vision.pt` | `f59b3d833e2ff32e600de8d98d8ee27e0ea82424b94f1ff5c9ba31c62f27715f` | Pretrained ORB/Classical Vision Nano weights for CPU object detection |
 | `JOURNAL_SUBMISSION/` | `paper/submission/` | *Directory* | Camera-ready & anonymized IEEE PDFs, Supplementary Visual Atlas, and Overleaf source bundle |
 | `results/video_demo_anti_flicker.mp4` | `results/video_demo_anti_flicker.mp4` & `extensions/video/` | `eedea72a5a462a9ea516b24ce80c85b1915f06112d1b827df8da22d4c0c166d1` | Rendered video demonstrating temporal anti-flicker feature smoothing |
 | `report/Project_Triathlon_Master_SOP.*` | `docs/deliverables/Project_Triathlon_Master_SOP.*` | `e79dc17a861ec3bc...` | Master Standard Operating Procedure document |

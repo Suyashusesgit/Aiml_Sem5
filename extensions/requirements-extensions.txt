@@ -1,12 +1,7 @@
 # Project Triathlon · Optional Extensions Requirements
-# Heavy dependencies required ONLY for downstream extensions and optional tooling.
+# Optional tooling.
 # NEVER required for core Phase 0 selector training, evaluation, or paper generation.
 # Run: pip install -r extensions/requirements-extensions.txt
-
-# YOLOv8 downstream object detection (extensions/downstream/)
-ultralytics>=8.0.0
-torch>=2.0.0
-torchvision>=0.15.0
 
 # Interactive Web Application (apps/web/)
 streamlit>=1.30.0

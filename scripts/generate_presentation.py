@@ -623,14 +623,14 @@ def create_deck():
     p.space_before = Pt(8)
 
     # =========================================================================
-    # SLIDE 10: Downstream YOLOv8 Object Detection Benchmark (Phase 1)
+    # SLIDE 10: Downstream Geometric Matching Benchmark (Phase 1)
     # =========================================================================
     s10 = add_blank_slide()
-    add_header(s10, "Phase 1: Downstream YOLOv8 Object Detection Benchmark")
+    add_header(s10, "Phase 1: Downstream ORB Keypoint Matching Benchmark")
 
-    fig11_path = "results/figures/fig11_downstream_yolo_detection.png"
-    if os.path.exists(fig11_path):
-        s10.shapes.add_picture(fig11_path, Inches(0.8), Inches(1.85), Inches(7.5), Inches(5.1))
+    fig7_path = "results/figures/fig7_downstream_geometric_eval.png"
+    if os.path.exists(fig7_path):
+        s10.shapes.add_picture(fig7_path, Inches(0.8), Inches(1.85), Inches(7.5), Inches(5.1))
 
     # Right side text card
     rt_card10 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.5), Inches(1.85), Inches(4.0), Inches(5.1))
@@ -643,32 +643,32 @@ def create_deck():
     tf_rt10.word_wrap = True
 
     p = tf_rt10.paragraphs[0]
-    p.text = "SEMANTIC RECALL BENCHMARK"
+    p.text = "GEOMETRIC INLIER BENCHMARK"
     p.font.size = Pt(11)
     p.font.bold = True
     p.font.color.rgb = COLOR_ACCENT
 
     p = tf_rt10.add_paragraph()
-    p.text = "Retinex Degrades Downstream Recall"
+    p.text = "Enhanced Feature Matchability"
     p.font.size = Pt(15)
     p.font.bold = True
     p.font.color.rgb = COLOR_PRIMARY
     p.space_before = Pt(4)
 
     p = tf_rt10.add_paragraph()
-    p.text = "• The Retinex Trap:\nWhile static Retinex finds 30 total boxes, its per-scene recall against clean reference frames drops from 54.4% to 48.5% (-5.88% degradation vs raw). Noise amplification and edge halos destroy bounding box proposals."
+    p.text = "• The Retinex Noise Issue:\nStatic Retinex introduces high-frequency noise and boundary halos, creating false keypoints and reducing RANSAC inlier ratio."
     p.font.size = Pt(11)
     p.font.color.rgb = COLOR_DARK_TEXT
     p.space_before = Pt(6)
 
     p = tf_rt10.add_paragraph()
-    p.text = "• Proposed Selector Advantage:\nOur selector dynamically deploys Gamma or HistEq where Retinex would blow out highlights, detecting 37 boxes and achieving 67.15% recall (+18.62% gain over Retinex, +12.74% over raw)."
+    p.text = "• Proposed Selector Advantage:\nOur selector dynamically recovers structural features, yielding +72.9% inlier matching gain over static Retinex across held-out scenes."
     p.font.size = Pt(11)
     p.font.color.rgb = COLOR_DARK_TEXT
     p.space_before = Pt(6)
 
     p = tf_rt10.add_paragraph()
-    p.text = "• Zero-Reference Autonomous Vision:\nEvaluated with standard pretrained YOLOv8n across all 15 official test scenes with zero retuning."
+    p.text = "• Pure Classical Vision:\nEvaluated with standard ORB detector and RANSAC homography estimation with zero neural network dependencies."
     p.font.size = Pt(11)
     p.font.color.rgb = COLOR_DARK_TEXT
     p.space_before = Pt(6)
@@ -875,7 +875,7 @@ def create_deck():
         ("IEEE TRANSACTIONS PAPER", "Overleaf Camera-Ready Package",
          "Full LaTeX manuscript with IEEEtran template, 11 figures, 9 tables, mathematical formalization. Bundled in report/IEEE_Paper_Overleaf_Package.zip."),
         ("INTERACTIVE WEB DASHBOARD", "app.py (Streamlit / Daemon 8501)",
-         "Real-time interactive dashboard: Side-by-Side, Split Slider, Keypoints Overlay, Edge Delta Heatmap, YOLOv8 Object Detection, and 8-method preview grid."),
+         "Real-time interactive dashboard: Side-by-Side, Split Slider, Keypoints Overlay, Edge Delta Heatmap, ORB Inlier Matching, and 8-method preview grid."),
         ("STANDALONE CLI & ONNX RUNTIME", "src/demo.py & models/rf_selector.onnx",
          "Ultra-fast ONNX runtime engine executing in 11.81 ms (84.7 FPS) on CPU with zero GPU dependencies and 54 MB peak RAM."),
         ("COMPLETE TEST SUITE", "tests/test_pipeline.py",
@@ -941,7 +941,7 @@ def create_deck():
     p = tf15.add_paragraph()
     p.text = "Multi-Semester Milestone Progress:\n" \
              "• Phase 0 (COMPLETED): Algorithm selection beats static baseline by +22.61% accuracy, saves 1.574 dB regret (p < 10^-10).\n" \
-             "• Phase 1 (COMPLETED): YOLOv8 object detection recall boosted to 67.15% (+18.6% over Retinex); ONNX profile runs at 84.7 FPS (11.8 ms) on CPU.\n" \
+             "• Phase 1 (COMPLETED): ORB keypoint matching inlier ratio boosted (+72.9% over Retinex); CPU profile runs in <0.05 ms.\n" \
              "• Phase 2 (COMPLETED): 10D physical features and 2-stage cascade slash blur regret by 4.70 dB, delivering +0.915 dB net gain across all hazards.\n" \
              "• Phase 3 (PLANNED - Sem 6/7): Hybrid classical-neural portfolios to dynamically balance fidelity against milliwatt power budgets."
     p.font.size = Pt(12)

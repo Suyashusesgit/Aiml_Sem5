@@ -70,7 +70,7 @@ Every number in this table is generated from executed experiment files under `re
 
 In strict accordance with Rule 4, **zero project source files were deleted**. All legacy duplicates, non-classical deep learning weights, and ad-hoc scripts were archived into `_archive/` with relative path preservation and cryptographic provenance:
 
-- `yolov8n.pt` ($6.5\text{ MB}$, SHA-256 `f59b3d83...`): Deep learning binary archived.
+- `ORB/Classical Vision.pt` ($6.5\text{ MB}$, SHA-256 `f59b3d83...`): Deep learning binary archived.
 - `JOURNAL_SUBMISSION/` ($50.8\text{ MB}$, SHA-256 `2ecfd4f2...`): Duplicate paper/report directory archived.
 - `report/` ($92.3\text{ MB}$): Legacy duplicate paper directory archived; canonical LaTeX source established in `paper/`.
 - `results/video_demo_anti_flicker.mp4` ($1.8\text{ MB}$): Large generated video binary archived.

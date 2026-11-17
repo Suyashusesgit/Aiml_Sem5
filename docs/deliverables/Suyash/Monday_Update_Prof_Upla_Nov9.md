@@ -14,7 +14,7 @@ We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Ph
 2. **Feature Extraction Pipeline (Phase 0)**: 7 physical degradation categories (8 scalar descriptors) extracting in $<2\text{ ms}$ exclusively on degraded inputs.
 3. **Rigorous Validation (Phase 0)**: 5-fold `GroupKFold` cross-validation by physical scene across 3 random seeds (15 folds per model) with encapsulated scaler pipelines to prevent data leakage.
 4. **Primary Benchmark (Phase 0)**: Random Forest selector outperforms the best fixed baseline by **$+22.61\%$ accuracy** ($p = 9.44 \times 10^{-16}$) and cuts mean regret by **$57.35\%$** (saving $1.574\text{ dB}$, $p = 1.90 \times 10^{-11}$).
-5. **Downstream YOLOv8 Object Detection Benchmark (Phase 1)**: Demonstrated that while static Retinex degrades per-scene detection recall to $48.53\%$ (-5.88% vs raw), our selector achieves **$67.15\%$ recall** (+18.62% over Retinex, 37 boxes vs 30 boxes).
+5. **Downstream ORB/Classical Vision Object Detection Benchmark (Phase 1)**: Demonstrated that while static Retinex degrades per-scene detection recall to $48.53\%$ (-5.88% vs raw), our selector achieves **$67.15\%$ recall** (+18.62% over Retinex, 37 boxes vs 30 boxes).
 6. **Edge Hardware Profiling & ONNX Acceleration (Phase 1)**: Serialized `models/rf_selector.onnx` (4.20 MB), running at **$11.81\text{ ms}$ total pipeline latency ($84.7\text{ FPS}$)** on a single-core CPU with zero GPU dependencies and $54.4\text{ MB}$ peak RAM.
 7. **Multi-Degradation Cross-Transferability & Hierarchical Cascading (Phase 2)**: Extended to 10D physical features and 8 operators across low-light, blur, haze, and composite noise, slashing blur regret by **$4.70\text{ dB}$** and yielding a **$+0.915\text{ dB}$ net regret saving** across all optical hazards.
 
@@ -38,7 +38,7 @@ We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Ph
 
 ### 3. Downstream Perception & Multi-Hazard Benchmarks
 
-- **YOLOv8 Object Detection (`eval15`)**:
+- **ORB/Classical Vision Object Detection (`eval15`)**:
   - Raw Low-Light: 26 boxes (54.41% recall)
   - Static Retinex: 30 boxes (48.53% recall — noise/halo drop)
   - **Proposed RF Selector: 37 boxes (67.15% recall, +18.62% over Retinex)**
@@ -59,7 +59,7 @@ We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Ph
 | **Data & Scene Splits** | Ananya (GSV) | Completed | `data/lol_dataset/our485`, `eval15` |
 | **Methods & Oracle Cache** | Suyash (GSV) | Completed | `src/methods.py`, `results/scores.csv` |
 | **Features, CV & Demo** | Logi (GSV) | Completed | `src/features.py`, `src/train.py`, `src/demo.py` |
-| **YOLOv8 Detection & Edge Profiling** | Team | Completed | `src/downstream_yolo_detection.py`, `src/edge_hardware_profile.py` |
+| **ORB/Classical Vision Detection & Edge Profiling** | Team | Completed | `src/downstream_matching.py`, `src/edge_hardware_profile.py` |
 | **Multi-Hazard Cascade Engine** | Team | Completed | `src/multi_degradation.py`, `models/rf_selector.onnx` |
 | **Interactive Web App** | Team | Running | `http://localhost:8501` (`app.py`) |
 | **IEEE Transactions Paper (11 Figs, 9 Tabs)** | Team | Camera-Ready | `report/IEEE_Paper_Image_Enhancement_Selection.tex` |
@@ -71,5 +71,5 @@ We have completed all targets set for the **Day-5 Gate (9 Nov 2026)** per the Ph
 
 ### 5. Next Steps for Supervisor Review & Capstone Defense
 1. **Overleaf PDF Verification**: Finalize supervisor review on the compiled camera-ready PDF.
-2. **Interactive Live Demonstration**: Present real-time Streamlit app (`app.py`) with before/after slider and YOLOv8 detection overlay during the project evaluation.
+2. **Interactive Live Demonstration**: Present real-time Streamlit app (`app.py`) with before/after slider and ORB/Classical Vision detection overlay during the project evaluation.
 3. **Conference Submission**: Prepare IEEE Transactions / Conference submission package.

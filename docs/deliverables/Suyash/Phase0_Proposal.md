@@ -38,7 +38,7 @@ Performance is validated using strict **5-fold GroupKFold cross-validation** gro
 
 ## 5. Phased Research Roadmap
 - **Phase 0 (Current - 5th Sem)**: Prove cheap physical features can predict the PSNR winner and slash regret (+21.85% accuracy, 57% regret reduction).
-- **Phase 1 (6th Sem)**: Downstream object detection evaluation (evaluating detection mAP with YOLOv10 / RT-DETR on night frames).
+- **Phase 1 (6th Sem)**: Downstream object detection evaluation (evaluating detection mAP with ORB Inlier Tracking / RT-DETR on night frames).
 - **Phase 2 (7th Sem)**: Multi-degradation transferability (composite low-light, haze, motion blur).
 - **Phase 3 (8th Sem)**: Hybrid portfolios incorporating lightweight neural enhancers (Zero-DCE, SCI) alongside classical filters.
 

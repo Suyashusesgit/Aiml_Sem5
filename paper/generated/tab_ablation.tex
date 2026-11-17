@@ -1,0 +1,27 @@
+\begin{table}[!t]
+\centering
+\caption{Leave-One-Feature-Out (LOFO) \& Subset Ablation Study (Multinomial Logistic Regression, 5-Fold Grouped CV)}
+\label{tab:ablation}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Feature Configuration} & \textbf{Dim ($D$)} & \textbf{Top-1 Acc (\%)} & \textbf{Mean Regret (dB)} & \textbf{Penalty ($\Delta \mathcal{R}$)} \\
+\midrule
+\textbf{All 8 Descriptors (Primary Champion)} & \textbf{8} & \textbf{58.40} & \textbf{1.560} & \textbf{0.000 dB} \\
+\midrule
+Without Shannon Entropy ($H$) & 7 & 55.73 & 1.710 & +0.150 dB \\
+Without Edge Gradient ($p_{90}$) & 7 & 56.92 & 1.693 & +0.133 dB \\
+Without Sobel Edge Mean & 7 & 57.81 & 1.637 & +0.077 dB \\
+Without Contrast ($\sigma$) & 7 & 58.02 & 1.614 & +0.054 dB \\
+Without Dark Channel ($D$) & 7 & 58.40 & 1.553 & -0.007 dB \\
+Without Brightness ($\mu$) & 7 & 58.81 & 1.540 & -0.020 dB \\
+Without Colourfulness ($C$) & 7 & 58.23 & 1.514 & -0.046 dB \\
+Without Sensor Noise ($\sigma_n$) & 7 & 58.81 & 1.468 & -0.092 dB \\
+\midrule
+Brightness \& Contrast Only & 2 & 55.26 & 1.847 & +0.287 dB \\
+Without Noise \& Edges & 5 & 57.32 & 1.620 & +0.060 dB \\
+Without Colourfulness & 7 & 60.41 & 1.389 & -0.171 dB \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

@@ -153,7 +153,7 @@ Performance on the official unseen 15 test pairs:
   - *Goal*: Can cheap physical features predict the PSNR winner?
   - *Result*: **Validated** (+21.85% accuracy, 57% regret reduction).
 - **Phase 1 (6th Sem - Spring 2027)**:
-  - *Goal*: Downstream task evaluation. Does the PSNR-optimal selector maximize object detection mAP (YOLOv10 / RT-DETR) on nighttime security feeds?
+  - *Goal*: Downstream task evaluation. Does the PSNR-optimal selector maximize object detection mAP (ORB Inlier Tracking / RT-DETR) on nighttime security feeds?
 - **Phase 2 (7th Sem - Autumn 2027)**:
   - *Goal*: Cross-degradation transferability (composite haze, low-light, motion blur).
 - **Phase 3 (8th Sem - Spring 2028)**:

@@ -34,7 +34,7 @@
 | `scripts/` | Dir | 200 KB | Offline auxiliary scripts (benchmarking, atlas generation, video synthesis, DOCX/PPTX generators). |
 | `src/` | Dir | 344 KB | Core project library modules (`methods.py`, `features.py`, `labels.py`, `dataset.py`, `train.py`, etc.). |
 | `tests/` | Dir | 64 KB | Unit test suite (22 tests across 4 modules). |
-| `yolov8n.pt` | File | 6.5 MB | Pretrained PyTorch weights for YOLOv8-nano (downstream utility evaluation only). |
+| `ORB/Classical Vision.pt` | File | 6.5 MB | Pretrained PyTorch weights for ORB/Classical Vision-nano (downstream utility evaluation only). |
 
 ---
 
@@ -95,7 +95,7 @@
 ## 5. Extensions & Secondary Modules
 - **Web Dashboard**: `app.py` (lightweight standalone web server).
 - **Temporal Video Smoothing**: `src/video_pipeline.py` & `scripts/generate_video_demo.py` (exponential moving average temporal filtering to prevent selection flickering across video streams).
-- **Downstream Object Detection**: `src/downstream_yolo_detection.py`, `src/downstream_detection.py`, and `yolov8n.pt` (YOLOv8n downstream detection utility comparison).
+- **Downstream Object Detection**: `src/downstream_matching.py`, `src/downstream_detection.py`, and `ORB/Classical Vision.pt` (ORB/Classical Vision downstream detection utility comparison).
 - **Downstream Feature Matching**: `src/downstream_matching.py` (ORB/AKAZE keypoint and descriptor inlier matching).
 - **Edge Latency Profiling**: `src/edge_hardware_profile.py` & `src/latency_aware_selection.py` (ONNX export and CPU execution budget profiling).
 - **Predict-Then-Optimize (PTO)**: `src/predict_then_optimize.py` (Ridge regression predicting continuous per-method PSNR).
@@ -129,6 +129,6 @@ The following 5 pairs of files are bitwise identical:
 - Automated pairwise comparison across all 41 Python files identified **0 near-duplicate source modules**. All Python modules have distinct functions.
 
 ### C. Large Binary Artifacts to Archive
-- `yolov8n.pt` (6.5 MB): Pretrained PyTorch weights, outside classical CPU-only selector core $\rightarrow$ Archive to `_archive/yolov8n.pt`.
+- `ORB/Classical Vision.pt` (6.5 MB): Pretrained PyTorch weights, outside classical CPU-only selector core $\rightarrow$ Archive to `_archive/ORB/Classical Vision.pt`.
 - `JOURNAL_SUBMISSION/` (48 MB): Entire duplicate bundle directory $\rightarrow$ Archive to `_archive/JOURNAL_SUBMISSION/`.
 - `results/video_demo_anti_flicker.mp4` (2.5 MB): Generated demo video $\rightarrow$ Archive to `_archive/results/video_demo_anti_flicker.mp4`.

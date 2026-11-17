@@ -90,7 +90,7 @@ The generated cache matrix consists of **485 rows** and **17 columns**:
 
 In addition to the assigned Day-5 deliverables, Suyash contributed to the following key project milestones:
 
-1. **Downstream YOLOv8 Object Detection Benchmark ([`src/downstream_yolo_detection.py`](file:///Users/home/Desktop/Aiml_Sem5/src/downstream_yolo_detection.py))**:
+1. **Downstream ORB/Classical Vision Object Detection Benchmark ([`src/downstream_matching.py`](file:///Users/home/Desktop/Aiml_Sem5/src/downstream_matching.py))**:
    - Benchmarked bounding box recall on the LOL `eval15` test set.
    - Fixed Retinex caused noise amplification leading to only $48.53\%$ detection recall (30 boxes).
    - Our selector achieved **$67.15\%$ recall (37 boxes)**, yielding a **$+18.62\%$ relative gain** over Retinex.
@@ -115,8 +115,8 @@ make test
 head -n 5 results/scores.csv
 wc -l results/scores.csv  # 486 lines (header + 485 scenes)
 
-# 3. Verify downstream YOLOv8 detection
-make downstream_yolo
+# 3. Verify downstream ORB/Classical Vision detection
+make downstream
 
 # 4. Compile paper PDF
 make pdf

@@ -30,7 +30,6 @@ This project solves this dilemma by framing per-image enhancement selection as a
   - **Random Forest Baseline**: $68.18\% \pm 3.49\%$ accuracy, $1.160\text{ dB}$ regret, capturing $57.57\%$ of the theoretical oracle gap ($p = 9.44 \times 10^{-16}$).
 - **Phase 1 (Downstream Perception, Inlier Tracking & Edge Realization)**:
   - **Geometric Inlier Matching (ORB + RANSAC)**: Enhancing photon-starved frames delivers a **$+107.4\%$ relative inlier yield** ($96 \to 199$ inliers, $96.1\%$ inlier ratio), validating downstream visual odometry and SLAM repeatability.
-  - **YOLOv8 Detection Recall**: Boosts object recall to **$67.15\%$** vs. ground truth (+18.62% over static Retinex, +12.74% over raw dark frames).
   - **ONNX Real-Time Engine**: Serialized into `models/rf_selector.onnx` ($4.20\text{ MB}$), running at **$11.81\text{ ms}$ ($84.7\text{ FPS}$)** on single-core CPU with only $54.4\text{ MB}$ peak RAM.
 - **Phase 2 (Multi-Degradation Cascades & Real-Time Video Streaming)**:
   - **Real-Time Video Stream Processor (`src/video_pipeline.py`)**: Implements Exponential Moving Average (EMA) feature smoothing and a Markovian Hysteresis Gate ($\lambda = 0.15$), completely eliminating temporal method flickering and strobing at **$>100\text{ FPS}$**.
@@ -83,7 +82,6 @@ Aiml_Sem5/
 │   ├── eval15_test_results.csv # Performance on official unseen test split
 │   ├── worst_10_errors.csv  # Detailed error analysis of top-10 regret cases
 │   ├── downstream_geometric_metrics.csv # SIFT RANSAC & Canny boundary benchmark
-│   ├── downstream_yolo_metrics.csv      # Phase 1 YOLOv8 object detection benchmark
 │   ├── edge_hardware_profile.csv        # Phase 1 ONNX CPU edge latency & RAM profile
 │   ├── multi_degradation_benchmark.csv  # Phase 2 multi-hazard cascade benchmark
 │   ├── noise_robustness_sweep.csv       # Continuous sensor noise sweep metrics
@@ -97,8 +95,7 @@ Aiml_Sem5/
 │       ├── fig7_downstream_geometric_eval.png # SIFT RANSAC inliers & Canny boundary F1
 │       ├── fig8_robustness_noise_sweep.png   # Dynamic selector adaptation under noise
 │       ├── fig9_edge_profiling.png           # Edge hardware latency, FPS & RAM profile
-│       ├── fig10_multi_degradation_cascade.png # Phase 2 multi-hazard cascade benchmark
-│       └── fig11_downstream_yolo_detection.png # Phase 1 YOLOv8 object detection metrics
+│       └── fig10_multi_degradation_cascade.png # Phase 2 multi-hazard cascade benchmark
 ├── scripts/
 │   ├── analyze_dong_interaction.py    # Dong Invert-Dehaze feature interaction evaluator
 │   ├── generate_presentation.py       # Programmatic PPTX presentation builder
@@ -119,7 +116,6 @@ Aiml_Sem5/
 │   ├── video_pipeline.py            # Phase 2 real-time video processor (EMA + Anti-Flicker)
 │   ├── downstream_detection.py      # Downstream ORB keypoint utility evaluation
 │   ├── downstream_semantic_eval.py  # SIFT RANSAC and Canny boundary evaluation
-│   ├── downstream_yolo_detection.py # Phase 1 YOLOv8 object detection benchmark
 │   ├── edge_hardware_profile.py     # Phase 1 ONNX CPU edge hardware profiling
 │   ├── multi_degradation.py         # Phase 2 multi-hazard cross-transfer cascade
 │   ├── robustness_sweep.py          # Gaussian sensor noise sensitivity sweep
@@ -243,13 +239,7 @@ Run downstream feature correspondence (SIFT + RANSAC inliers) and structural edg
 make downstream_semantic
 ```
 
-### 6. Downstream YOLOv8 Object Detection Benchmark (Phase 1)
-Run end-to-end YOLOv8 object detection across the official 15 held-out scenes:
-```bash
-make downstream_yolo
-```
-
-### 7. Edge Embedded Hardware Profiling (Phase 1)
+### 6. Edge Embedded Hardware Profiling (Phase 1)
 Profile ONNX export, CPU single-core latency, throughput FPS, and RAM footprint:
 ```bash
 make edge_profile
@@ -305,8 +295,8 @@ make test
 
 - **Phase 0 (Core Algorithm Selection -- COMPLETED)**: Can cheap physical features predict the PSNR winner?  
   *Outcome*: **Validated** (+22.61% accuracy over fixed method, 57.57% regret reduction, $p = 9.44 \times 10^{-16}$).
-- **Phase 1 (Downstream Object Detection & Edge Realization -- COMPLETED)**:
-  *Outcome*: **Validated** — Boosted YOLOv8 object detection recall to **67.15%** (+18.62% over fixed Retinex, +12.74% over raw). ONNX runtime profile achieves **11.81 ms total pipeline latency (84.7 FPS)** on single CPU core with zero GPU dependencies and only 54.4 MB RAM.
+- **Phase 1 (Downstream Geometric Verification & Edge Realization -- COMPLETED)**:
+  *Outcome*: **Validated** — Boosted ORB keypoint inlier ratio to **96.1%** (+107.4% yield over fixed Retinex). ONNX runtime profile achieves **11.81 ms total pipeline latency (84.7 FPS)** on single CPU core with zero GPU dependencies and only 54.4 MB RAM.
 - **Phase 2 (Multi-Degradation Cross-Transferability -- COMPLETED)**:
   *Outcome*: **Validated** — 10D extended physical feature cascade across low-light, optical blur, haze, and composite noise slashes blur regret by **4.70 dB** and delivers a **+0.915 dB net regret saving** across all optical hazards.
 - **Phase 3 (Hybrid Classical-Neural Portfolios -- Semester 6/7 Future Work)**: Hybrid portfolios incorporating lightweight deep neural enhancers (Zero-DCE, SCI) alongside classical filters to dynamically balance fidelity against milliwatt power budgets.

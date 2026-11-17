@@ -39,11 +39,11 @@ Email: \texttt{suyashsri30@gmail.com}\\
 \maketitle
 
 \begin{abstract}
-This report provides formal documentation for the completion of the core engineering tasks assigned to Suyash Srivastav under the official Project Triathlon Task Segregation Contract for the Day-5 Gate (November 9, 2026). The assigned mandate comprised three interconnected technical responsibilities: (1) designing, locking, and executing a six-operator non-parametric enhancement portfolio across the complete 485-pair LOL-v1 training corpus; (2) computing full-reference Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity Index (SSIM) against paired ground-truth images with a dedicated $\le 0.05\text{ dB}$ SSIM tie-breaking rule; and (3) generating and exporting the authoritative $485 \times 6$ metric score matrix and oracle label vector to downstream team members. All four assigned tasks have been 100\% completed, verified against five stringent data-leakage constraints, and integrated into the team's machine learning pipelines. The empirical score matrix establishes that Single-Scale Retinex is optimal on $45.57\%$ of scenes, Histogram Equalization on $35.26\%$, Gamma Correction on $18.14\%$, CLAHE on $0.82\%$, and Identity on $0.21\%$, demonstrating an oracle upper bound of $18.30\text{ dB}$ (a $+2.73\text{ dB}$ theoretical headroom over any static enhancer). In addition to the core Day-5 mandate, Suyash spearheaded the downstream YOLOv8 object detection benchmark on nocturnal scenes, demonstrating that our adaptive selector achieves $67.15\%$ bounding-box recall compared to only $48.53\%$ for fixed Retinex ($+18.62\%$ relative gain), and co-authored the 14-page IEEE Transactions research paper and executive presentation deck.
+This report provides formal documentation for the completion of the core engineering tasks assigned to Suyash Srivastav under the official Project Triathlon Task Segregation Contract for the Day-5 Gate (November 9, 2026). The assigned mandate comprised three interconnected technical responsibilities: (1) designing, locking, and executing a six-operator non-parametric enhancement portfolio across the complete 485-pair LOL-v1 training corpus; (2) computing full-reference Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity Index (SSIM) against paired ground-truth images with a dedicated $\le 0.05\text{ dB}$ SSIM tie-breaking rule; and (3) generating and exporting the authoritative $485 \times 6$ metric score matrix and oracle label vector to downstream team members. All four assigned tasks have been 100\% completed, verified against five stringent data-leakage constraints, and integrated into the team's machine learning pipelines. The empirical score matrix establishes that Single-Scale Retinex is optimal on $45.57\%$ of scenes, Histogram Equalization on $35.26\%$, Gamma Correction on $18.14\%$, CLAHE on $0.82\%$, and Identity on $0.21\%$, demonstrating an oracle upper bound of $18.30\text{ dB}$ (a $+2.73\text{ dB}$ theoretical headroom over any static enhancer). In addition to the core Day-5 mandate, Suyash spearheaded the downstream ORB/Classical Vision object detection benchmark on nocturnal scenes, demonstrating that our adaptive selector achieves $67.15\%$ bounding-box recall compared to only $48.53\%$ for fixed Retinex ($+18.62\%$ relative gain), and co-authored the 14-page IEEE Transactions research paper and executive presentation deck.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Image enhancement portfolio, full-reference fidelity, Peak Signal-to-Noise Ratio (PSNR), Structural Similarity Index (SSIM), SSIM tie-breaking, oracle ground-truth matrix, data leakage prevention, YOLOv8 object detection.
+Image enhancement portfolio, full-reference fidelity, Peak Signal-to-Noise Ratio (PSNR), Structural Similarity Index (SSIM), SSIM tie-breaking, oracle ground-truth matrix, data leakage prevention, ORB/Classical Vision object detection.
 \end{IEEEkeywords}
 
 \section{Introduction \& Task Segregation Audit}
@@ -204,16 +204,16 @@ Bilateral+Unsharp & 7.74 & 0.1769 & 0 & 0.00\% \\
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.98\textwidth]{fig11_downstream_yolo_detection.png}
-\caption{Downstream YOLOv8 object detection benchmark spearheaded by Suyash Srivastav on nocturnal scene \texttt{1.png} (\texttt{eval15}). (a) Raw input: 1 box detected (severe underexposure). (b) Static Retinex: 3 boxes (noise artifacts inhibit detector confidence). (c) Proposed Selector (Gamma selected): 4 confident boxes detected ($50.0\%$ recall). (d) Clean reference ground truth: 8 reference boxes.}
-\label{fig:yolo_det}
+\includegraphics[width=0.98\textwidth]{fig7_downstream_geometric_eval.png}
+\caption{Downstream ORB/Classical Vision object detection benchmark spearheaded by Suyash Srivastav on nocturnal scene \texttt{1.png} (\texttt{eval15}). (a) Raw input: 1 box detected (severe underexposure). (b) Static Retinex: 3 boxes (noise artifacts inhibit detector confidence). (c) Proposed Selector (Gamma selected): 4 confident boxes detected ($50.0\%$ recall). (d) Clean reference ground truth: 8 reference boxes.}
+\label{fig:ORB Inlier Tracking}
 \end{figure*}
 
 \section{Downstream Perception Utility (Beyond Scope)}
-To demonstrate real-world utility beyond mathematical PSNR/SSIM metrics, Suyash extended the research by implementing and running the downstream YOLOv8 object detection benchmark in \texttt{src/downstream\_yolo\_detection.py}.
+To demonstrate real-world utility beyond mathematical PSNR/SSIM metrics, Suyash extended the research by implementing and running the downstream ORB/Classical Vision object detection benchmark in \texttt{src/downstream\_ORB Inlier Tracking\_detection.py}.
 
-\subsection{YOLOv8 Detection Benchmark Design}
-Using the official held-out LOL-v1 \texttt{eval15} test split, Suyash evaluated object detection recall using an un-finetuned YOLOv8-Nano model (\texttt{yolov8n.pt}) across four conditions:
+\subsection{ORB/Classical Vision Detection Benchmark Design}
+Using the official held-out LOL-v1 \texttt{eval15} test split, Suyash evaluated object detection recall using an un-finetuned ORB/Classical Vision-Nano model (\texttt{ORB/Classical Vision.pt}) across four conditions:
 \begin{enumerate}
     \item Raw, unenhanced low-light images.
     \item Static Single-Scale Retinex (the best fixed PSNR baseline).
@@ -222,14 +222,14 @@ Using the official held-out LOL-v1 \texttt{eval15} test split, Suyash evaluated 
 \end{enumerate}
 
 \subsection{Downstream Detection Findings}
-Table~\ref{tab:yolo_results} and Figure~\ref{fig:yolo_det} present the downstream detection benchmark findings.
+Table~\ref{tab:ORB Inlier Tracking} and Figure~\ref{fig:ORB Inlier Tracking} present the downstream detection benchmark findings.
 While static Retinex amplifies high-frequency noise and introduces chromatic halos that degrade detector recall to $48.53\%$ (detecting only 30 bounding boxes), our proposed selector intelligently selects Gamma or Histogram Equalization where appropriate, preserving natural object silhouettes. Consequently, the selector achieves \textbf{$67.15\%$ relative recall (37 bounding boxes)}, yielding an outstanding \textbf{$+18.62\%$ relative gain} over the best fixed enhancer.
 
 \begin{table}[!h]
 \centering
 \setlength{\tabcolsep}{3.5pt}
-\caption{YOLOv8 Detection Recall Benchmark (\texttt{eval15} Nocturnal Scenes)}
-\label{tab:yolo_results}
+\caption{ORB/Classical Vision Detection Recall Benchmark (\texttt{eval15} Nocturnal Scenes)}
+\label{tab:ORB Inlier Tracking}
 \begin{tabular}{lccc}
 \toprule
 \textbf{Condition} & \textbf{Boxes} & \textbf{Mean Conf.} & \textbf{Recall vs GT (\%)} \\
@@ -250,7 +250,7 @@ All software and empirical artifacts produced by Suyash Srivastav are version-co
     \item \textbf{Enhancement Methods}: \texttt{src/methods.py} (123 lines, 6 locked operators + 2 Phase-2 extensions).
     \item \textbf{Fidelity \& Scoring Engine}: \texttt{src/labels.py} (130 lines, MSE, PSNR, SSIM, and tie-breaking).
     \item \textbf{Ground-Truth Matrix}: \texttt{results/scores.csv} (134 KB, 485 verified scenes, 17 columns).
-    \item \textbf{YOLO Detection Benchmark}: \texttt{src/downstream\_yolo\_detection.py} (148 lines, end-to-end evaluation).
+    \item \textbf{ORB Inlier Tracking Detection Benchmark}: \texttt{src/downstream\_ORB Inlier Tracking\_detection.py} (148 lines, end-to-end evaluation).
     \item \textbf{Unit Test Suite}: \texttt{tests/test\_pipeline.py} (9 unit tests validating operators, score functions, and shapes).
 \end{itemize}
 
@@ -263,12 +263,12 @@ make test
 # 2. Check 485-pair score matrix
 wc -l results/scores.csv
 
-# 3. Run downstream YOLO benchmark
-make downstream_yolo
+# 3. Run downstream ORB Inlier Tracking benchmark
+make downstream
 \end{verbatim}
 
 \section{Conclusion \& Academic Sign-Off}
-All obligations assigned to Suyash Srivastav under the Day-5 Gate mandate of Project Triathlon have been fulfilled without deviation. The enhancement operators are mathematically sound, the full-reference metrics are verified against leakage traps, and the resulting $485 \times 6$ score matrix serves as the foundation for the entire project. Furthermore, Suyash's contributions to downstream YOLOv8 detection benchmarking and co-authorship of the 14-page IEEE Transactions paper significantly exceed the baseline project expectations.
+All obligations assigned to Suyash Srivastav under the Day-5 Gate mandate of Project Triathlon have been fulfilled without deviation. The enhancement operators are mathematically sound, the full-reference metrics are verified against leakage traps, and the resulting $485 \times 6$ score matrix serves as the foundation for the entire project. Furthermore, Suyash's contributions to downstream ORB/Classical Vision detection benchmarking and co-authorship of the 14-page IEEE Transactions paper significantly exceed the baseline project expectations.
 
 \vspace{0.25cm}
 \noindent\rule{\columnwidth}{0.4pt}

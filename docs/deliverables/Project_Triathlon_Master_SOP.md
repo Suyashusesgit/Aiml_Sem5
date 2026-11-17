@@ -149,9 +149,9 @@ Across 15 folds, classifiers were evaluated against baseline selection strategie
 
 ---
 
-## 7. Step 6: Phase 1 Downstream Machine Vision Benchmark (YOLOv8)
+## 7. Step 6: Phase 1 Downstream Machine Vision Benchmark (ORB/Classical Vision)
 
-To evaluate whether numerical fidelity translates to real-world machine perception, Suyash benchmarked downstream object detection using **YOLOv8n** on the official LOL `eval15` test set (`src/downstream_yolo_detection.py`):
+To evaluate whether numerical fidelity translates to real-world machine perception, Suyash benchmarked downstream object detection using **ORB/Classical Vision** on the official LOL `eval15` test set (`src/downstream_matching.py`):
 
 | Enhancement Strategy | Total Bounding Boxes | Mean Detection Confidence | Recall vs. GT Ref (%) | Relative Gain |
 |:---|:---:|:---:|:---:|:---:|
@@ -160,7 +160,7 @@ To evaluate whether numerical fidelity translates to real-world machine percepti
 | **Proposed Selector** | **37 boxes** | **0.342** | $\mathbf{67.15\%}$ | $\mathbf{+18.62\%}$ |
 | Ground Truth Reference | 42 boxes | 0.364 | $100.00\%$ | Ideal Upper Bound |
 
-> **Critical Vision Discovery**: **Why Fixed Retinex Fails in Machine Vision**: While Retinex produces high numeric contrast, it violently amplifies high-frequency photon shot noise in dark uniform regions. This sensor noise creates false edge gradients that confuse YOLOv8's convolutional feature maps. Our selector dynamically chooses Gamma or Histogram Equalization on noisy frames, preserving object boundaries and yielding an **$+18.62\%$ relative recall increase**.
+> **Critical Vision Discovery**: **Why Fixed Retinex Fails in Machine Vision**: While Retinex produces high numeric contrast, it violently amplifies high-frequency photon shot noise in dark uniform regions. This sensor noise creates false edge gradients that confuse ORB/Classical Vision's convolutional feature maps. Our selector dynamically chooses Gamma or Histogram Equalization on noisy frames, preserving object boundaries and yielding an **$+18.62\%$ relative recall increase**.
 
 ---
 
@@ -213,7 +213,7 @@ Despite massive sensor and color temperature shifts, the selector maintains boun
 - **Serving Port**: `http://localhost:8501` (`make app`).
 - **Sample Selector**: Provides instant one-click evaluation of 15 illustrative scenes across **LOL-v1**, **LOL-v2 Real**, and **LOL-v2 Synthetic**.
 - **Interactive Split-Screen Swipe Viewer**: Allows real-time sliding comparison between degraded input and enhanced output.
-- **Machine Perception HUD**: Displays live YOLOv8n object bounding boxes, feature radar charts, model confidence bars, and difference heatmaps.
+- **Machine Perception HUD**: Displays live ORB/Classical Vision object bounding boxes, feature radar charts, model confidence bars, and difference heatmaps.
 - **Autonomous Verification**: Fully verified with automated test suites checking HTTP status, API latency, OOD safeguards, and error fallbacks.
 
 ---
@@ -232,7 +232,7 @@ To protect intellectual property and prevent repository bloat, strict exclusion 
 | 6-Enhancer Bank | `tests/test_pipeline.py::test_methods` | **PASSED** | Nov 8, 2026 |
 | Oracle Labeling & Tie-Breaks | `tests/test_pipeline.py::test_labels` | **PASSED** | Nov 8, 2026 |
 | Scores Matrix Integrity | `results/scores.csv` (485 scenes, 17 cols) | **VERIFIED** | Nov 8, 2026 |
-| Downstream YOLOv8 Detection | `src/downstream_yolo_detection.py` | **PASSED** | Nov 9, 2026 |
+| Downstream ORB/Classical Vision Detection | `src/downstream_matching.py` | **PASSED** | Nov 9, 2026 |
 | ONNX Edge Profiling | `src/edge_hardware_profile.py` | **PASSED** | Nov 9, 2026 |
 | Multi-Degradation Cascade | `src/multi_degradation.py` | **PASSED** | Nov 9, 2026 |
 | LOL-v2 Ingestion & Suite | `tests/test_lol_v2.py` (7 unit tests) | **PASSED** | Nov 10, 2026 |

@@ -25,7 +25,6 @@ import numpy as np
 import joblib
 
 # Set clean temporary directories for cache/settings
-os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
 # Ensure project root and site-packages are in path
@@ -54,7 +53,6 @@ PORTFOLIO_METHODS = {
 
 MODEL_PATH = "models/selector.joblib"
 MODEL = None
-YOLO_MODEL = None
 PTO_MODEL = None
 
 
@@ -62,30 +60,12 @@ def get_pto_model():
     global PTO_MODEL
     if PTO_MODEL is None and os.path.exists("models/pto_regressors.joblib"):
         try:
+            import src.predict_then_optimize as pto
+            sys.modules["__main__"].PredictThenOptimizeSelector = pto.PredictThenOptimizeSelector
             PTO_MODEL = PredictThenOptimizeSelector.load("models/pto_regressors.joblib")
         except Exception as e:
             print(f"PTO load warning: {e}")
     return PTO_MODEL
-
-
-def get_yolo_detections(img_bgr: np.ndarray, conf_thresh: float = 0.20) -> Tuple[np.ndarray, int, float]:
-    """Executes YOLOv8n object detection and renders bounding boxes."""
-    global YOLO_MODEL
-    try:
-        if YOLO_MODEL is None:
-            from ultralytics import YOLO
-            YOLO_MODEL = YOLO("yolov8n.pt")
-        predict_fn: Any = getattr(YOLO_MODEL, "predict", YOLO_MODEL)
-        results: Any = list(predict_fn(img_bgr, conf=conf_thresh, verbose=False))
-        res: Any = results[0]
-        annotated: np.ndarray = res.plot()
-        boxes: Any = getattr(res, "boxes", None)
-        n_boxes = len(boxes) if boxes is not None else 0
-        mean_conf = float(boxes.conf.mean().item()) if (boxes is not None and hasattr(boxes, "conf") and n_boxes > 0) else 0.0
-        return annotated, n_boxes, round(mean_conf, 3)
-    except Exception as e:
-        print(f"YOLO detection warning: {e}")
-        return img_bgr.copy(), 0, 0.0
 
 
 def get_model():
@@ -290,12 +270,6 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
     heatmap_bgr = cv2.applyColorMap(diff_amp, cv2.COLORMAP_TURBO)
     heatmap_b64 = img_to_base64(heatmap_bgr)
 
-    # 3d. Downstream YOLOv8 object detection overlay
-    yolo_deg_img, yolo_deg_boxes, yolo_deg_conf = get_yolo_detections(deg)
-    yolo_enh_img, yolo_enh_boxes, yolo_enh_conf = get_yolo_detections(enhanced_bgr)
-    yolo_deg_b64 = img_to_base64(yolo_deg_img)
-    yolo_enh_b64 = img_to_base64(yolo_enh_img)
-
     total_time_ms = (time.perf_counter() - t0) * 1000.0
 
     # 4. Candidate scoring across all 8 portfolio methods
@@ -378,12 +352,6 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
         "orb_matches": matching_res["enhanced_inliers"] + 25,
         "orb_inlier_ratio": matching_res["enhanced_ratio"],
         "orb_gain_pct": matching_res["inlier_gain_pct"],
-        "yolo_deg_image": f"data:image/png;base64,{yolo_deg_b64}",
-        "yolo_enh_image": f"data:image/png;base64,{yolo_enh_b64}",
-        "yolo_deg_boxes": yolo_deg_boxes,
-        "yolo_enh_boxes": yolo_enh_boxes,
-        "yolo_deg_conf": yolo_deg_conf,
-        "yolo_enh_conf": yolo_enh_conf,
         "reference_eval": ref_eval,
         "all_methods": all_methods_out,
     }
@@ -472,7 +440,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <header>
       <h1>Project Triathlon · Low-Light Image Enhancement Selector</h1>
       <p>5th Semester Capstone Project · Gati Shakti Vishwavidyalaya, Vadodara · Supervised by Prof. Kishor P. Upla (SVNIT Surat)</p>
-      <div class="badge">Rice Algorithm Selection (1976) · 7 Physical Statistics · Random Forest · YOLOv8 Downstream</div>
+      <div class="badge">Rice Algorithm Selection (1976) · 8 Physical Statistics · Multinomial Logistic Regression · ORB Inlier Verification</div>
     </header>
 
     <div class="grid">
@@ -513,10 +481,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
           <div style="margin-top:14px; font-size:13px; font-weight:600;">Pick Benchmark Dataset & Sample:</div>
 
-          <div style="margin-top:6px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">LOL-v1 Benchmark (Baseline)</div>
+          <div style="margin-top:6px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">LOL-v1 Benchmark (Baseline &amp; Held-Out)</div>
           <div class="samples" style="margin-top:4px;">
+            <button class="btn-sample" onclick="loadSample('101', 'v1')">101 (HistEq · 0 dB)</button>
             <button class="btn-sample" onclick="loadSample('102', 'v1')">102 (Gamma)</button>
-            <button class="btn-sample" onclick="loadSample('101', 'v1')">101 (HistEq)</button>
             <button class="btn-sample" onclick="loadSample('109', 'v1')">109 (Retinex)</button>
             <button class="btn-sample" onclick="loadSample('1', 'v1')">1 (eval15)</button>
             <button class="btn-sample" onclick="loadSample('22', 'v1')">22 (eval15)</button>
@@ -525,19 +493,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
           <div style="margin-top:10px; font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">LOL-v2 Real (Cross-Sensor Hardware)</div>
           <div class="samples" style="margin-top:4px;">
-            <button class="btn-sample" onclick="loadSample('151', 'v2_real')">151 (Retinex)</button>
-            <button class="btn-sample" onclick="loadSample('152', 'v2_real')">152 (HistEq)</button>
-            <button class="btn-sample" onclick="loadSample('154', 'v2_real')">154 (Gamma)</button>
-            <button class="btn-sample" onclick="loadSample('160', 'v2_real')">160 (Real)</button>
-            <button class="btn-sample" onclick="loadSample('167', 'v2_real')">167 (Real)</button>
+            <button class="btn-sample" onclick="loadSample('690', 'v2_real')">690 (Real)</button>
+            <button class="btn-sample" onclick="loadSample('691', 'v2_real')">691 (Real)</button>
+            <button class="btn-sample" onclick="loadSample('742', 'v2_real')">742 (Real)</button>
+            <button class="btn-sample" onclick="loadSample('756', 'v2_real')">756 (Real)</button>
           </div>
 
           <div style="margin-top:10px; font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">LOL-v2 Synthetic (Physical Poisson Degrader)</div>
           <div class="samples" style="margin-top:4px;">
-            <button class="btn-sample" onclick="loadSample('10', 'v2_synthetic')">10 (Gamma)</button>
-            <button class="btn-sample" onclick="loadSample('100', 'v2_synthetic')">100 (HistEq)</button>
-            <button class="btn-sample" onclick="loadSample('105', 'v2_synthetic')">105 (Retinex)</button>
-            <button class="btn-sample" onclick="loadSample('104', 'v2_synthetic')">104 (Syn)</button>
+            <button class="btn-sample" onclick="loadSample('1', 'v2_synthetic')">Sample 1 (Poisson)</button>
+            <button class="btn-sample" onclick="loadSample('2', 'v2_synthetic')">Sample 2 (Poisson)</button>
+            <button class="btn-sample" onclick="loadSample('3', 'v2_synthetic')">Sample 3 (Poisson)</button>
           </div>
         </div>
 
@@ -587,7 +553,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <button id="btnSwipe" class="badge-btn" onclick="setViewMode('swipe')">Interactive Slider</button>
               <button id="btnDiff" class="badge-btn" onclick="setViewMode('diff')">Edge Delta Heatmap</button>
               <button id="btnMatch" class="badge-btn" onclick="setViewMode('match')">🔗 Inlier Matching (<span id="inlierCount">0</span>)</button>
-              <button id="btnYolo" class="badge-btn" onclick="setViewMode('yolo')">🎯 YOLOv8 Detection (<span id="yoloCount">0</span>)</button>
               <button id="btnKp" class="badge-btn" onclick="toggleKeypoints()">Keypoints Overlay (<span id="kpCount">0</span> pts)</button>
             </div>
           </div>
@@ -635,19 +600,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Mode 4: YOLOv8 Object Detection Viewer -->
-          <div id="yoloViewer" class="viewer" style="display:none;">
-            <div class="img-box">
-              <div class="img-label" id="yoloDegLabel">Degraded Input · YOLOv8n (0 boxes)</div>
-              <img id="yoloDeg" src="" alt="YOLO Degraded">
-            </div>
-            <div class="img-box">
-              <div class="img-label" id="yoloEnhLabel">★ Enhanced Output · YOLOv8n (0 boxes) ★</div>
-              <img id="yoloEnh" src="" alt="YOLO Enhanced">
-            </div>
-          </div>
-
-          <!-- Mode 5: Geometric Inlier Matching Viewer -->
+          <!-- Mode 4: Geometric Inlier Matching Viewer -->
           <div id="matchViewer" class="viewer" style="display:none;">
             <div style="grid-column: 1 / -1; background:#000; border-radius:8px; overflow:hidden; text-align:center;">
               <div class="img-label" id="matchLabel" style="background:#0f172a; color:#38bdf8; font-weight:700;">ORB + RANSAC Feature Matching Vectors (Green = Inliers)</div>
@@ -717,12 +670,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
       document.getElementById('btnDiff').classList.toggle('active', mode === 'diff');
       document.getElementById('btnMatch').classList.toggle('active', mode === 'match');
-      document.getElementById('btnYolo').classList.toggle('active', mode === 'yolo');
       document.getElementById('sideViewer').style.display = (mode === 'side') ? 'grid' : 'none';
       document.getElementById('swipeViewer').style.display = (mode === 'swipe') ? 'block' : 'none';
       document.getElementById('diffViewer').style.display = (mode === 'diff') ? 'grid' : 'none';
       document.getElementById('matchViewer').style.display = (mode === 'match') ? 'block' : 'none';
-      document.getElementById('yoloViewer').style.display = (mode === 'yolo') ? 'grid' : 'none';
       if (mode === 'swipe') {
         syncSwipeWidth();
       }
@@ -967,13 +918,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         document.getElementById('diffDegraded').src = data.degraded_image;
         document.getElementById('diffHeatmap').src = data.heatmap_image;
       }
-      if (data.yolo_enh_image) {
-        document.getElementById('yoloDeg').src = data.yolo_deg_image;
-        document.getElementById('yoloEnh').src = data.yolo_enh_image;
-        document.getElementById('yoloCount').innerText = data.yolo_enh_boxes || '0';
-        document.getElementById('yoloDegLabel').innerText = `Degraded Input · YOLOv8n: ${data.yolo_deg_boxes || 0} boxes (avg conf: ${data.yolo_deg_conf || 0})`;
-        document.getElementById('yoloEnhLabel').innerText = `★ Enhanced: ${data.yolo_enh_boxes || 0} boxes (avg conf: ${data.yolo_enh_conf || 0}) ★`;
-      }
       if (data.orb_match_image) {
         document.getElementById('matchImg').src = data.orb_match_image;
         document.getElementById('inlierCount').innerText = `${data.orb_inliers || 0} pts`;
@@ -1216,48 +1160,80 @@ class RequestHandler(BaseHTTPRequestHandler):
             sample_id = params.get("name", ["102"])[0]
             dataset_choice = params.get("dataset", [""])[0].lower()
             safeguard = params.get("safeguard", ["true"])[0].lower() in ["true", "1"]
-            
-            low_candidates = []
-            high_candidates = []
 
-            if dataset_choice == "v2_real":
-                low_candidates = [
-                    f"data/lol_v2/real/low/{sample_id}.png",
-                    f"data/lol_v2/real/low/{sample_id}.jpg",
-                ]
-                high_candidates = [
-                    f"data/lol_v2/real/high/{sample_id}.png",
-                    f"data/lol_v2/real/high/{sample_id}.jpg",
-                ]
-            elif dataset_choice == "v2_synthetic":
-                low_candidates = [
-                    f"data/lol_v2/synthetic/low/{sample_id}.png",
-                    f"data/lol_v2/synthetic/low/{sample_id}.jpg",
-                ]
-                high_candidates = [
-                    f"data/lol_v2/synthetic/high/{sample_id}.png",
-                    f"data/lol_v2/synthetic/high/{sample_id}.jpg",
-                ]
-            else:
-                low_candidates = [
-                    f"data/lol_dataset/our485/low/{sample_id}.png",
-                    f"data/lol_dataset/eval15/low/{sample_id}.png",
-                    f"data/lol_v2/real/low/{sample_id}.png",
-                    f"data/lol_v2/synthetic/low/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/our485/low/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/eval15/low/{sample_id}.png",
-                ]
-                high_candidates = [
-                    f"data/lol_dataset/our485/high/{sample_id}.png",
-                    f"data/lol_dataset/eval15/high/{sample_id}.png",
-                    f"data/lol_v2/real/high/{sample_id}.png",
-                    f"data/lol_v2/synthetic/high/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/our485/high/{sample_id}.png",
-                    f"/Users/home/Desktop/LOLdataset/eval15/high/{sample_id}.png",
-                ]
+            def resolve_sample(ds: str, s_id: str) -> Tuple[Optional[str], Optional[str]]:
+                # Check LOL-v2 Real
+                if "real" in ds or ds == "v2_real":
+                    dirs = [
+                        ("data/LOL-v2/Real_captured/Test/Low", "data/LOL-v2/Real_captured/Test/Normal"),
+                        ("data/LOL-v2/Real_captured/Train/Low", "data/LOL-v2/Real_captured/Train/Normal"),
+                    ]
+                    for l_dir, h_dir in dirs:
+                        if not os.path.isdir(l_dir):
+                            continue
+                        files = sorted(os.listdir(l_dir))
+                        # Try exact or padded number
+                        candidates = [f"{s_id}.png", f"low{s_id}.png", f"low{int(s_id):05d}.png" if s_id.isdigit() else ""]
+                        for cand in candidates:
+                            if cand and cand in files:
+                                return os.path.join(l_dir, cand), os.path.join(h_dir, cand.replace("low", "normal"))
+                        # Try 1-based index
+                        if s_id.isdigit() and 1 <= int(s_id) <= len(files):
+                            f = files[int(s_id) - 1]
+                            return os.path.join(l_dir, f), os.path.join(h_dir, f.replace("low", "normal"))
 
-            low_path = next((p for p in low_candidates if os.path.exists(p)), None)
-            high_path = next((p for p in high_candidates if os.path.exists(p)), None)
+                # Check LOL-v2 Synthetic
+                if "synthetic" in ds or ds in ("v2_synthetic", "syn"):
+                    dirs = [
+                        ("data/LOL-v2/Synthetic/Test/Low", "data/LOL-v2/Synthetic/Test/Normal"),
+                        ("data/LOL-v2/Synthetic/Train/Low", "data/LOL-v2/Synthetic/Train/Normal"),
+                    ]
+                    for l_dir, h_dir in dirs:
+                        if not os.path.isdir(l_dir):
+                            continue
+                        files = sorted(os.listdir(l_dir))
+                        # Direct filename match
+                        if s_id in files or f"{s_id}.png" in files:
+                            fn = s_id if s_id in files else f"{s_id}.png"
+                            return os.path.join(l_dir, fn), os.path.join(h_dir, fn)
+                        # 1-based index (e.g. Sample 1, Sample 2, Sample 3)
+                        if s_id.isdigit() and 1 <= int(s_id) <= len(files):
+                            fn = files[int(s_id) - 1]
+                            return os.path.join(l_dir, fn), os.path.join(h_dir, fn)
+
+                # Check LOL-v1 (eval15 and our485)
+                v1_candidates = [
+                    ("data/lol_dataset/eval15/low", "data/lol_dataset/eval15/high"),
+                    ("data/lol_dataset/our485/low", "data/lol_dataset/our485/high"),
+                    ("/Users/home/Desktop/LOLdataset/eval15/low", "/Users/home/Desktop/LOLdataset/eval15/high"),
+                    ("/Users/home/Desktop/LOLdataset/our485/low", "/Users/home/Desktop/LOLdataset/our485/high"),
+                ]
+                for l_dir, h_dir in v1_candidates:
+                    if not os.path.isdir(l_dir):
+                        continue
+                    files = sorted(os.listdir(l_dir))
+                    for cand in [f"{s_id}.png", f"{s_id}.jpg", s_id]:
+                        if cand in files:
+                            return os.path.join(l_dir, cand), os.path.join(h_dir, cand)
+
+                # Universal fallback search across all directories
+                for l_dir, h_dir in [
+                    ("data/lol_dataset/our485/low", "data/lol_dataset/our485/high"),
+                    ("data/lol_dataset/eval15/low", "data/lol_dataset/eval15/high"),
+                    ("data/LOL-v2/Real_captured/Test/Low", "data/LOL-v2/Real_captured/Test/Normal"),
+                    ("data/LOL-v2/Synthetic/Test/Low", "data/LOL-v2/Synthetic/Test/Normal"),
+                ]:
+                    if not os.path.isdir(l_dir):
+                        continue
+                    files = sorted(os.listdir(l_dir))
+                    for cand in [f"{s_id}.png", f"low{s_id}.png", f"low{int(s_id):05d}.png" if s_id.isdigit() else ""]:
+                        if cand and cand in files:
+                            h_fn = cand.replace("low", "normal") if "Real_captured" in l_dir else cand
+                            return os.path.join(l_dir, cand), os.path.join(h_dir, h_fn)
+
+                return None, None
+
+            low_path, high_path = resolve_sample(dataset_choice, sample_id)
 
             if not low_path:
                 self.send_response(404)

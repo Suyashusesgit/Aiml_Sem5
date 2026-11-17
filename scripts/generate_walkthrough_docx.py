@@ -385,18 +385,6 @@ def build_document():
         r_cap.font.italic = True
         doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-    # Embed Downstream YOLOv8 Detection
-    yolo_p = "results/figures/fig11_downstream_yolo_detection.png"
-    if os.path.exists(yolo_p):
-        doc.add_heading("Figure D: Downstream YOLOv8 Object Detection Benchmark (Phase 1)", level=2)
-        doc.add_picture(yolo_p, width=Inches(6.5))
-        p_cap = doc.add_paragraph()
-        p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_cap = p_cap.add_run("Figure D (Paper Fig 11): Pretrained YOLOv8n object detection across official 15 held-out test scenes. Retinex reduces detection recall to 48.53% due to noise amplification and halo blowouts, whereas our selector achieves 67.15% recall (+18.62% gain over Retinex, detecting 37 bounding boxes).")
-        r_cap.font.size = Pt(9)
-        r_cap.font.italic = True
-        doc.add_paragraph().paragraph_format.space_after = Pt(12)
-
     # Embed Edge Hardware Profiling
     edge_p = "results/figures/fig9_edge_profiling.png"
     if os.path.exists(edge_p):
@@ -468,42 +456,8 @@ def build_document():
 
     doc.add_paragraph().paragraph_format.space_after = Pt(14)
 
-    # Downstream YOLO & Edge Table
-    doc.add_heading("4.2 Phase 1: Downstream YOLOv8 Object Detection Benchmark", level=2)
-    tbl_yolo = doc.add_table(rows=5, cols=5)
-    tbl_yolo.alignment = WD_TABLE_ALIGNMENT.CENTER
-    for j, h in enumerate(["Restoration Pipeline", "Total Boxes", "Mean Boxes", "Relative Recall (%)", "Gain vs. Raw (%)"]):
-        c = tbl_yolo.cell(0, j)
-        set_cell_background(c, "1E3A8A")
-        set_cell_margins(c, top=60, bottom=60, left=80, right=80)
-        r = c.paragraphs[0].add_run(h)
-        r.bold = True
-        r.font.size = Pt(9)
-        r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-
-    yolo_data = [
-        ("Unprocessed Low-Light (Raw)", "26", "1.73", "54.41%", "Baseline"),
-        ("Best Fixed Method (Retinex)", "30", "2.00", "48.53%", "-5.88% (Degradation)"),
-        ("Proposed RF Selector (Ours)", "37", "2.47", "67.15%", "+12.74% (+18.6% vs Retinex)"),
-        ("Ground Truth Clean Reference", "50", "3.33", "100.00%", "Reference Bound"),
-    ]
-    for i, row in enumerate(yolo_data):
-        is_prop = (i == 2)
-        for j, val in enumerate(row):
-            c = tbl_yolo.cell(i + 1, j)
-            set_cell_background(c, "DCFCE7" if is_prop else ("F8FAFC" if i % 2 == 0 else "FFFFFF"))
-            set_cell_margins(c, top=50, bottom=50, left=80, right=80)
-            p = c.paragraphs[0]
-            r = p.add_run(val)
-            r.font.size = Pt(8.5)
-            if is_prop:
-                r.bold = True
-                r.font.color.rgb = RGBColor(0x15, 0x80, 0x3D)
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(14)
-
     # Edge Hardware Profiling Table
-    doc.add_heading("4.3 Phase 1: Edge Embedded Hardware Profiling", level=2)
+    doc.add_heading("4.2 Phase 1: Edge Embedded Hardware Profiling", level=2)
     tbl_edge = doc.add_table(rows=6, cols=6)
     tbl_edge.alignment = WD_TABLE_ALIGNMENT.CENTER
     for j, h in enumerate(["Model / Engine", "Hardware", "Latency (ms)", "FPS", "Model Size", "Peak RAM"]):
@@ -581,12 +535,11 @@ def build_document():
     p = doc.add_paragraph("All steps in this project can be reproduced with single-line commands via the Makefile:")
     
     commands = [
-        ("make app", "Launch the live interactive web dashboard (http://localhost:8501) with real-time feature gauges, split slider, and YOLOv8 detection overlay."),
+        ("make app", "Launch the live interactive web dashboard (http://localhost:8501) with real-time feature gauges, split slider, and ORB inlier overlay."),
         ("make demo", "Run end-to-end single image inference on any sample image and generate the 6-panel comparison grid."),
         ("make benchmark", "Execute the full 15-run GroupKFold cross-validation pipeline across 3 seeds on LOL benchmark."),
         ("make downstream", "Run the Phase 1 downstream keypoint repeatability benchmark comparing feature matching against ground truth."),
         ("make downstream_semantic", "Run SIFT RANSAC feature inlier and Canny edge boundary preservation evaluation."),
-        ("make downstream_yolo", "Run the Phase 1 YOLOv8 object detection benchmark across official 15 held-out scenes."),
         ("make edge_profile", "Run the Phase 1 ONNX CPU edge hardware profiling and memory assessment (11.8 ms / 84.7 FPS)."),
         ("make multi_degradation", "Run the Phase 2 multi-hazard cascade benchmark across blur, haze, low-light, and composite noise."),
         ("make test", "Run the automated unit test suite (tests/test_pipeline.py) verifying 9/9 tests."),
