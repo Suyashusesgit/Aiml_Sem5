@@ -7,6 +7,7 @@ verified publication analytics.
 """
 
 import os
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 import sys
 import json
 import base64
@@ -360,8 +361,10 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
                 "image_base64": f"data:image/png;base64,{img_to_base64(out_img)}",
             }
 
-        oracle_method = max(method_psnr, key=method_psnr.get)
-        oracle_psnr = method_psnr[oracle_method]
+        # Constrain Oracle and Regret strictly to Phase 0 Canonical Portfolio (6 methods)
+        canonical_psnrs = {m: method_psnr[m] for m in CANONICAL_6_METHODS if m in method_psnr}
+        oracle_method = max(canonical_psnrs, key=canonical_psnrs.get) if canonical_psnrs else max(method_psnr, key=method_psnr.get)
+        oracle_psnr = canonical_psnrs[oracle_method] if canonical_psnrs else method_psnr[oracle_method]
         selected_psnr = method_psnr.get(predicted_method, 0.0)
         regret_db = max(0.0, oracle_psnr - selected_psnr)
 
@@ -371,6 +374,7 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
             "oracle_psnr": round(oracle_psnr, 2),
             "selected_psnr": round(selected_psnr, 2),
             "regret_db": round(regret_db, 3),
+            "is_oracle_tie": regret_db <= 0.05,
             "psnr_by_method": {k: round(v, 2) for k, v in method_psnr.items()},
             "ssim_by_method": {k: round(v, 3) for k, v in method_ssim.items()},
         }
@@ -382,6 +386,16 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
                 "ssim": None,
                 "image_base64": f"data:image/png;base64,{img_to_base64(out_img)}",
             }
+        ref_eval = {
+            "has_reference": False,
+            "oracle_method": None,
+            "oracle_psnr": None,
+            "selected_psnr": None,
+            "regret_db": None,
+            "is_oracle_tie": False,
+            "psnr_by_method": {},
+            "ssim_by_method": {},
+        }
 
     # Format output features
     feats_formatted = {k: round(float(v), 3) for k, v in feats.items() if k in FEATURE_NAMES}
@@ -1102,13 +1116,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     async function uploadImage() {
       const input = document.getElementById('fileInput');
       if (!input.files || !input.files[0]) return;
+      window.CURRENT_SAMPLE = null;
       const file = input.files[0];
       const base64 = await imgToBase64(file);
       await processImageBase64(base64);
     }
 
     function onSafeguardChange(checked) {
-      if (window.CURRENT_RESULT && window.CURRENT_RESULT.degraded_image) {
+      if (window.CURRENT_SAMPLE) {
+        loadSample(window.CURRENT_SAMPLE.sampleId, window.CURRENT_SAMPLE.dataset);
+      } else if (window.CURRENT_RESULT && window.CURRENT_RESULT.degraded_image) {
         processImageBase64(window.CURRENT_RESULT.degraded_image, checked);
       }
     }
@@ -1139,6 +1156,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     async function loadSample(sampleId, dataset = 'v1') {
+      window.CURRENT_SAMPLE = { sampleId, dataset };
       const isSafeguard = document.getElementById('safeguardToggle')?.checked ?? false;
       showToast(`Loading ${dataset} Scene ${sampleId}...`);
       try {
@@ -1230,11 +1248,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       timingMeta.textContent = `Computed in ${result.timings_ms.total.toFixed(1)} ms`;
       
       const regret = result.reference_eval?.regret_db;
-      if (regret !== undefined) {
-        regretBadge.textContent = regret === 0 ? 'Zero Regret' : `Regret: ${regret.toFixed(3)} dB`;
-        regretBadge.style.background = regret === 0 ? '#15803d' : '#dc2626';
+      if (regret !== undefined && regret !== null) {
+        if (regret <= 0.05) {
+          regretBadge.textContent = regret === 0 ? '🏆 Zero Regret (Exact Oracle)' : `🏆 Regret: ${regret.toFixed(3)} dB (Oracle Tie)`;
+          regretBadge.style.background = '#15803d';
+        } else {
+          regretBadge.textContent = `Regret: ${regret.toFixed(3)} dB`;
+          regretBadge.style.background = '#dc2626';
+        }
       } else {
-        regretBadge.textContent = 'No Ground Truth';
+        regretBadge.textContent = 'Blind Inference (No Reference)';
         regretBadge.style.background = '#64748b';
       }
       banner.style.display = 'flex';
@@ -1296,12 +1319,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       function renderTile(name, data, isExtension = false) {
         const isSelected = name === result.predicted_method;
         const isOracle = name === result.reference_eval?.oracle_method;
+        const isTie = isSelected && !isOracle && (result.reference_eval?.regret_db !== null && result.reference_eval?.regret_db !== undefined && result.reference_eval?.regret_db <= 0.05);
         let badge = '';
         let tileClass = 'method-tile';
 
         if (isSelected && isOracle) {
           badge = '<span style="background:#15803d;color:white;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px;">★ SELECTED (ORACLE)</span>';
           tileClass += ' oracle-and-selected';
+        } else if (isSelected && isTie) {
+          badge = '<span style="background:#2563eb;color:white;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px;">★ SELECTED (TIE WITH ORACLE)</span>';
+          tileClass += ' selected';
         } else if (isSelected) {
           badge = '<span style="background:#2563eb;color:white;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px;">★ SELECTED</span>';
           tileClass += ' selected';
@@ -1312,8 +1339,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           badge = '<span style="background:#f1f5f9;color:#64748b;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px;">PREVIEW ONLY</span>';
         }
 
-        const psnr = (data && data.psnr) ? `${data.psnr} dB` : '—';
-        const ssim = (data && data.ssim) ? `${data.ssim}` : '—';
+        const psnr = (data && data.psnr !== null && data.psnr !== undefined) ? `${data.psnr} dB` : 'N/A (Blind)';
+        const ssim = (data && data.ssim !== null && data.ssim !== undefined) ? `${data.ssim}` : 'N/A (Blind)';
         const imgSrc = (data && data.image_base64) ? data.image_base64 : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
 
         return `
@@ -1407,12 +1434,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const tag = document.getElementById('activeRegretTag');
       if (!pill || !text || !tag) return;
 
-      if (result.reference_eval) {
+      if (result.reference_eval && result.reference_eval.has_reference) {
         const reg = result.reference_eval.regret_db;
-        const isZero = reg <= 0.05;
-        text.innerHTML = `Regret: <strong>${reg.toFixed(3)} dB</strong> | Selected: <strong>${result.predicted_method.toUpperCase()}</strong> | Oracle: <strong>${result.reference_eval.oracle_method.toUpperCase()}</strong> ${isZero ? '🏆 (Oracle Match)' : ''}`;
+        const isTie = reg <= 0.05;
+        const tieText = isTie ? '🏆 (Oracle Match / Empirical Tie)' : '';
+        text.innerHTML = `Regret: <strong>${reg.toFixed(3)} dB</strong> | Selected: <strong>${result.predicted_method.toUpperCase()}</strong> | Oracle: <strong>${result.reference_eval.oracle_method.toUpperCase()}</strong> ${tieText}`;
         tag.textContent = 'Live';
-        if (isZero) {
+        if (isTie) {
           pill.style.background = '#f0fdf4';
           pill.style.borderColor = '#86efac';
           tag.style.background = '#16a34a';
@@ -1422,8 +1450,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           tag.style.background = '#2563eb';
         }
       } else {
-        text.textContent = 'Select or upload an image with ground truth to see live instance regret and decision headroom...';
-        tag.textContent = 'Reference-Free';
+        text.innerHTML = `Blind Inference Mode · Selected: <strong>${result.predicted_method.toUpperCase()}</strong> | No ground-truth reference image (PSNR, SSIM, and Oracle evaluated on benchmark test sets)`;
+        tag.textContent = 'Blind Mode';
+        pill.style.background = '#f8fafc';
+        pill.style.borderColor = '#cbd5e1';
         tag.style.background = '#64748b';
       }
     }
@@ -1598,6 +1628,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     dropZone.addEventListener('drop', async (e) => {
       e.preventDefault();
       dropZone.style.borderColor = '#cbd5e1';
+      window.CURRENT_SAMPLE = null;
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
         const base64 = await imgToBase64(file);
@@ -1657,6 +1688,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       if (initDataEl && initDataEl.textContent.trim().length > 20) {
         try {
           const initialResult = JSON.parse(initDataEl.textContent);
+          window.CURRENT_SAMPLE = { sampleId: '547', dataset: 'v1' };
           displayResult(initialResult);
         } catch (e) {
           console.warn('Initial data parse fallback:', e);
