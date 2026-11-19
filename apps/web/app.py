@@ -255,6 +255,13 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
     """Executes feature extraction, prediction, and enhancement with domain safeguards."""
     if img_bgr is None or not isinstance(img_bgr, np.ndarray) or img_bgr.size == 0:
         raise ValueError("Invalid image: could not be decoded or input is empty")
+
+    # Defensive channel normalization (support grayscale and 4-channel RGBA/BGRA)
+    if img_bgr.ndim == 2:
+        img_bgr = cv2.cvtColor(img_bgr, cv2.COLOR_GRAY2BGR)
+    elif img_bgr.ndim == 3 and img_bgr.shape[2] == 4:
+        img_bgr = cv2.cvtColor(img_bgr, cv2.COLOR_BGRA2BGR)
+
     t0 = time.perf_counter()
     deg, scale = resize_long_side(img_bgr, target_size=512)
 
@@ -344,8 +351,14 @@ def process_image(img_bgr: np.ndarray, ref_bgr: Optional[np.ndarray] = None, enf
     # 5. Full Portfolio Evaluation (if clean reference provided)
     ref_eval = None
     all_methods_out = {}
-    if ref_bgr is not None:
+    if ref_bgr is not None and isinstance(ref_bgr, np.ndarray) and ref_bgr.size > 0:
+        if ref_bgr.ndim == 2:
+            ref_bgr = cv2.cvtColor(ref_bgr, cv2.COLOR_GRAY2BGR)
+        elif ref_bgr.ndim == 3 and ref_bgr.shape[2] == 4:
+            ref_bgr = cv2.cvtColor(ref_bgr, cv2.COLOR_BGRA2BGR)
         ref_resized, _ = resize_long_side(ref_bgr, target_size=512)
+        if ref_resized.shape[:2] != deg.shape[:2]:
+            ref_resized = cv2.resize(ref_resized, (deg.shape[1], deg.shape[0]), interpolation=cv2.INTER_AREA)
         method_psnr = {}
         method_ssim = {}
 
@@ -1743,8 +1756,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
             data_root = os.path.join(base_dir, "data")
-            if not os.path.exists(os.path.join(data_root, "LOLdataset")):
-                data_root = "/Users/home/Desktop/LOLdataset"
 
             def find_sample_pair(ds, s_id):
                 dirs_to_try = []
@@ -1762,12 +1773,16 @@ class RequestHandler(BaseHTTPRequestHandler):
                     ]
                 elif ds in ("v2_real", "lol_v2_real"):
                     dirs_to_try = [
+                        (os.path.join(data_root, "LOL-v2/Real_captured/Test/Low"), os.path.join(data_root, "LOL-v2/Real_captured/Test/Normal")),
                         (os.path.join(data_root, "lol_v2/Real_captured/Test/Low"), os.path.join(data_root, "lol_v2/Real_captured/Test/Normal")),
+                        (os.path.join(data_root, "LOL-v2/Real_captured/Train/Low"), os.path.join(data_root, "LOL-v2/Real_captured/Train/Normal")),
                         (os.path.join(data_root, "lol_v2/Real_captured/Train/Low"), os.path.join(data_root, "lol_v2/Real_captured/Train/Normal")),
                     ]
                 elif ds in ("v2_synthetic", "lol_v2_syn"):
                     dirs_to_try = [
+                        (os.path.join(data_root, "LOL-v2/Synthetic/Test/Low"), os.path.join(data_root, "LOL-v2/Synthetic/Test/Normal")),
                         (os.path.join(data_root, "lol_v2/Synthetic/Test/Low"), os.path.join(data_root, "lol_v2/Synthetic/Test/Normal")),
+                        (os.path.join(data_root, "LOL-v2/Synthetic/Train/Low"), os.path.join(data_root, "LOL-v2/Synthetic/Train/Normal")),
                         (os.path.join(data_root, "lol_v2/Synthetic/Train/Low"), os.path.join(data_root, "lol_v2/Synthetic/Train/Normal")),
                     ]
 
@@ -1782,15 +1797,15 @@ class RequestHandler(BaseHTTPRequestHandler):
                             return os.path.join(l_dir, cand), os.path.join(h_dir, h_name)
                     if s_id.isdigit():
                         num = int(s_id)
-                        cand_pats = [f'low{num:05d}.png', f'low00{s_id}.png', f'{s_id}.png']
+                        cand_pats = [f'low{num:05d}.png', f'low00{s_id}.png', f'low{s_id}.png', f'{s_id}.png']
                         for cp in cand_pats:
                             if cp in files:
-                                h_name = cp.replace('low', 'normal')
+                                h_name = cp.replace('low', 'normal') if 'low' in cp else cp
                                 return os.path.join(l_dir, cp), os.path.join(h_dir, h_name)
                         idx = num - 1
                         if 0 <= idx < len(files):
                             f = files[idx]
-                            h_name = f.replace('low', 'normal')
+                            h_name = f.replace('low', 'normal') if 'low' in f else f
                             return os.path.join(l_dir, f), os.path.join(h_dir, h_name)
                 return None, None
 
@@ -1804,6 +1819,12 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
 
             deg_img = cv2.imread(low_path)
+            if deg_img is None:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self._safe_write(json.dumps({"status": "error", "message": f"Could not decode image at {low_path}"}).encode("utf-8"))
+                return
             clean_img = cv2.imread(high_path) if high_path else None
             try:
                 res = process_image(deg_img, clean_img, enforce_safeguards=safeguard)
