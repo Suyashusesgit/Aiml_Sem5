@@ -112,10 +112,11 @@ We establish a six-operator portfolio with complementary inductive biases:
     \item \textbf{Single-Scale Retinex ($a_5$)}: Illumination estimation $\log R = \log I - \log (G_\sigma * I)$ with Gaussian surround $\sigma=80.0$ and dynamic normalization \cite{jobson1997multiscale}.
     \item \textbf{Bilateral Filtering + Unsharp Masking ($a_6$)}: Edge-preserving smoothing ($d=9, \sigma=75$) followed by unsharp masking ($\sigma=1.5, \alpha=0.8$) \cite{tomasi1998bilateral}.
 \end{enumerate}
+\noindent\textit{Portfolio Boundaries}: While inverted dark channel dehazing \cite{dong2011fast} is a known heuristic, low-light degradation is physically governed by Poisson shot noise rather than particulate scattering. Inverting dark channel noise induces chromatic distortion and requires $80$--$250\text{ ms}$ on CPU (violating real-time budgets); it is thus excluded from our real-time portfolio.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.86\columnwidth]{fig1_oracle_distribution.png}
+\includegraphics[width=0.72\columnwidth]{fig1_oracle_distribution.png}
 \caption{Empirical distribution of oracle-winning enhancers across the 485 training pairs of LOL-v1 \cite{wei2018deep}. The optimal operator shifts dynamically with scene physics, proving that a static operator cannot maximize fidelity across instances.}
 \label{fig:oracle_distribution}
 \end{figure}
@@ -167,7 +168,7 @@ Experiments utilize the canonical Low-Light (LOL-v1) benchmark \cite{wei2018deep
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.92\textwidth,height=1.65in,keepaspectratio]{fig5_qualitative_strip.png}
+\includegraphics[width=0.92\textwidth,height=1.28in,keepaspectratio]{fig5_qualitative_strip.png}
 \caption{Qualitative restoration comparison across three benchmark scenes: (a) Degraded low-light input, (b) Best-fixed method (Retinex), (c) Proposed selector output, and (d) Ground truth reference. In each case, our selector identifies the operator maximizing structural preservation while avoiding noise amplification.}
 \label{fig:qualitative_strip}
 \end{figure*}
@@ -194,22 +195,23 @@ To resolve the architecture choice between linear and non-linear paradigms under
 
 As detailed in Table~\ref{tab:model_comparison}:
 \begin{enumerate}
-    \setlength{\itemsep}{1pt}
+    \setlength{\itemsep}{0.5pt}
     \setlength{\parskip}{0pt}
-    \item \textbf{Default Parity \& Outperformance}: In default configurations, Logistic Regression outperforms Random Forest by $+0.50\text{ dB}$ in mean regret and $+5.8\%$ in accuracy.
-    \item \textbf{Scene Leakage Sensitivity}: When evaluated under naïve un-grouped cross-validation, Random Forest displays $\mathbf{3.7\times}$ higher leakage inflation ($+0.48\text{ dB}$ vs. $+0.13\text{ dB}$), memorizing room backgrounds. Under proper \texttt{GroupKFold}, this illusory advantage vanishes.
-    \item \textbf{Edge Computing Footprint}: Logistic Regression requires just $\mathbf{\lrModelSize}$ ($\sizeRatio$ smaller than RF's $\rfModelSize$) and executes in $\mathbf{\lrLatency}$ on standard CPU. Under Occam's razor, Logistic Regression is our selected deployment model.
+    \item \textbf{Default Parity \& Accuracy}: In default setups, Logistic Regression outperforms Random Forest by $+0.50\text{ dB}$ mean regret and $+5.8\%$ top-1 accuracy.
+    \item \textbf{Scene Leakage Sensitivity}: Under naïve un-grouped CV, Random Forest displays $\mathbf{3.7\times}$ higher leakage inflation ($+0.48\text{ dB}$ vs. $+0.13\text{ dB}$), memorizing backgrounds. Under \texttt{GroupKFold}, this illusory edge vanishes.
+    \item \textbf{Edge Footprint}: Logistic Regression requires just $\mathbf{\lrModelSize}$ ($\sizeRatio$ smaller than RF's $\rfModelSize$) and executes in $\mathbf{\lrLatency}$ on standard CPU. Under Occam's razor, it is our selected model.
 \end{enumerate}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.80\columnwidth]{fig3_regret_cdf.png}
+\includegraphics[width=0.74\columnwidth]{fig3_regret_cdf.png}
 \caption{Empirical Cumulative Distribution Function (CDF) of regret in dB against the oracle. Logistic Regression concentrates over 80\% of instances below $1.5\text{ dB}$ regret, avoiding heavy-tailed failures.}
 \label{fig:regret_cdf}
 \end{figure}
 
-\subsection{Held-Out Verification (\texttt{eval15})}
-On the official 15 held-out benchmark pairs (\texttt{eval15}), the deployed Logistic Regression selector achieves $\mathbf{66.67\%}$ accuracy and slashes mean regret from $2.78\text{ dB}$ (Retinex) to $\mathbf{1.28\text{ dB}}$ (max regret reduced from $11.45\text{ dB}$ to $\mathbf{5.33\text{ dB}}$), confirming robust in-domain stability on unseen scenes.
+\enlargethispage{2\baselineskip}
+\subsection{Held-Out Verification (\texttt{eval15}) \& Metric Divergence}
+On the 15 held-out pairs (\texttt{eval15}), Logistic Regression achieves $\mathbf{66.67\%}$ accuracy and reduces mean regret from $2.78\text{ dB}$ to $\mathbf{1.28\text{ dB}}$ (max regret: $11.45 \to \mathbf{5.33\text{ dB}}$). Crucially, instance diagnostics explain why human visual preference diverges from fidelity metrics: on scene \texttt{547.png}, Single-Scale Retinex produces vibrant contrast favored by casual human inspection, yet collapses in PSNR ($9.44\text{ dB}$ vs. $14.76\text{ dB}$ for Gamma) due to a $+82.3$-level overexposure bias against ground truth. Reference fidelity strictly penalizes hallucinated dynamic range expansion that human vision subjectively tolerates, emphasizing metric-grounded selection.
 
 \section{Feature Ablations \& External Generalization}
 
@@ -224,9 +226,10 @@ The LOFO analysis reveals three key insights:
     \setlength{\parskip}{0pt}
     \item \textit{Entropy and Edge Acuity Dominate}: Shannon Entropy ($H$) and 90th-percentile edge gradient ($p_{90}$) are the primary load-bearing descriptors, with their omission inflicting the steepest regret collapse ($+0.150\text{ dB}$ and $+0.133\text{ dB}$ penalties; up to $2.67\%$ accuracy drop). Spatial structural dispersion is critical for disambiguating Retinex from Gamma correction.
     \item \textit{Contrast and Sobel Energy Guide Boundaries}: Contrast ($\sigma$) and Sobel edge mean contribute moderate penalties ($+0.054\text{ dB}$ and $+0.077\text{ dB}$). Restricting the feature space strictly to first- and second-order exposure moments ($\mu, \sigma$) surges regret to $1.847\text{ dB}$ ($+0.287\text{ dB}$ penalty), proving that multi-hazard spatial statistics are essential.
-    \item \textit{Feature Redundancy and Negative Penalties}: Four descriptors exhibit negligible or negative penalties when removed: Brightness ($-0.020\text{ dB}$), Colourfulness ($-0.046\text{ dB}$), Dark Channel ($-0.007\text{ dB}$), and Sensor Noise ($-0.092\text{ dB}$). These features appear redundant for this task, suggesting that a compact 4-D descriptor ($\{H, p_{90}, \text{Sobel}, \sigma\}$) could maintain or marginally improve fidelity. However, because individual LOFO shifts remain small relative to cross-fold standard deviation ($\sigma = 0.31\text{ dB}$), paired significance testing is recommended before feature pruning.
+    \item \textit{Feature Redundancy}: Four descriptors exhibit negligible or negative penalties when removed: Brightness ($-0.020\text{ dB}$), Colourfulness ($-0.046\text{ dB}$), Dark Channel ($-0.007\text{ dB}$), and Sensor Noise ($-0.092\text{ dB}$). These appear redundant, suggesting a compact 4-D descriptor ($\{H, p_{90}, \text{Sobel}, \sigma\}$) could maintain fidelity. As LOFO shifts are small relative to cross-fold variance ($\sigma = 0.31\text{ dB}$), paired tests are recommended prior to pruning.
 \end{enumerate}
 
+\enlargethispage{3\baselineskip}
 \subsection{Cross-Dataset Zero-Shot Generalization on LOL-v2}
 To evaluate out-of-distribution transfer across distinct camera sensors and degradation models, we evaluate our primary selector (trained strictly on LOL-v1) zero-shot on both official test partitions of LOL-v2 \cite{yang2021sparse} (200 test pairs total) without retraining (Table~\ref{tab:cross_dataset_zero_shot}).
 
@@ -249,42 +252,35 @@ LOL-v2-Synthetic Test ($N=100$) & \lolvTwoSynAcc & \lolvTwoSynRegret & \lolvTwoS
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.74\columnwidth]{fig15_cross_degradation_generalization.png}
-\caption{Zero-shot generalization across LOL-v2 partitions. The selector improves over Retinex across both domains, delivering a 1.20 dB fidelity gain on real camera hardware noise.}
+\includegraphics[width=0.55\columnwidth]{fig15_cross_degradation_generalization.png}
+\caption{Zero-shot generalization across LOL-v2 test sets. Logistic Regression yields a 1.20 dB fidelity gain over Retinex on real camera noise.}
 \label{fig:cross_dataset_generalization}
 \end{figure}
 
 As reported in Table~\ref{tab:cross_dataset_zero_shot} and Fig.~\ref{fig:cross_dataset_generalization}:
 \begin{enumerate}
-    \setlength{\itemsep}{1pt}
+    \setlength{\itemsep}{0.5pt}
     \setlength{\parskip}{0pt}
-    \item \textbf{Positive Transfer on Real Hardware}: On LOL-v2-Real Test ($N=100$), the selector transfers effectively: mean regret is $\lolvTwoRealRegret\text{ dB}$ vs. $\lolvTwoRealRetinexRegret\text{ dB}$ for Retinex, achieving a $\mathbf{\lolvTwoRealGain\text{ dB}}$ fidelity dividend ($36.0\%$ top-1 accuracy) with zero retraining.
-    \item \textbf{Distribution Shift on Synthetic Data}: On LOL-v2-Synthetic Test ($N=100$), the selector holds parity with Retinex ($\lolvTwoSynRegret\text{ dB}$ vs. $\lolvTwoSynRetinexRegret\text{ dB}$, a negligible $\lolvTwoSynGain\text{ dB}$ gain; $34.0\%$ accuracy). Synthetic Poisson/gamma degradation departs from real camera physics, and physical descriptors trained on LOL-v1 do not transfer meaningfully to this domain---an explicit limitation motivating future domain-invariant or causal modeling.
+    \item \textbf{Positive Transfer on Real Hardware}: On LOL-v2-Real Test ($N=100$), the selector transfers zero-shot: mean regret is $\lolvTwoRealRegret\text{ dB}$ vs. $\lolvTwoRealRetinexRegret\text{ dB}$ for Retinex, achieving a $\mathbf{\lolvTwoRealGain\text{ dB}}$ dividend ($36.0\%$ accuracy). Perceptual hash analysis ($\text{dHash} \le 4$) reveals 91/100 Real pairs share scene geometry with LOL-v1, explaining strong transfer and establishing an essential data audit caveat.
+    \item \textbf{Distribution Shift on Synthetic Data}: On LOL-v2-Synthetic Test ($N=100$), the selector matches Retinex ($\lolvTwoSynRegret\text{ dB}$ vs. $\lolvTwoSynRetinexRegret\text{ dB}$, a $0.16\text{ dB}$ delta; $34.0\%$ accuracy). Synthetic Poisson noise departs from camera physics, and descriptors trained on LOL-v1 do not transfer here---an explicit limitation motivating future causal modeling.
 \end{enumerate}
 
-\enlargethispage{2\baselineskip}
 \section{Diagnostics, Edge Feasibility \& Conclusion}
 
 \subsection{Worst-Case Error Diagnostics}
-Inspecting instances incurring the largest regret reveals that worst-case errors concentrate at the extreme physical boundary of photon starvation ($\mu < 14, \sigma < 4.0$, e.g., scenes \texttt{763.png}, \texttt{764.png}). In this regime, Retinex expands contrast aggressively, but Gamma correction ($\gamma=0.5$) provides a smoother monotonic curve that preserves noise statistics without ringing. The selector occasionally misclassifies these as Retinex because exposure moments resemble typical Retinex instances.
+Inspecting peak-regret instances reveals that worst-case errors concentrate at extreme photon starvation ($\mu < 14, \sigma < 4.0$, e.g., scenes \texttt{763.png}, \texttt{764.png}). Here, Retinex over-amplifies noise, whereas Gamma ($\gamma=0.5$) provides a smooth monotonic curve preserving noise statistics. The selector occasionally misclassifies these as Retinex due to overlapping exposure moments.
 
 \subsection{Edge Feasibility Profile}
-Benchmarked across $2,289$ image pairs on standard CPU:
-\begin{itemize}
-    \setlength{\itemsep}{1pt}
-    \setlength{\parskip}{0pt}
-    \item Feature extraction: $\mathbf{14.22\text{ ms} \pm 2.42\text{ ms}}$.
-    \item Model inference: $\mathbf{0.90\text{ ms} \pm 0.56\text{ ms}}$.
-    \item Total decision latency: $\mathbf{< 16\text{ ms}}$ per frame ($> 60\text{ FPS}$), operating comfortably within real-time video edge budgets without discrete GPU hardware.
-\end{itemize}
+Benchmarked across $2,289$ image pairs on standard CPU, feature extraction requires $\mathbf{14.22 \pm 2.42\text{ ms}}$, while model inference requires $\mathbf{0.90 \pm 0.56\text{ ms}}$. Total decision latency remains strictly $\mathbf{< 16\text{ ms}}$ per frame ($> 60\text{ FPS}$), operating comfortably within real-time video edge budgets without discrete GPU hardware.
 
 \subsection{Conclusion}
-This work addressed the challenge of selecting fidelity-optimal image enhancement operators without reference ground truth under strict classical ML and CPU-only constraints. By formulating enhancement selection through decision regret and 8-dimensional physical degradation statistics, we proved that lightweight handcrafted descriptors reliably predict optimal operators without deep neural networks. Evaluated under strict 5-fold grouped cross-validation by scene across three seeds (15 evaluations) on LOL-v1, our Multinomial Logistic Regression selector achieves $\mathbf{\lrTopOneAcc \pm \lrTopOneStd}$ accuracy and slashes mean regret to $\mathbf{\lrMeanRegret \pm \lrMeanRegretStd\text{ dB}}$, beating Best-Fixed Retinex by $\mathbf{\gainVsRetinex\text{ dB}}$ and capturing $\mathbf{\oracleGapCaptured}$ of available headroom. While nominal top-1 accuracy is modest, decision regret confirms that misclassifications remain predominantly within a tight, perceptually imperceptible fidelity margin of the oracle. Under Occam's razor, Logistic Regression decisively outperforms Random Forest while requiring $\sizeRatio$ less storage ($\lrModelSize$) and executing in $\lrLatency$ on standard CPU. Zero-shot evaluation on LOL-v2 confirms positive transfer on real hardware ($\lolvTwoRealRegret\text{ dB}$ vs. $\lolvTwoRealRetinexRegret\text{ dB}$), providing a rigorous foundation for future split-conformal risk control and causal domain adaptation.
+This work addressed reference-free selection of fidelity-optimal enhancement operators under classical ML and CPU-only constraints. Formulating selection through decision regret and 8-D physical degradation statistics, we showed that lightweight descriptors reliably predict optimal operators without deep networks. Evaluated under 5-fold grouped cross-validation across three seeds (15 evaluations) on LOL-v1, Multinomial Logistic Regression achieves $\mathbf{\lrTopOneAcc \pm \lrTopOneStd}$ accuracy and slashes mean regret to $\mathbf{\lrMeanRegret \pm \lrMeanRegretStd\text{ dB}}$, beating Best-Fixed Retinex by $\mathbf{\gainVsRetinex\text{ dB}}$ and capturing $\mathbf{\oracleGapCaptured}$ of available headroom. Decision regret confirms that misclassifications concentrate within a perceptually imperceptible margin of the oracle. Under Occam's razor, Logistic Regression decisively outperforms Random Forest while requiring $\sizeRatio$ less storage ($\lrModelSize$) and executing in $\lrLatency$ on CPU. Zero-shot evaluation on LOL-v2 confirms positive transfer on real hardware ($\lolvTwoRealRegret\text{ dB}$ vs. $\lolvTwoRealRetinexRegret\text{ dB}$), establishing a rigorous foundation for future conformal risk control and causal adaptation.
 
+\renewcommand{\footnotesize}{\fontsize{7.5pt}{8.5pt}\selectfont}
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{20}
 \footnotesize
-\setlength{\itemsep}{-0.5pt}
+\setlength{\itemsep}{-2.2pt}
 \setlength{\parskip}{0pt}
 \bibitem{bischl2016aslib}
 B.~Bischl \emph{et~al.}, ``ASlib: A benchmark library for algorithm selection,'' \emph{Artif. Intell.}, vol. 237, pp. 41--58, 2016.
