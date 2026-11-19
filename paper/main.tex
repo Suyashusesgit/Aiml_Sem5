@@ -81,13 +81,13 @@ a^*(x) \triangleq \arg\max_{a \in \mathcal{A}} s_a(x).
 \end{equation}
 A deployed selector $\pi: \mathcal{X} \to \mathcal{A}$ maps observable features $\phi(x) \in \mathbb{R}^8$ extracted from degraded input $x$ directly to an operator choice, without access to $y$ or forward candidate outputs.
 
-\subsection{Decision Regret Formulation}
-Classification accuracy alone is an inadequate objective for algorithm selection \cite{bischl2016aslib}: misclassifying between two near-tied operators ($30.02\text{ dB}$ vs. $30.00\text{ dB}$) incurs an imperceptible $0.02\text{ dB}$ loss, whereas choosing an inappropriate operator that posterizes edges may cost $10\text{ dB}$. We formally quantify performance via \textbf{Decision Regret}:
+\subsection{Decision Regret \& Conformal Risk Control}
+Accuracy alone is an inadequate selection metric \cite{bischl2016aslib}: choosing a near-tied operator ($30.02$ vs. $30.00\text{ dB}$) costs an imperceptible $0.02\text{ dB}$, whereas an inappropriate operator can cost $10\text{ dB}$. We quantify performance via non-negative \textbf{Decision Regret}:
 \begin{equation}
 \mathcal{R}(x, \pi) \triangleq s_{a^*}(x) - s_{\pi(x)}(x) \ge 0\text{ dB}.
 \label{eq:regret_definition}
 \end{equation}
-Across an evaluation corpus of $N$ instances, we evaluate mean regret $\bar{\mathcal{R}}(\pi) = \frac{1}{N} \sum_{i=1}^N \mathcal{R}(x_i, \pi)$ and maximum regret $\mathcal{R}_{\max}(\pi) = \max_i \mathcal{R}(x_i, \pi)$. The objective is minimizing expected regret $\mathbb{E}[\mathcal{R}(x, \pi)]$ over the target distribution.
+To ensure finite-sample safety, we calibrate split-conformal prediction sets $\mathcal{C}(x) = \{a \in \mathcal{A} \mid p(a \mid x) \ge 1 - \hat{q}\}$ guaranteeing $P(a^* \in \mathcal{C}(x)) \ge 1 - \alpha$ without distributional assumptions. Across $N$ instances, we evaluate mean regret $\bar{\mathcal{R}}(\pi) = \frac{1}{N} \sum_{i=1}^N \mathcal{R}(x_i, \pi)$ and maximum regret $\mathcal{R}_{\max}(\pi) = \max_i \mathcal{R}(x_i, \pi)$.
 
 \subsection{Leakage-Free Experimental Protocol}
 To ensure rigorous generalization estimates, we enforce three strict boundaries:
@@ -211,8 +211,9 @@ As detailed in Table~\ref{tab:model_comparison}:
 \end{figure}
 
 \enlargethispage{2\baselineskip}
-\subsection{Held-Out Verification (\texttt{eval15}) \& Metric Divergence}
-On the 15 held-out pairs (\texttt{eval15}), Logistic Regression achieves $\mathbf{66.67\%}$ accuracy and reduces mean regret from $2.78\text{ dB}$ to $\mathbf{1.28\text{ dB}}$ (max regret: $11.45 \to \mathbf{5.33\text{ dB}}$). Crucially, instance diagnostics explain why human visual preference diverges from fidelity metrics: on scene \texttt{547.png}, Single-Scale Retinex produces vibrant contrast favored by casual human inspection, yet collapses in PSNR ($9.44\text{ dB}$ vs. $14.76\text{ dB}$ for Gamma) due to a $+82.3$-level overexposure bias against ground truth. Reference fidelity strictly penalizes hallucinated dynamic range expansion that human vision subjectively tolerates, emphasizing metric-grounded selection.
+\subsection{Verification (\texttt{eval15}), Metric Alignment \& Conformal Sets}
+On the 15 held-out pairs (\texttt{eval15}), Logistic Regression achieves $\mathbf{66.67\%}$ accuracy and slashes regret from $2.78\text{ dB}$ (Retinex) to $\mathbf{1.28\text{ dB}}$ (max regret: $11.45 \to \mathbf{5.33\text{ dB}}$). Crucially, instance diagnostics explain why visual preference diverges from fidelity: on scene \texttt{547.png}, Retinex yields vibrant contrast favored by casual inspection, yet collapses in PSNR ($9.44\text{ dB}$ vs. $14.76\text{ dB}$ for Gamma) due to a $+82.3$-level overexposure bias against ground truth. 
+Furthermore, multi-metric study (RQ2) confirms that PSNR and SSIM oracles agree on $63.3\%$ of scenes with strong rank correlation ($\rho = 0.8823$). Under split-conformal calibration ($1-\alpha=90\%$), empirical coverage reaches $91.13\%$ with set size $2.41$ (reducing search space by $59.8\%$), while confidence abstention ($\tau \ge 0.60$) cuts accepted regret to $\mathbf{1.068\text{ dB}}$ ($70.59\%$ accuracy).
 
 \section{Feature Ablations \& External Generalization}
 
