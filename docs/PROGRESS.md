@@ -153,3 +153,24 @@
 - Generated `docs/ui_audit/UI_AUDIT.md`, `docs/DEMO_CHECKLIST.md`, and captured all before/after evidence screenshots.
 - Cleaned up duplicate and unwanted artifacts per repository archival rule (`_archive/`).
 Problems: None. Repository health 5/5 pass, all 33 unit tests pass.
+
+---
+
+## Phase 0 & Phase 1 Formal Lock (20 Nov 2026)
+- **Status**: **LOCKED & FROZEN** (Tag: `phase0-phase1-locked`).
+- **Scope Locked**:
+  1. **Phase 0 Canonical Foundation**:
+     - 6 Canonical Enhancers: `identity`, `gamma`, `clahe`, `hist_eq`, `retinex`, `bilat_unsharp`.
+     - 8 Handcrafted Physical Descriptors: $\mu$, $\sigma$, $H$, $\sigma_n$, $D$, $\text{Sobel}_{\text{mean}}$, $p_{90}$, $C$.
+     - Deployed Champion: Multinomial Logistic Regression (45 params, 2.4 KB, 0.90 ms CPU inference, 14.22 ms feature extraction, < 16 ms total, > 60 FPS).
+     - Decision Rule: Occam's razor / Parsimony rule verified under 5-fold StratifiedGroupKFold across 3 seeds (15 evaluations).
+  2. **Phase 1 Conformal Reliability & Multi-Metric Alignment**:
+     - Split-Conformal Prediction sets calibrated (91.13% coverage at 90% nominal target; avg set size 2.41).
+     - Risk-Controlled Confidence-Gated Abstention ($\tau \ge 0.60$ fallback to Retinex cuts accepted regret to 1.068 dB, top-1 accuracy to 70.59%).
+     - RQ2 Oracle Alignment: PSNR vs SSIM agreement verified (63.30%, Spearman $\rho=0.8823$).
+     - Out-of-Distribution Transfer: LOL-v2 Real Test (audited 91/100 near-duplicates) and Synthetic Test (+2.01 dB gain vs Retinex).
+     - 10D Feature Expansion: Insignificant delta ($p = 0.5481$), cementing 8D completeness.
+  3. **Verified Deliverables**:
+     - Interactive Web Application (`apps/web/app.py` on port 8501) with live Phase 1 Conformal Set and Risk Abstention badges.
+     - IEEE 5-Page Letters Paper (`paper/main.tex` compiled to `paper/main.pdf`, strictly 5 pages).
+     - Full automated test suite: 33/33 tests passing, repository integrity audit 5/5 passing.
