@@ -160,11 +160,25 @@ def extract_extended_features(img_bgr: np.ndarray) -> Dict[str, float]:
     return feats
 
 
+CHAMPION_MODEL = None
+
+
+def get_champion_model():
+    global CHAMPION_MODEL
+    if CHAMPION_MODEL is None and os.path.exists("models/selector.joblib"):
+        try:
+            import joblib
+            CHAMPION_MODEL = joblib.load("models/selector.joblib")
+        except Exception:
+            CHAMPION_MODEL = None
+    return CHAMPION_MODEL
+
+
 def hierarchical_selector(feats: Dict[str, float]) -> Tuple[str, str, str]:
     """
     Two-Stage Hierarchical / Cascaded Algorithm Selector:
     Stage 1: Physical Degradation Regime Classification
-    Stage 2: Targeted Optimal Operator Routing
+    Stage 2: Targeted Optimal Operator Routing (routes low-light to Phase 0 Champion Model)
     """
     mu = feats["brightness"]
     dc = feats["dark_channel"]
@@ -175,14 +189,20 @@ def hierarchical_selector(feats: Dict[str, float]) -> Tuple[str, str, str]:
     # Stage 1: Regime Diagnosis
     if mu < 45.0 and dc < 22.0:
         regime = "Low-Light"
-        # Stage 2: Low-light policy
-        if noise_val > 5.0:
-            method = "gamma" # Noise-tolerant shadow lifting
-        elif feats["contrast"] < 20.0:
-            method = "hist_eq" # Narrow histogram expansion
+        # Stage 2: Low-light policy: route directly to Phase 0 Champion Model
+        model = get_champion_model()
+        if model is not None:
+            X_in = np.array([[feats[k] for k in FEATURE_NAMES]])
+            method = model.predict(X_in)[0]
+            reason = f"Photon-deficient regime (μ={mu:.1f} < 45). Routed to Phase 0 Champion Selector: {method}."
         else:
-            method = "retinex" # Illumination field correction
-        reason = f"Photon-deficient regime (μ={mu:.1f} < 45). Selected illumination operator: {method}."
+            if noise_val > 5.0:
+                method = "gamma"
+            elif feats["contrast"] < 20.0:
+                method = "hist_eq"
+            else:
+                method = "retinex"
+            reason = f"Photon-deficient regime (μ={mu:.1f} < 45). Heuristic routing: {method}."
 
     elif haze_val > 0.28 and mu > 60.0:
         regime = "Atmospheric Haze"

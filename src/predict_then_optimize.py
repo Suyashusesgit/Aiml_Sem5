@@ -63,6 +63,21 @@ class PredictThenOptimizeSelector:
         selected_methods = [self.methods[idx] for idx in best_indices]
         return selected_methods, pred_matrix
 
+    def predict_best_method(self, feats: Dict[str, float]) -> Tuple[str, float]:
+        """Predicts the best method and expected PSNR from an input feature dictionary."""
+        feature_keys = FEATURE_NAMES + ENGINEERED_FEATURE_NAMES
+        feats_copy = dict(feats)
+        if "contrast_brightness_ratio" not in feats_copy:
+            b = max(float(feats_copy.get("brightness", 1.0)), 1e-4)
+            feats_copy["contrast_brightness_ratio"] = float(feats_copy.get("contrast", 0.0)) / b
+        if "entropy_noise_product" not in feats_copy:
+            feats_copy["entropy_noise_product"] = float(feats_copy.get("entropy", 0.0)) * float(feats_copy.get("noise", 0.0))
+        x_vec = np.array([[feats_copy.get(k, 0.0) for k in feature_keys]])
+        methods, matrix = self.select(x_vec)
+        best_method = methods[0]
+        expected_psnr = float(np.max(matrix[0]))
+        return best_method, expected_psnr
+
     def save(self, path: str = "models/pto_regressors.joblib"):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         joblib.dump(self, path)

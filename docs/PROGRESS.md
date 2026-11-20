@@ -174,3 +174,34 @@ Problems: None. Repository health 5/5 pass, all 33 unit tests pass.
      - Interactive Web Application (`apps/web/app.py` on port 8501) with live Phase 1 Conformal Set and Risk Abstention badges.
      - IEEE 5-Page Letters Paper (`paper/main.tex` compiled to `paper/main.pdf`, strictly 5 pages).
      - Full automated test suite: 33/33 tests passing, repository integrity audit 5/5 passing.
+
+---
+
+## Phase 2 Checkpoint: Multi-Hazard Taxonomy, Predict-Then-Optimize & Micro-Pipelines (Semester 7)
+- **Status**: **EXPERIMENTAL VALIDATION COMPLETE & FULLY VERIFIED**
+- **Executed Milestones**:
+  1. **Milestone 2.1 (Multi-Degradation Optical Taxonomy)**:
+     - Formulated 10D physical feature vector incorporating $\kappa_{\text{blur}}$ (Laplacian frequency attenuation) and $\beta_{\text{haze}}$ (DCP dark channel elevation).
+     - Built 2-stage hierarchical cascade routing between Low-Light, Atmospheric Haze, Defocus Blur, and Noise regimes.
+     - Evaluated across 15 disjoint scenes: saves **$+1.236\text{ dB}$ regret per frame** over static Retinex (regret reduced from $5.582\text{ dB}$ to $4.346\text{ dB}$).
+     - Generated `results/phase2/multi_degradation_benchmark.csv` and Figure 10 (`results/figures/fig10_multi_degradation_cascade.png`).
+  2. **Milestone 2.2 (Predict-Then-Optimize / PTO Continuous Selection)**:
+     - Formulated continuous multi-target RidgeCV regressors predicting individual operator utility vector $\hat{\mathbf{u}}(x) \in \mathbb{R}^{|\mathcal{A}|}$.
+     - 5-Fold GroupKFold scene-level cross-validation on LOL-v1 achieves **$1.368\text{ dB}$ mean regret** (outperforming Phase 0 Logistic Regression's $1.560\text{ dB}$ by **$+0.192\text{ dB}$**!).
+     - Serialized model to `models/pto_regressors.joblib` and integrated live inference into Web UI (`apps/web/app.py`).
+  3. **Milestone 2.3 (Adaptive 2-Stage Micro-Pipelines)**:
+     - Built dynamic restoration DAG (`src/micro_pipeline.py`): Stage 1 Optical Conditioning ($\mathcal{O}_1$) $\to$ Stage 2 Photometric Restoration ($\mathcal{O}_2$).
+     - Evaluated on compound multi-hazard scenes:
+       - Low-Light + Heavy Noise: `Bilateral Denoise -> Retinex` yields **$+1.649\text{ dB}$ gain** over monolithic Retinex ($15.55\text{ dB}$ vs $13.90\text{ dB}$).
+       - Low-Light + Haze: `DCP Dehaze -> Gamma` yields **$+5.067\text{ dB}$ gain** over monolithic Gamma ($14.06\text{ dB}$ vs $8.998\text{ dB}$).
+     - Generated `results/phase2/micro_pipeline_benchmark.csv`.
+  4. **Milestone 2.4 (Latent Spectral vs. Physical Representation)**:
+     - Extracted 16D latent spectral representation (8-band Radially Averaged Power Spectral Density (RAPSD) via 2D FFT + 8-scale gradient quantiles) via `src/latent_features.py`.
+     - 5-fold GroupKFold evaluation proves handcrafted Physical 10D features achieve lower regret ($1.619\text{ dB}$) than 16D Latent Spectral features ($1.868\text{ dB}$), while halving extraction latency ($15.52\text{ ms}$ vs $27.38\text{ ms}$ for Hybrid 26D).
+     - Generated `results/phase2/representation_benchmark.csv`.
+  5. **Master Orchestrator & Technical Report**:
+     - Authored end-to-end reproducible orchestrator `scripts/run_phase2.py` (runs all 4 milestones and writes `results/phase2/phase2_summary.csv` in 43.8s).
+     - Authored comprehensive Phase 2 report `docs/PHASE2_REPORT.md`.
+  6. **Quality Assurance**:
+     - Unit tests expanded from 33 to 38 in `tests/test_phase2.py` (**38/38 passing, 100% green**).
+     - Repository health checks: 5/5 passing (`scripts/check_repo.py`).
